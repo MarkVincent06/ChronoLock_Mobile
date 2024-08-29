@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "ChronoLock",
-    "slug": "ChronoLock_Mobile",
+    "slug": "chronolock",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/chronolock-logo2.png",
@@ -17,10 +17,10 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/chronolock-logo2a.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.markvincentcleofe06.ChronoLock_Mobile"
+      "package": "com.markvincentcleofe06.chronolock"
     },
     "web": {
       "bundler": "metro",
@@ -36,8 +36,15 @@
         "origin": false
       },
       "eas": {
-        "projectId": "3f1f1b8c-d58b-4f55-b37b-a6913c18dbbc"
+        "projectId": "a601ec96-9028-42ff-a265-9cfec7ca0f2b"
       }
+    },
+    "owner": "markvincentcleofe06",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/a601ec96-9028-42ff-a265-9cfec7ca0f2b"
     }
   }
 }

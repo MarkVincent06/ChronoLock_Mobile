@@ -1,18 +1,57 @@
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import {
-  View,
-  Text,
-  Button,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-} from "react-native";
-import { Link } from "expo-router";
+  GoogleSignin,
+  GoogleSigninButton,
+} from "@react-native-google-signin/google-signin";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import axios from "axios";
 
 import logo from "../assets/images/chronolock-logo2.png";
 
+// OAuth2 Credentials
+// Expo Go: 727616176560-gf86ciiva3jbrh89krit9d0r1jm4ikse.apps.googleusercontent.com
+// Android: 727616176560-v1st3bp301d0r3h8olidh3892p2d0ud7.apps.googleusercontent.com
+// Web: 727616176560-diafqpv650m6sci93d8l5joi1c36npnr.apps.googleusercontent.com
+
 export default function Onboarding() {
+  const [user, setUser] = React.useState<string | null>(null);
+  const router = useRouter();
+
+  React.useEffect(() => {
+    GoogleSignin.configure({
+      webClientId:
+        "727616176560-diafqpv650m6sci93d8l5joi1c36npnr.apps.googleusercontent.com",
+      offlineAccess: true,
+    });
+  }, []);
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
+
+      const userInfo = await GoogleSignin.signIn();
+      const { idToken, user } = userInfo;
+
+      // Send a request to the backend to check if the user exists
+      const response = await axios.post("http://10.0.2.2:3000/checkUser", {
+        email: user.email,
+      });
+
+      if (response.data.exists) {
+        console.warn("User exists, logging in...");
+        setUser(user.name);
+      } else {
+        console.warn("User does not exist!");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.logoContainer}>
         <Text style={styles.logoText}>ChronoLock</Text>
         <Image source={logo} style={styles.logo} />
@@ -28,11 +67,20 @@ export default function Onboarding() {
       </View>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.signInButton}>
-          <Link href="/home" style={styles.buttonText}>
-            Sign In
-          </Link>
+        <TouchableOpacity
+          style={styles.loginButton}
+          onPress={() => {
+            router.push("/login");
+          }}
+        >
+          <Text style={styles.buttonText}>Login</Text>
         </TouchableOpacity>
+        <GoogleSigninButton
+          style={styles.googleSignInButton}
+          size={GoogleSigninButton.Size.Wide}
+          color={GoogleSigninButton.Color.Dark}
+          onPress={handleGoogleSignIn}
+        />
       </View>
 
       <View style={styles.footer}>
@@ -40,7 +88,7 @@ export default function Onboarding() {
           By continuing, you agree to our Terms of Service and Privacy Policy.
         </Text>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -49,7 +97,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 20,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
     backgroundColor: "#F0F4F8",
   },
   logoContainer: {
@@ -93,7 +142,7 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
   },
-  signInButton: {
+  loginButton: {
     width: "80%",
     padding: 15,
     backgroundColor: "#1A73E8",
@@ -104,6 +153,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     fontSize: 18,
+    fontWeight: "bold",
   },
   googleSignInButton: {
     width: "80%",
