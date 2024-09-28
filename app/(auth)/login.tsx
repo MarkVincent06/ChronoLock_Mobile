@@ -9,6 +9,7 @@ import {
   Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 
 import eye from "../../assets/icons/eye.png";
 import eyeHide from "../../assets/icons/eye-hide.png";
@@ -19,9 +20,12 @@ const Login: React.FC = () => {
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
+  const router = useRouter();
+
   const handleLogin = () => {
     // Handle login logic
     console.log("Logging in with:", { email, password });
+    router.push("/(tabs)/home");
   };
 
   return (

@@ -40,10 +40,13 @@ export default function Onboarding() {
       });
 
       if (response.data.exists) {
-        console.warn("User exists, logging in...");
+        if (response.data.firebaseToken) {
+          console.log("User's Firebase Token: " + response.data.firebaseToken);
+        }
+        console.log("User exists, logging in...");
         setUser(user.name);
       } else {
-        console.warn("User does not exist!");
+        console.log("User does not exist!");
       }
     } catch (error) {
       console.error(error);

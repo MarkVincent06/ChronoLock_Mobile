@@ -4,14 +4,21 @@ import {
   View,
   Image,
   ImageSourcePropType,
+  TouchableOpacity,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import React from "react";
 import { Tabs, Redirect } from "expo-router";
+import { useRouter } from "expo-router";
+import { useNavigation } from "@react-navigation/native"; // Import to use navigation hook
 
 import home from "../../assets/icons/home.png";
 import access from "../../assets/icons/access.png";
 import attendance from "../../assets/icons/attendance.png";
 import laboratory from "../../assets/icons/laboratory.png";
+import chronolockLogo from "../../assets/images/chronolock-logo2a.png";
+import settings from "../../assets/icons/gear.png";
+import messages from "../../assets/icons/message-circle.png";
 
 interface TabIconProps {
   icon: ImageSourcePropType;
@@ -37,6 +44,55 @@ const TabIcon: React.FC<TabIconProps> = ({ icon, color, name, focused }) => {
   );
 };
 
+const CustomHeader = () => {
+  const router = useRouter();
+  const navigation = useNavigation(); // Hook to navigate between screens
+
+  return (
+    <SafeAreaView style={styles.headerContainer}>
+      {/* Left side with logo and app name */}
+      <View style={styles.headerLeft}>
+        <Image
+          source={chronolockLogo}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <Text style={styles.appName}>ChronoLock</Text>
+      </View>
+
+      {/* Right side with Chat and Settings buttons */}
+      <View style={styles.headerRight}>
+        {/* Chat Button */}
+        <TouchableOpacity
+          onPress={() => router.push("/chat")}
+          style={styles.headerButton}
+        >
+          <Image
+            source={messages}
+            style={styles.headerIcon}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+
+        {/* Settings Button */}
+        <TouchableOpacity
+          onPress={() => {
+            console.log("Settings Button Pressed"); // Debugging Log
+            // navigation.navigate("settings");
+          }}
+          style={styles.headerButton}
+        >
+          <Image
+            source={settings}
+            style={styles.headerIcon}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+};
+
 const TabsLayout = () => {
   return (
     <>
@@ -46,13 +102,14 @@ const TabsLayout = () => {
           tabBarStyle: {
             height: 55,
           },
+          header: () => <CustomHeader />,
         }}
       >
         <Tabs.Screen
           name="home"
           options={{
             title: "Home",
-            headerShown: false,
+            headerShown: true,
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
                 icon={home}
@@ -68,7 +125,7 @@ const TabsLayout = () => {
           name="access"
           options={{
             title: "Access",
-            headerShown: false,
+            headerShown: true,
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
                 icon={access}
@@ -84,7 +141,7 @@ const TabsLayout = () => {
           name="attendance"
           options={{
             title: "Attendance",
-            headerShown: false,
+            headerShown: true,
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
                 icon={attendance}
@@ -100,7 +157,7 @@ const TabsLayout = () => {
           name="laboratory"
           options={{
             title: "Laboratory",
-            headerShown: false,
+            headerShown: true,
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
                 icon={laboratory}
@@ -130,5 +187,39 @@ const styles = StyleSheet.create({
   iconText: {
     fontSize: 12,
     color: "#000",
+  },
+  headerContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    height: 80,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  logo: {
+    width: 55,
+    height: 55,
+  },
+  appName: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#000",
+  },
+  headerRight: {
+    flexDirection: "row",
+  },
+  headerButton: {
+    marginHorizontal: 10,
+  },
+  headerIcon: {
+    width: 24,
+    height: 24,
+    tintColor: "#000",
   },
 });
