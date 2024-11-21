@@ -1,8 +1,56 @@
-import React from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
-import { Card, ListItem, Icon } from "@rneui/themed";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Button,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
+import { Card, ListItem } from "@rneui/themed";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { useRouter } from "expo-router";
+import { auth } from "../../config/firebase";
+import { signOut } from "firebase/auth";
 
 export default function Home() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  const router = useRouter();
+
+  // Function to handle Google Logout
+  const handleGoogleLogout = async () => {
+    setIsLoading(true);
+    setIsButtonDisabled(true);
+
+    try {
+      await GoogleSignin.signOut(); // Sign out from Google
+      await signOut(auth); // Sign out from Firebase
+      Alert.alert("Success", "You have been logged out.");
+      // Navigate back to the login screen
+      router.replace("/(auth)/login");
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Failed to log out.");
+    } finally {
+      setIsLoading(false);
+      setIsButtonDisabled(false);
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user: any) => {
+      if (!user) {
+        // User is logged out, navigate to the login screen
+        router.replace("/(auth)/login");
+      }
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, [router]);
+
   return (
     <ScrollView style={styles.container}>
       {/* Welcome Section */}
@@ -47,6 +95,20 @@ export default function Home() {
           </ListItem.Content>
         </ListItem>
       </Card>
+
+      {/* Logout Button Section */}
+      <View style={styles.logoutButtonContainer}>
+        {isLoading ? (
+          <ActivityIndicator size="large" color="#d9534f" />
+        ) : (
+          <Button
+            title="Logout"
+            onPress={handleGoogleLogout}
+            color="#d9534f"
+            disabled={isButtonDisabled}
+          />
+        )}
+      </View>
     </ScrollView>
   );
 }
@@ -96,5 +158,9 @@ const styles = StyleSheet.create({
   },
   listItem: {
     backgroundColor: "#e9ecef",
+  },
+  logoutButtonContainer: {
+    marginTop: 20,
+    paddingHorizontal: 16,
   },
 });

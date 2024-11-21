@@ -11,6 +11,9 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
-    "constants/icons.js"
-, "app/(tabs)/access/control.jsx", "app/(tabs)/access/control.jsx"  ]
+    "constants/icons.js",
+    "app/(tabs)/access/control.jsx",
+    "app/(tabs)/access/control.jsx",
+    "app/chat/index.jsx"
+  ]
 }
