@@ -110,6 +110,7 @@ const TabsLayout = () => {
           options={{
             title: "Home",
             headerShown: true,
+            header: () => <CustomHeader />,
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
                 icon={home}

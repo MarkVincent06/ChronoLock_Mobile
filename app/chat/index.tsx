@@ -44,7 +44,7 @@ const GroupChatList = () => {
     </TouchableOpacity>
   );
 
-  if (groups.length !== 0) {
+  if (groups.length === 0) {
     return (
       <View style={styles.emptyContainer}>
         <Image
