@@ -1,11 +1,12 @@
 import { useFonts } from "expo-font";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useRouter, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
 import { auth } from "../config/firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import { UserContextProvider } from "../context/UserContext";
 import "expo-dev-client";
 
 // Prevent the splash screen from auto-hiding
@@ -21,6 +22,7 @@ export default function RootLayout() {
   );
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const router = useRouter();
+  const pathname = usePathname();
 
   // Check onboarding status
   useEffect(() => {
@@ -41,7 +43,7 @@ export default function RootLayout() {
     return () => unsubscribe();
   }, []);
 
-  // Hide the splash screen and attempt navigation once fonts and states are ready
+  // Hide splash screen and navigate based on app state
   useEffect(() => {
     const navigate = async () => {
       if (
@@ -49,30 +51,31 @@ export default function RootLayout() {
         hasSeenOnboarding !== null &&
         isAuthenticated !== null
       ) {
-        // Ensure splash screen is hidden before navigation
         await SplashScreen.hideAsync();
 
-        // Perform navigation based on app state
-        if (isAuthenticated) {
+        if (isAuthenticated && pathname !== "/(tabs)/home") {
           router.replace("/(tabs)/home");
-        } else if (hasSeenOnboarding) {
+        } else if (
+          !isAuthenticated &&
+          hasSeenOnboarding &&
+          pathname !== "/(auth)/login"
+        ) {
           router.replace("/(auth)/login");
-        } else {
+        } else if (!hasSeenOnboarding && pathname !== "/") {
           router.replace("/");
         }
       }
     };
 
     navigate();
-  }, [fontsLoaded, hasSeenOnboarding, isAuthenticated]);
+  }, [fontsLoaded, hasSeenOnboarding, isAuthenticated, pathname]);
 
-  // Prevent rendering until fonts and onboarding state are loaded
   if (!fontsLoaded || hasSeenOnboarding === null || isAuthenticated === null) {
     return null;
   }
 
   return (
-    <>
+    <UserContextProvider>
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
@@ -81,6 +84,6 @@ export default function RootLayout() {
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar backgroundColor="#161622" style="light" />
-    </>
+    </UserContextProvider>
   );
 }

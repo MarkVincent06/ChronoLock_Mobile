@@ -100,7 +100,7 @@ const TabsLayout = () => {
         screenOptions={{
           tabBarShowLabel: false,
           tabBarStyle: {
-            height: 55,
+            height: 45,
           },
           header: () => <CustomHeader />,
         }}
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     height: 55,
   },
   appName: {
-    fontSize: 22,
+    fontSize: 21,
     fontWeight: "bold",
     color: "#000",
   },

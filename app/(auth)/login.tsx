@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
 import {
   GoogleSignin,
   GoogleSigninButton,
@@ -18,6 +17,7 @@ import {
 import axios from "axios";
 import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 import { auth } from "../../config/firebase";
+import { useUserContext } from "../../context/UserContext";
 
 import eye from "../../assets/icons/eye.png";
 import eyeHide from "../../assets/icons/eye-hide.png";
@@ -27,15 +27,36 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState<string>("");
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [user, setUser] = useState<string | null>(null);
-  const [firebaseToken, setFirebaseToken] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const router = useRouter();
+  const { setUser } = useUserContext();
 
-  const handleLogin = () => {
-    console.log("Logging in with:", { email, password });
-    router.push("/(tabs)/home");
+  const handleLogin = async () => {
+    if (!email || !password) {
+      alert("Please enter both email and password.");
+      return;
+    }
+
+    setLoading(true);
+    // try {
+    //   console.log("Logging in with:", { email, password });
+    //   const response = await axios.post(
+    //     "https://your-backend-endpoint/login",
+    //     { email, password },
+    //     { headers: { "Content-Type": "application/json" } }
+    //   );
+
+    //   if (response.data.success) {
+    //     console.log("User authenticated!");
+    //   } else {
+    //     alert("Invalid credentials. Please try again.");
+    //   }
+    // } catch (error) {
+    //   console.error("Login error:", error);
+    //   alert("An error occurred. Please try again.");
+    // } finally {
+    //   setLoading(false);
+    // }
   };
 
   const handleGoogleSignIn = async () => {
@@ -45,40 +66,40 @@ const Login: React.FC = () => {
       const userInfo = await GoogleSignin.signIn();
       const { idToken, user: googleUser } = userInfo;
 
-      // Check if the user exists in the MySQL database
       const response = await axios.post(
-        "https://1dd6-139-135-241-240.ngrok-free.app/googleSignIn",
-        {
-          email: googleUser.email,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+        "https://1664-139-135-241-135.ngrok-free.app/googleSignIn",
+        { email: googleUser.email },
+        { headers: { "Content-Type": "application/json" } }
       );
 
       if (response.data.exists) {
-        // User exists, create a credential with the ID token
         const googleCredential = GoogleAuthProvider.credential(idToken);
-
-        // Sign in to Firebase with the credential
         await signInWithCredential(auth, googleCredential);
 
-        console.log("User signed in successfully!");
-        setUser(googleUser.name);
+        const userData = response.data.user;
 
-        if (response.data.firebaseToken) {
-          setFirebaseToken(response.data.firebaseToken);
-        }
-        router.push("/(tabs)/home");
+        // Map the response data to the User type, including avatar
+        const mappedUser = {
+          id: userData.id,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          email: userData.email,
+          idNumber: userData.idNumber,
+          userType: userData.userType,
+          avatar: userData.avatar, // Include avatar here
+        };
+
+        // Set the mapped user in context
+        setUser(mappedUser); // This should now work without error
+
+        console.log("Google sign-in successful and context updated!");
       } else {
-        // Handle the case where the user is not found
         alert(response.data.message);
-        await GoogleSignin.signOut(); // Sign out the user if they are not found
+        await GoogleSignin.signOut();
       }
     } catch (error) {
       console.error("Google Sign-In Error:", error);
+      alert("An error occurred during Google Sign-In.");
     } finally {
       setLoading(false);
     }
@@ -122,9 +143,7 @@ const Login: React.FC = () => {
             />
             <TouchableOpacity
               style={styles.eyeContainer}
-              onPress={() =>
-                setShowPassword((prevShowPassword) => !prevShowPassword)
-              }
+              onPress={() => setShowPassword((prev) => !prev)}
             >
               <Image
                 source={showPassword ? eyeHide : eye}

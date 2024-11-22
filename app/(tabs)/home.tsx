@@ -13,10 +13,13 @@ import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { useRouter } from "expo-router";
 import { auth } from "../../config/firebase";
 import { signOut } from "firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useUserContext } from "../../context/UserContext";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  const { user, setUser } = useUserContext();
   const router = useRouter();
 
   // Function to handle Google Logout
@@ -27,8 +30,12 @@ export default function Home() {
     try {
       await GoogleSignin.signOut(); // Sign out from Google
       await signOut(auth); // Sign out from Firebase
+
+      await AsyncStorage.removeItem("user");
+      setUser(null);
+
       Alert.alert("Success", "You have been logged out.");
-      // Navigate back to the login screen
+
       router.replace("/(auth)/login");
     } catch (error) {
       console.error(error);
@@ -51,12 +58,22 @@ export default function Home() {
     return () => unsubscribe();
   }, [router]);
 
+  //  if (!user) {
+  //    return (
+  //      <View style={styles.loaderContainer}>
+  //        <ActivityIndicator size="large" color="#1A73E8" />
+  //      </View>
+  //    );
+  //  }
+
   return (
     <ScrollView style={styles.container}>
       {/* Welcome Section */}
       <Card containerStyle={styles.welcomeCard}>
-        <Card.Title style={styles.welcomeText}>Welcome, Mark!</Card.Title>
-        <Text style={styles.userTypeText}>Instructor</Text>
+        <Card.Title style={styles.welcomeText}>
+          Welcome, {user?.firstName} {user?.lastName}!
+        </Card.Title>
+        <Text style={styles.userTypeText}>{user?.userType}</Text>
         <Text style={styles.statusText}>
           You have 2 scheduled classes today.
         </Text>
@@ -115,7 +132,7 @@ export default function Home() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     padding: 16,
     backgroundColor: "#f8f9fa",
   },
