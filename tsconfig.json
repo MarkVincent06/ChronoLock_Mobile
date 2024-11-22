@@ -14,6 +14,7 @@
     "constants/icons.js",
     "app/(tabs)/access/control.jsx",
     "app/(tabs)/access/control.jsx",
-    "app/chat/index.jsx"
+    "app/chat/index.tsx",
+    "app/chat/message.jsx"
   ]
 }

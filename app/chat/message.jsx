@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { GiftedChat } from "react-native-gifted-chat";
 import axios from "axios";
-import { auth } from "../../config/firebase";
+import { useLocalSearchParams } from "expo-router";
+import API_URL from "../../config/ngrok-api";
+import { useUserContext } from "../../context/UserContext";
 
-const API_URL = "https://1664-139-135-241-135.ngrok-free.app";
-
-const Chat = () => {
+const Message = () => {
   const [messages, setMessages] = useState([]);
-  const groupId = 1;
-  const currentUserId = auth.currentUser?.uid || "unknown_user";
+  const { group_id: groupId } = useLocalSearchParams();
+  const { user } = useUserContext();
+  const currentStudentNumber = user?.idNumber || "unknown_user";
 
   // Fetch messages from the server
   useEffect(() => {
@@ -47,23 +48,23 @@ const Chat = () => {
       try {
         // Post the new message to the server
         await axios.post(`${API_URL}/group/${groupId}/messages`, {
-          userId: currentUserId,
+          userId: currentStudentNumber,
           text: message.text,
         });
       } catch (error) {
         console.error("Error sending message:", error);
       }
     },
-    [currentUserId]
+    [currentStudentNumber]
   );
 
   return (
     <GiftedChat
       messages={messages}
       onSend={(messages) => onSend(messages)}
-      user={{ _id: currentUserId }}
+      user={{ _id: currentStudentNumber }}
     />
   );
 };
 
-export default Chat;
+export default Message;

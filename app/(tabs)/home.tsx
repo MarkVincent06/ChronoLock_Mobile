@@ -135,6 +135,10 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 16,
     backgroundColor: "#f8f9fa",
+    paddingBottom: 100,
+  },
+  scrollContent: {
+    paddingBottom: 50,
   },
   welcomeCard: {
     borderRadius: 10,
@@ -177,7 +181,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#e9ecef",
   },
   logoutButtonContainer: {
-    marginTop: 20,
+    marginVertical: 20,
     paddingHorizontal: 16,
+    marginBottom: 40,
   },
 });

@@ -18,6 +18,7 @@ import axios from "axios";
 import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 import { auth } from "../../config/firebase";
 import { useUserContext } from "../../context/UserContext";
+import API_URL from "../../config/ngrok-api";
 
 import eye from "../../assets/icons/eye.png";
 import eyeHide from "../../assets/icons/eye-hide.png";
@@ -67,7 +68,7 @@ const Login: React.FC = () => {
       const { idToken, user: googleUser } = userInfo;
 
       const response = await axios.post(
-        "https://1664-139-135-241-135.ngrok-free.app/googleSignIn",
+        `${API_URL}/googleSignIn`,
         { email: googleUser.email },
         { headers: { "Content-Type": "application/json" } }
       );

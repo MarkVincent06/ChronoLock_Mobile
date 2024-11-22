@@ -1,5 +1,5 @@
 import { useFonts } from "expo-font";
-import { Stack, useRouter, usePathname } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -22,7 +22,6 @@ export default function RootLayout() {
   );
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const router = useRouter();
-  const pathname = usePathname();
 
   // Check onboarding status
   useEffect(() => {
@@ -53,22 +52,18 @@ export default function RootLayout() {
       ) {
         await SplashScreen.hideAsync();
 
-        if (isAuthenticated && pathname !== "/(tabs)/home") {
+        if (isAuthenticated) {
           router.replace("/(tabs)/home");
-        } else if (
-          !isAuthenticated &&
-          hasSeenOnboarding &&
-          pathname !== "/(auth)/login"
-        ) {
+        } else if (!isAuthenticated && hasSeenOnboarding) {
           router.replace("/(auth)/login");
-        } else if (!hasSeenOnboarding && pathname !== "/") {
-          router.replace("/");
+        } else if (!hasSeenOnboarding) {
+          console.warn("Navigating to onboarding...");
         }
       }
     };
 
     navigate();
-  }, [fontsLoaded, hasSeenOnboarding, isAuthenticated, pathname]);
+  }, [fontsLoaded, hasSeenOnboarding, isAuthenticated]);
 
   if (!fontsLoaded || hasSeenOnboarding === null || isAuthenticated === null) {
     return null;
@@ -80,7 +75,7 @@ export default function RootLayout() {
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="chat" options={{ title: "Chat" }} />
+        <Stack.Screen name="chat" options={{ title: "Chat List" }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar backgroundColor="#161622" style="light" />
