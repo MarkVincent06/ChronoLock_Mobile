@@ -36,7 +36,7 @@ const GroupChatList = () => {
       onPress={() => {
         router.push({
           pathname: "/chat/message",
-          params: { group_id: item.group_id },
+          params: { group_id: item.group_id, group_name: item.group_name },
         });
       }}
     >

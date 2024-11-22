@@ -1,15 +1,22 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { GiftedChat } from "react-native-gifted-chat";
 import axios from "axios";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useNavigation } from "expo-router";
 import API_URL from "../../config/ngrok-api";
 import { useUserContext } from "../../context/UserContext";
 
 const Message = () => {
   const [messages, setMessages] = useState([]);
-  const { group_id: groupId } = useLocalSearchParams();
+  const { group_id: groupId, group_name: groupName } = useLocalSearchParams();
   const { user } = useUserContext();
   const currentStudentNumber = user?.idNumber || "unknown_user";
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    if (groupName) {
+      navigation.setOptions({ title: groupName });
+    }
+  }, [groupName, navigation]);
 
   // Fetch messages from the server
   useEffect(() => {
@@ -34,7 +41,10 @@ const Message = () => {
     };
 
     fetchMessages();
-  }, []);
+    const intervalId = setInterval(fetchMessages, 3000); // Fetch every 3 seconds
+
+    return () => clearInterval(intervalId); // Cleanup on unmount
+  }, [groupId]);
 
   // Send a message to the server
   const onSend = useCallback(

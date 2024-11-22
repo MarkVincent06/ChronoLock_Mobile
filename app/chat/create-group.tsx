@@ -18,6 +18,7 @@ const CreateGroupChat = () => {
   const [name, setName] = useState("");
   const [enrollmentKey, setEnrollmentKey] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
+  const [image, setImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const router = useRouter();
 
   // Handle image selection
@@ -37,34 +38,46 @@ const CreateGroupChat = () => {
       quality: 1,
     });
 
-    console.log("Image picker result:", result); // Log the result to inspect its structure
-
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      setAvatar(result.assets[0].uri); // Access the URI
+      setAvatar(result.assets[0].uri);
+      setImage(result.assets[0]);
     }
   };
 
+  // In `handleCreateGroup`
   const handleCreateGroup = async () => {
-    // try {
-    //   const formData = new FormData();
-    //   formData.append("name", name);
-    //   formData.append("enrollmentKey", enrollmentKey);
-    //   if (avatar) {
-    //     formData.append("avatar", {
-    //       uri: avatar,
-    //       type: "image/jpeg",
-    //       name: "avatar.jpg",
-    //     });
-    //   }
-    //   await axios.post(`${API_URL}/groups`, formData, {
-    //     headers: { "Content-Type": "multipart/form-data" },
-    //   });
-    //   Alert.alert("Success", "Group chat created!");
-    //   router.push("/chat");
-    // } catch (error) {
-    //   console.error("Error creating group:", error);
-    //   Alert.alert("Error", "Could not create group chat.");
-    // }
+    try {
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("enrollmentKey", enrollmentKey);
+
+      if (avatar && image) {
+        const fileType =
+          image.type && typeof image.type === "string"
+            ? image.type
+            : "image/jpeg";
+        const fileName =
+          image.fileName && typeof image.fileName === "string"
+            ? image.fileName
+            : "avatar.jpg";
+
+        formData.append("file", {
+          uri: avatar,
+          type: fileType,
+          name: fileName,
+        });
+      }
+
+      await axios.post(`${API_URL}/groups`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      Alert.alert("Success", "Group chat created!");
+      router.push("/chat");
+    } catch (error) {
+      console.error("Error creating group:", error);
+      Alert.alert("Error", "Could not create group chat.");
+    }
   };
 
   return (
