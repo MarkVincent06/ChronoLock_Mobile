@@ -56,8 +56,6 @@ export default function RootLayout() {
           router.replace("/(tabs)/home");
         } else if (!isAuthenticated && hasSeenOnboarding) {
           router.replace("/(auth)/login");
-        } else if (!hasSeenOnboarding) {
-          console.warn("Navigating to onboarding...");
         }
       }
     };

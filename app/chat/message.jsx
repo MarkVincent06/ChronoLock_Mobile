@@ -28,7 +28,7 @@ const Message = () => {
         const formattedMessages = response.data.map((message) => ({
           _id: message.id.toString(),
           text: message.text,
-          createdAt: new Date(message.timestamp),
+          createdAt: new Date(message.created_at),
           user: {
             _id: message.user_id.toString(),
             name: message.user_id,
@@ -43,13 +43,33 @@ const Message = () => {
     fetchMessages();
     const intervalId = setInterval(fetchMessages, 3000); // Fetch every 3 seconds
 
-    return () => clearInterval(intervalId); // Cleanup on unmount
+    return () => clearInterval(intervalId);
   }, [groupId]);
 
   // Send a message to the server
+  // const onSend = useCallback(
+  //   async (newMessages = []) => {
+  //     // Append the new message to the current messages state
+  //     setMessages((previousMessages) =>
+  //       GiftedChat.append(previousMessages, newMessages)
+  //     );
+
+  //     const message = newMessages[0];
+  //     try {
+  //       // Post the new message to the server
+  //       await axios.post(`${API_URL}/group/${groupId}/messages`, {
+  //         userId: currentStudentNumber,
+  //         text: message.text,
+  //       });
+  //     } catch (error) {
+  //       console.error("Error sending message:", error);
+  //     }
+  //   },
+  //   [currentStudentNumber]
+  // );
+
   const onSend = useCallback(
     async (newMessages = []) => {
-      // Append the new message to the current messages state
       setMessages((previousMessages) =>
         GiftedChat.append(previousMessages, newMessages)
       );
@@ -61,6 +81,12 @@ const Message = () => {
           userId: currentStudentNumber,
           text: message.text,
         });
+
+        // Mark the message as seen (refetch groups and update UI)
+        await axios.post(`${API_URL}/group/${groupId}/markAsSeen`);
+
+        // Optionally, fetch groups to update the seen status
+        // fetchGroups(); // This will refresh the group list and ensure that the latest message status is updated.
       } catch (error) {
         console.error("Error sending message:", error);
       }

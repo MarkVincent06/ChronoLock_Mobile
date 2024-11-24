@@ -12,7 +12,7 @@ import {
 import { useRouter } from "expo-router";
 import axios from "axios";
 import * as ImagePicker from "expo-image-picker";
-import API_URL from "../../config/ngrok-api";
+import API_URL from "@/config/ngrok-api";
 
 const CreateGroupChat = () => {
   const [name, setName] = useState("");
@@ -47,26 +47,36 @@ const CreateGroupChat = () => {
   // In `handleCreateGroup`
   const handleCreateGroup = async () => {
     try {
+      if (!name || !enrollmentKey) {
+        Alert.alert("Error", "All fields are required.");
+        return;
+      }
+
       const formData = new FormData();
       formData.append("name", name);
       formData.append("enrollmentKey", enrollmentKey);
 
       if (avatar && image) {
-        const fileType =
-          image.type && typeof image.type === "string"
-            ? image.type
-            : "image/jpeg";
-        const fileName =
-          image.fileName && typeof image.fileName === "string"
-            ? image.fileName
-            : "avatar.jpg";
+        // console.warn("Image file being appended:", {
+        //   uri: image.uri,
+        //   type: image.type,
+        //   name: image.fileName || "avatar.jpg",
+        // });
 
-        formData.append("file", {
+        formData.append("avatar", {
           uri: avatar,
-          type: fileType,
-          name: fileName,
+          type: "image/jpeg",
+          name: image.fileName || "avatar.jpg",
         });
+
+        // formData.append("file", {
+        //   uri: image.uri,
+        //   type: image.type || "image/jpeg",
+        //   name: image.fileName || "avatar.jpg",
+        // });
       }
+
+      console.warn("Sending FormData:", formData);
 
       await axios.post(`${API_URL}/groups`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
