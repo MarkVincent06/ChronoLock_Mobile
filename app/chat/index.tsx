@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,23 +8,47 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  TextInput,
 } from "react-native";
 import { useRouter } from "expo-router";
 import axios from "axios";
 import API_URL from "../../config/ngrok-api";
 import { useFocusEffect } from "@react-navigation/native";
+import Icon from "react-native-vector-icons/Ionicons";
+import { useUserContext } from "../../context/UserContext";
+
+interface Group {
+  group_id: number;
+  group_name: string;
+  avatar?: string;
+  group_key: string;
+  sender?: string;
+  latest_message?: string;
+  latest_message_isSeen?: boolean;
+}
 
 const GroupChatList = () => {
-  const [groups, setGroups] = useState([]);
+  const { user } = useUserContext();
+  const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filteredGroups, setFilteredGroups] = useState<Group[]>([]);
+  const [searchText, setSearchText] = useState("");
   const router = useRouter();
+
+  console.warn(user);
+
+  // useEffect(() => {
+  //   const interval = setInterval(fetchGroups, 5000); // Fetch groups every 5 seconds
+  //   return () => clearInterval(interval);
+  // }, []);
 
   // Fetch groups from the server
   const fetchGroups = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/groups`);
+      const response = await axios.get<Group[]>(`${API_URL}/groups`);
       setGroups(response.data);
+      setFilteredGroups(response.data);
     } catch (error) {
       console.error("Error fetching groups:", error);
     } finally {
@@ -38,6 +62,19 @@ const GroupChatList = () => {
       fetchGroups();
     }, [])
   );
+
+  // Handle search input change
+  const handleSearch = (text: string) => {
+    setSearchText(text);
+    if (text.trim() === "") {
+      setFilteredGroups(groups); // Reset to all groups if search is empty
+    } else {
+      const filtered = groups.filter((group) =>
+        group.group_name.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredGroups(filtered);
+    }
+  };
 
   const handleGroupClick = async (
     groupId: string | number,
@@ -54,7 +91,24 @@ const GroupChatList = () => {
     }
   };
 
-  const renderItem = ({ item }: { item: any }) => (
+  const handleSettingsPress = (
+    groupId: string | number,
+    groupName: string,
+    groupKey: string,
+    avatar: string
+  ) => {
+    router.push({
+      pathname: "/chat/edit-group",
+      params: {
+        group_id: groupId,
+        group_name: groupName,
+        group_key: groupKey,
+        group_avatar: avatar,
+      },
+    });
+  };
+
+  const renderItem = ({ item }: { item: Group }) => (
     <TouchableOpacity
       style={styles.groupItem}
       onPress={() => handleGroupClick(item.group_id, item.group_name)}
@@ -78,10 +132,27 @@ const GroupChatList = () => {
             styles.latestMessage,
             !item.latest_message_isSeen && styles.unseenMessage,
           ]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
         >
-          {item.latest_message || "No messages yet"}
+          {item.sender && item.latest_message
+            ? `${item.sender}: ${item.latest_message}`
+            : "No messages yet"}
         </Text>
       </View>
+      <TouchableOpacity
+        style={styles.settingsIconContainer}
+        onPress={() =>
+          handleSettingsPress(
+            item.group_id,
+            item.group_name,
+            item.group_key || "",
+            item.avatar || ""
+          )
+        }
+      >
+        <Icon name="settings-outline" size={24} color="#777" />
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 
@@ -107,14 +178,24 @@ const GroupChatList = () => {
 
   return (
     <View style={styles.container}>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Search chats..."
+        value={searchText}
+        onChangeText={handleSearch}
+      />
+
       {/* Show loading indicator while fetching */}
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />
       ) : (
         <FlatList
-          data={groups}
+          data={filteredGroups}
           keyExtractor={(item) => item.group_id.toString()}
           renderItem={renderItem}
+          ListEmptyComponent={
+            <Text style={styles.emptyMessage}>No groups found</Text>
+          }
         />
       )}
       <View style={{ marginBottom: 10 }}>
@@ -132,6 +213,14 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
     backgroundColor: "#fff",
+  },
+  searchInput: {
+    marginVertical: 10,
+    padding: 10,
+    borderColor: "#ddd",
+    borderWidth: 1,
+    borderRadius: 8,
+    fontSize: 16,
   },
   loader: {
     flex: 1,
@@ -159,7 +248,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     borderWidth: 3,
     borderColor: "#fff",
-    marginRight: 15,
+    marginRight: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
@@ -182,6 +271,17 @@ const styles = StyleSheet.create({
   unseenMessage: {
     fontWeight: "bold",
     color: "#000",
+  },
+  settingsIconContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 10,
+  },
+  emptyMessage: {
+    textAlign: "center",
+    marginTop: 20,
+    fontSize: 16,
+    color: "#888",
   },
   emptyContainer: {
     flex: 1,

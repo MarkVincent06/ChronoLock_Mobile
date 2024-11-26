@@ -9,7 +9,7 @@ const Message = () => {
   const [messages, setMessages] = useState([]);
   const { group_id: groupId, group_name: groupName } = useLocalSearchParams();
   const { user } = useUserContext();
-  const currentStudentNumber = user?.idNumber || "unknown_user";
+  const currentIdNumber = user?.idNumber || "unknown_user";
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -46,28 +46,6 @@ const Message = () => {
     return () => clearInterval(intervalId);
   }, [groupId]);
 
-  // Send a message to the server
-  // const onSend = useCallback(
-  //   async (newMessages = []) => {
-  //     // Append the new message to the current messages state
-  //     setMessages((previousMessages) =>
-  //       GiftedChat.append(previousMessages, newMessages)
-  //     );
-
-  //     const message = newMessages[0];
-  //     try {
-  //       // Post the new message to the server
-  //       await axios.post(`${API_URL}/group/${groupId}/messages`, {
-  //         userId: currentStudentNumber,
-  //         text: message.text,
-  //       });
-  //     } catch (error) {
-  //       console.error("Error sending message:", error);
-  //     }
-  //   },
-  //   [currentStudentNumber]
-  // );
-
   const onSend = useCallback(
     async (newMessages = []) => {
       setMessages((previousMessages) =>
@@ -78,7 +56,7 @@ const Message = () => {
       try {
         // Post the new message to the server
         await axios.post(`${API_URL}/group/${groupId}/messages`, {
-          userId: currentStudentNumber,
+          userId: currentIdNumber,
           text: message.text,
         });
 
@@ -91,14 +69,14 @@ const Message = () => {
         console.error("Error sending message:", error);
       }
     },
-    [currentStudentNumber]
+    [currentIdNumber]
   );
 
   return (
     <GiftedChat
       messages={messages}
       onSend={(messages) => onSend(messages)}
-      user={{ _id: currentStudentNumber }}
+      user={{ _id: currentIdNumber }}
     />
   );
 };

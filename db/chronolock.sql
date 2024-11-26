@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.0
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 30, 2024 at 07:59 AM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.2.12
+-- Generation Time: Nov 25, 2024 at 04:34 PM
+-- Server version: 10.4.24-MariaDB
+-- PHP Version: 8.1.6
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -29,11 +29,11 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `attendances` (
   `attendanceID` bigint(20) UNSIGNED NOT NULL,
-  `userID` varchar(50) DEFAULT NULL,
+  `userID` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `classID` bigint(20) UNSIGNED DEFAULT NULL,
   `date` date NOT NULL,
   `time` time DEFAULT NULL,
-  `remark` varchar(50) DEFAULT NULL,
+  `remark` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -127,8 +127,8 @@ INSERT INTO `attendances` (`attendanceID`, `userID`, `classID`, `date`, `time`, 
 CREATE TABLE `class_lists` (
   `classID` bigint(20) UNSIGNED NOT NULL,
   `scheduleID` bigint(20) UNSIGNED NOT NULL,
-  `semester` varchar(50) NOT NULL,
-  `enrollmentKey` varchar(50) NOT NULL,
+  `semester` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `enrollmentKey` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -148,12 +148,112 @@ INSERT INTO `class_lists` (`classID`, `scheduleID`, `semester`, `enrollmentKey`,
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `groups`
+--
+
+CREATE TABLE `groups` (
+  `group_id` int(11) NOT NULL,
+  `group_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `group_key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `avatar` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `groups`
+--
+
+INSERT INTO `groups` (`group_id`, `group_name`, `group_key`, `created_at`, `avatar`) VALUES
+(1, 'Senpai', 'nugwdilfb', '2024-11-21 09:03:13', NULL),
+(2, 'BSIT3C', 'bsit3c', '2024-11-21 22:05:09', NULL),
+(3, 'BSOT4C', 'nsdafbw', '2024-11-22 08:06:16', NULL),
+(4, 'BSIT5C', 'bsit5c', '2024-11-22 19:40:19', '/uploads/1732333218747-462752303.jpg'),
+(5, 'Tekaka', 'jjhhh', '2024-11-22 20:12:07', '/uploads/1732545590474-467667174.jpeg'),
+(6, 'rusuf', 'jfkf', '2024-11-22 20:16:04', '/uploads/1732335364716-469083880.jpeg'),
+(7, 'Vey', 'ggiufx', '2024-11-22 20:18:01', '/uploads/1732335481281-462847843.png'),
+(8, 'BSIT2D', 'bsit2d', '2024-11-25 10:02:07', '/uploads/1732528927618-569711496.png'),
+(9, 'Test', 'test', '2024-11-25 13:26:18', '/uploads/1732541178452-401155422.jpeg'),
+(10, 'huil', 'hii', '2024-11-25 13:30:30', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `messages`
+--
+
+CREATE TABLE `messages` (
+  `id` int(11) NOT NULL,
+  `group_id` int(11) NOT NULL,
+  `user_id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `text` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `isSeen` tinyint(1) NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `messages`
+--
+
+INSERT INTO `messages` (`id`, `group_id`, `user_id`, `text`, `created_at`, `isSeen`) VALUES
+(1, 1, 'C21102324', 'hello', '2024-11-21 09:10:22', 1),
+(2, 1, 'C21102324', 'asjfbsaasd', '2024-11-21 09:12:36', 1),
+(3, 1, 'C21102324', 'ho', '2024-11-21 09:28:20', 1),
+(4, 1, 'Y9QCqtQgrPUyUUZS1MxSYgnOEjI3', 'hahaha', '2024-11-21 18:18:50', 1),
+(5, 1, 'Y9QCqtQgrPUyUUZS1MxSYgnOEjI3', 'gumagana na yey', '2024-11-21 18:33:56', 1),
+(6, 1, '100', 'hi', '2024-11-22 00:20:36', 1),
+(7, 1, 'C21102324', 'hey', '2024-11-22 00:22:14', 1),
+(8, 1, 'C21101162', 'Hiii', '2024-11-22 07:14:52', 1),
+(9, 1, 'C21102324', 'fgfr.', '2024-11-22 07:14:59', 1),
+(10, 1, 'C21101162', 'He', '2024-11-22 07:15:02', 1),
+(11, 1, 'C21101162', '3gwgw', '2024-11-22 07:15:44', 1),
+(12, 1, 'C21101162', 'Kahit ano', '2024-11-22 07:24:00', 1),
+(13, 1, 'C21102324', 'okay na yan', '2024-11-22 07:24:14', 1),
+(14, 2, 'C21101162', 'H', '2024-11-22 07:46:59', 1),
+(15, 1, 'C21102324', 'hello', '2024-11-23 06:22:49', 1),
+(16, 4, 'C21102324', 'hi', '2024-11-23 06:24:03', 1),
+(17, 2, 'C21102324', 'hi', '2024-11-24 09:04:27', 1),
+(18, 1, 'C21102324', 'hello', '2024-11-24 09:04:38', 1),
+(19, 1, 'C21102324', 'gago ka', '2024-11-24 09:04:47', 1),
+(20, 1, 'C21102324', 'gago', '2024-11-24 09:05:14', 1),
+(21, 3, 'C21102324', 'po', '2024-11-24 09:15:19', 1),
+(22, 4, 'C21102324', 'hmm', '2024-11-24 09:15:42', 1),
+(23, 1, 'C21102324', 'hayys', '2024-11-24 09:22:52', 1),
+(24, 1, 'C21102324', 'hmmm', '2024-11-24 09:23:07', 1),
+(25, 3, 'C21102324', 'grr', '2024-11-24 09:23:33', 1),
+(26, 3, 'C21102324', 'test', '2024-11-24 09:33:44', 1),
+(27, 3, 'C21102324', 'testmike', '2024-11-24 09:33:52', 1),
+(28, 4, 'C21102324', 'ga', '2024-11-24 10:00:14', 1),
+(29, 4, 'C21102324', 'hahaha', '2024-11-24 10:27:10', 1),
+(30, 2, 'C21102324', 'test', '2024-11-25 10:06:36', 1),
+(31, 2, 'C21101162', 'Hi', '2024-11-25 10:06:55', 1),
+(32, 2, 'C21101162', 'Heyyyyy', '2024-11-25 10:07:28', 1),
+(33, 2, 'C21101162', 'Heeeeeryyyyy', '2024-11-25 10:10:31', 1),
+(34, 2, 'C21102324', 'po', '2024-11-25 10:16:34', 1),
+(35, 1, 'C21102324', '-@-@-@-@', '2024-11-25 10:17:49', 1),
+(36, 2, 'C21102324', 'hi', '2024-11-25 11:13:34', 1),
+(37, 2, 'C21101162', 'Hi', '2024-11-25 11:15:00', 1),
+(38, 2, 'C21102324', 'gh', '2024-11-25 11:15:12', 1),
+(39, 1, 'C21101162', 'Hiii', '2024-11-25 11:51:56', 1),
+(40, 1, 'C21101162', 'Hello', '2024-11-25 11:52:05', 1),
+(41, 1, 'C21101162', 'Okay', '2024-11-25 11:52:14', 1),
+(42, 1, 'C21101162', 'Hsususj', '2024-11-25 11:52:22', 1),
+(43, 1, 'C21101162', 'Hsususj', '2024-11-25 11:52:24', 1),
+(44, 1, 'C21101162', 'Ususu', '2024-11-25 11:52:29', 1),
+(45, 1, 'C21101162', 'Hsususjsj', '2024-11-25 11:52:36', 1),
+(46, 1, 'C21101162', 'Hahajaj', '2024-11-25 11:52:55', 1),
+(47, 4, 'C21101162', 'Sysusisj', '2024-11-25 11:53:10', 1),
+(48, 4, 'C21101162', 'Jajaiwi', '2024-11-25 11:59:40', 1),
+(49, 5, 'C21102324', 'okay', '2024-11-25 12:46:02', 1);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `migrations`
 --
 
 CREATE TABLE `migrations` (
   `id` int(10) UNSIGNED NOT NULL,
-  `migration` varchar(255) NOT NULL,
+  `migration` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `batch` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -178,8 +278,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 --
 
 CREATE TABLE `password_reset_tokens` (
-  `email` varchar(50) NOT NULL,
-  `token` varchar(50) NOT NULL,
+  `email` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `token` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -191,8 +291,8 @@ CREATE TABLE `password_reset_tokens` (
 
 CREATE TABLE `rfid_accounts` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `RFID_Code` varchar(50) NOT NULL,
-  `RFID_Status` varchar(50) DEFAULT NULL,
+  `RFID_Code` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `RFID_Status` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -258,7 +358,7 @@ INSERT INTO `rfid_accounts` (`id`, `RFID_Code`, `RFID_Status`, `created_at`, `up
 
 CREATE TABLE `rfid_temps` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `RFID_Code` varchar(50) NOT NULL,
+  `RFID_Code` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -294,22 +394,22 @@ INSERT INTO `rfid_temps` (`id`, `RFID_Code`, `created_at`, `updated_at`) VALUES
 
 CREATE TABLE `schedules` (
   `scheduleID` bigint(20) UNSIGNED NOT NULL,
-  `courseCode` varchar(50) DEFAULT NULL,
-  `courseName` varchar(50) DEFAULT NULL,
-  `userID` varchar(50) DEFAULT NULL,
-  `instFirstName` varchar(50) DEFAULT NULL,
-  `instLastName` varchar(50) DEFAULT NULL,
-  `program` varchar(50) DEFAULT NULL,
-  `section` varchar(50) DEFAULT NULL,
-  `year` varchar(50) DEFAULT NULL,
+  `courseCode` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `courseName` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `userID` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `instFirstName` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `instLastName` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `program` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `section` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `year` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `startTime` time DEFAULT NULL,
   `endTime` time DEFAULT NULL,
   `startDate` date DEFAULT NULL,
   `endDate` date DEFAULT NULL,
-  `day` varchar(50) DEFAULT NULL,
-  `scheduleStatus` varchar(50) DEFAULT NULL,
-  `scheduleTitle` varchar(50) DEFAULT NULL,
-  `scheduleType` varchar(50) DEFAULT NULL,
+  `day` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `scheduleStatus` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `scheduleTitle` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `scheduleType` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -349,11 +449,11 @@ INSERT INTO `schedules` (`scheduleID`, `courseCode`, `courseName`, `userID`, `in
 --
 
 CREATE TABLE `sessions` (
-  `id` varchar(50) NOT NULL,
+  `id` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `user_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `ip_address` varchar(50) DEFAULT NULL,
-  `user_agent` text DEFAULT NULL,
-  `payload` longtext NOT NULL,
+  `ip_address` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_agent` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `payload` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
   `last_activity` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -374,8 +474,8 @@ INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, 
 
 CREATE TABLE `student_masterlists` (
   `MIT_ID` bigint(20) UNSIGNED NOT NULL,
-  `userID` varchar(50) NOT NULL,
-  `status` varchar(50) DEFAULT NULL,
+  `userID` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `status` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `classID` bigint(20) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -433,17 +533,17 @@ INSERT INTO `student_masterlists` (`MIT_ID`, `userID`, `status`, `classID`, `cre
 
 CREATE TABLE `users` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `accountName` varchar(50) DEFAULT NULL,
-  `firstName` varchar(50) DEFAULT NULL,
-  `lastName` varchar(50) DEFAULT NULL,
-  `email` varchar(50) NOT NULL,
-  `idNumber` varchar(50) DEFAULT NULL,
-  `userType` varchar(50) DEFAULT NULL,
-  `password` varchar(100) DEFAULT NULL,
-  `avatar` varchar(100) DEFAULT NULL,
-  `google_id` varchar(50) DEFAULT NULL,
-  `RFID_Code` varchar(50) DEFAULT NULL,
-  `remember_token` varchar(100) DEFAULT NULL,
+  `accountName` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `firstName` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `lastName` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `email` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `idNumber` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `userType` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `password` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `avatar` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `google_id` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `RFID_Code` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `remember_token` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `email_verified_at` timestamp NULL DEFAULT NULL,
@@ -517,7 +617,9 @@ INSERT INTO `users` (`id`, `accountName`, `firstName`, `lastName`, `email`, `idN
 (93, NULL, 'Kathlene Claire', 'Cailao', 'katcailao@my.cspc.edu.ph', '2411484', 'Student', '$2y$12$ErVChFdRgoRymB0vyejlLOQ6RGUM51mfAEph9HOdJVmWWKe97yl2e', NULL, NULL, '807381795446', 'EknDpjKkEYxpkzOuZPllSEJweQ1bwzAbL9LgYA2YghOw6kU78K9Rd6h6j2QM', '2024-09-27 02:08:07', '2024-09-27 02:12:22', NULL, NULL),
 (94, NULL, 'rendel', 'berdol', 'reberdol@my.cspc.edu.ph', '2411476', 'Student', '$2y$12$mxse1PkWMHFo.qIWBH61S.DAGXTpveetEAkdqrNWH9nphEI8T2TxC', NULL, NULL, '942276641325', 'hxWNxwfJrhZHAroQ1DI0gQJsIAZOGKGDdDT94KygOguFN1g9CefTeqIwbL9u', '2024-09-27 02:10:23', '2024-09-27 02:11:39', NULL, NULL),
 (95, NULL, 'adrian', 'aliparo', 'adaliparo@my.cspc.edu.ph', '2411310', 'Student', '$2y$12$EF0qmOVVfli8YWZGmLRtJOECEgd2Nve1ZGUeB4qIaFE.Pk.EJJYiG', NULL, NULL, '872237138494', 'Ck3uUUTHLwXsFTLHH10n2TlXdxGIqUAwDi5iu2svDldVfNuuMUM6rJpueX63', '2024-09-27 02:11:51', '2024-09-27 02:12:31', NULL, NULL),
-(96, NULL, 'jerry', 'balaguer', 'jebalaguer@my.cspc.edu.ph', '2411312', 'Student', '$2y$12$8ER9TNSpPAzEyLmnaSwQEuCs3gXaB8XaRTCqErrT1XgJEy9lJpt52', NULL, NULL, '131718404069', 'oIswkGUnZc7PC5MMKkccxcMilTwZ3GIy6dsqlL0oYbjswNBUSxvWCayrXJc3', '2024-09-27 02:13:14', '2024-09-27 02:14:32', NULL, NULL);
+(96, NULL, 'jerry', 'balaguer', 'jebalaguer@my.cspc.edu.ph', '2411312', 'Student', '$2y$12$8ER9TNSpPAzEyLmnaSwQEuCs3gXaB8XaRTCqErrT1XgJEy9lJpt52', NULL, NULL, '131718404069', 'oIswkGUnZc7PC5MMKkccxcMilTwZ3GIy6dsqlL0oYbjswNBUSxvWCayrXJc3', '2024-09-27 02:13:14', '2024-09-27 02:14:32', NULL, NULL),
+(100, NULL, 'Mark Vincent', 'Cleofe', 'macleofe@my.cspc.edu.ph', 'C21102324', 'Instructor', 'markvincent', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(101, NULL, 'Lyme', 'Lavarias', 'lylavarias@my.cspc.edu.ph', 'C21101162', 'Student', 'lymelavarias', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -527,8 +629,8 @@ INSERT INTO `users` (`id`, `accountName`, `firstName`, `lastName`, `email`, `idN
 
 CREATE TABLE `user_logs` (
   `idLogs` bigint(20) UNSIGNED NOT NULL,
-  `userID` varchar(50) DEFAULT NULL,
-  `action` varchar(100) NOT NULL,
+  `userID` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `action` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `date` date DEFAULT NULL,
   `time` time DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -1138,6 +1240,19 @@ ALTER TABLE `class_lists`
   ADD UNIQUE KEY `class_lists_scheduleid_unique` (`scheduleID`);
 
 --
+-- Indexes for table `groups`
+--
+ALTER TABLE `groups`
+  ADD PRIMARY KEY (`group_id`);
+
+--
+-- Indexes for table `messages`
+--
+ALTER TABLE `messages`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `group_id` (`group_id`);
+
+--
 -- Indexes for table `migrations`
 --
 ALTER TABLE `migrations`
@@ -1221,6 +1336,18 @@ ALTER TABLE `class_lists`
   MODIFY `classID` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
+-- AUTO_INCREMENT for table `groups`
+--
+ALTER TABLE `groups`
+  MODIFY `group_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+
+--
+-- AUTO_INCREMENT for table `messages`
+--
+ALTER TABLE `messages`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
+
+--
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
@@ -1254,7 +1381,7 @@ ALTER TABLE `student_masterlists`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=97;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=102;
 
 --
 -- AUTO_INCREMENT for table `user_logs`
@@ -1278,6 +1405,12 @@ ALTER TABLE `attendances`
 --
 ALTER TABLE `class_lists`
   ADD CONSTRAINT `class_lists_scheduleid_foreign` FOREIGN KEY (`scheduleID`) REFERENCES `schedules` (`scheduleID`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `messages`
+--
+ALTER TABLE `messages`
+  ADD CONSTRAINT `messages_ibfk_1` FOREIGN KEY (`group_id`) REFERENCES `groups` (`group_id`);
 
 --
 -- Constraints for table `rfid_accounts`

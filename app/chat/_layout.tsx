@@ -1,36 +1,51 @@
-import React, { useState, useEffect } from "react";
-import { Stack } from "expo-router";
-import axios from "axios";
-import API_URL from "@/config/ngrok-api";
+import React from "react";
+import { Stack, useRouter } from "expo-router";
+import { TouchableOpacity, StyleSheet } from "react-native";
+import Icon from "react-native-vector-icons/Ionicons";
 
 const ChatLayout = () => {
-  // const [groupExists, setGroupExists] = useState(false);
-
-  // useEffect(() => {
-  //   const checkGroupExists = async () => {
-  //     try {
-  //       const response = await axios.get(`${API_URL}/groups`);
-  //       setGroupExists(response.data > 0);
-  //     } catch (error) {
-  //       console.error("Error fetching groups:", error);
-  //     }
-  //   };
-
-  //   checkGroupExists();
-  // }, []);
+  const router = useRouter();
 
   return (
     <Stack>
       <Stack.Screen
         name="index"
-        options={{ title: "Chat List", headerShown: true }}
+        options={{
+          title: "Chats",
+          headerShown: true,
+          headerLeft: () => (
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.push("/(tabs)/home")}
+            >
+              <Icon name="arrow-back" size={24} color="#000" />
+            </TouchableOpacity>
+          ),
+        }}
       />
       <Stack.Screen
         name="create-group"
-        options={{ title: "Create Group", headerShown: true }}
+        options={{
+          title: "Create Group",
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name="edit-group"
+        options={{
+          title: "Edit Group",
+          headerShown: true,
+        }}
       />
     </Stack>
   );
 };
+
+const styles = StyleSheet.create({
+  backButton: {
+    paddingHorizontal: 10,
+    marginRight: 12,
+  },
+});
 
 export default ChatLayout;

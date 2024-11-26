@@ -87,7 +87,7 @@ const Login: React.FC = () => {
           email: userData.email,
           idNumber: userData.idNumber,
           userType: userData.userType,
-          avatar: userData.avatar, // Include avatar here
+          avatar: userData.avatar,
         };
 
         // Set the mapped user in context
