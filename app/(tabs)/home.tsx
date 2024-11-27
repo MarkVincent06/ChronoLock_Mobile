@@ -18,8 +18,8 @@ import { useUserContext } from "../../context/UserContext";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
-  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const { user, setUser } = useUserContext();
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const router = useRouter();
 
   // Function to handle Google Logout

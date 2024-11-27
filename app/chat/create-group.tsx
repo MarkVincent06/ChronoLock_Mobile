@@ -73,18 +73,25 @@ const CreateGroupChat = () => {
       }
 
       // Create the group
-      const response = await axios.post(`${API_URL}/groups`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const response = await axios.post(
+        `${API_URL}/groups/insertGroup`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
 
       const groupId = response.data.groupId;
 
       // Post a system message
       const welcomeMessage = `Welcome to ${name}! This group is now active. Feel free to start discussions and collaborate with others.`;
-      await axios.post(`${API_URL}/group/${groupId}/system-messages`, {
-        userId: user?.idNumber,
-        text: welcomeMessage,
-      });
+      await axios.post(
+        `${API_URL}/messages/group/${groupId}/newSystemMessage`,
+        {
+          userId: user?.idNumber,
+          text: welcomeMessage,
+        }
+      );
 
       Alert.alert("Success", "Group chat created!");
       router.replace("/chat");

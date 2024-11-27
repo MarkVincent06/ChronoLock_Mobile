@@ -23,7 +23,7 @@ const Message = () => {
     const fetchMessages = async () => {
       try {
         const response = await axios.get(
-          `${API_URL}/group/${groupId}/messages`
+          `${API_URL}/messages/group/${groupId}/fetchMessages`
         );
         const formattedMessages = response.data.map((message) => ({
           _id: message.id.toString(),
@@ -55,13 +55,15 @@ const Message = () => {
       const message = newMessages[0];
       try {
         // Post the new message to the server
-        await axios.post(`${API_URL}/group/${groupId}/messages`, {
+        await axios.post(`${API_URL}/messages/group/${groupId}/newMessage`, {
           userId: currentIdNumber,
           text: message.text,
         });
 
-        // Mark the message as seen (refetch groups and update UI)
-        await axios.post(`${API_URL}/group/${groupId}/markAsSeen`);
+        // Mark the message as seen (refetch groups and update UI)s
+        await axios.post(
+          `${API_URL}/messages/group/${groupId}/markMessageAsSeen`
+        );
 
         // Optionally, fetch groups to update the seen status
         // fetchGroups(); // This will refresh the group list and ensure that the latest message status is updated.

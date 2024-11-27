@@ -17,6 +17,7 @@
     "app/chat/index.tsx",
     "app/chat/message.jsx",
     "app/chat/create-group.tsx",
-    "app/chat/create-group.tsx"
+    "app/chat/create-group.tsx",
+    "app/account/index.jsx"
   ]
 }

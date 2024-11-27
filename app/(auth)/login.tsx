@@ -15,8 +15,15 @@ import {
   GoogleSigninButton,
 } from "@react-native-google-signin/google-signin";
 import axios from "axios";
-import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
+import {
+  GoogleAuthProvider,
+  signInWithCredential,
+  signInWithEmailAndPassword,
+  signInWithCustomToken,
+  getAuth,
+} from "firebase/auth";
 import { auth } from "../../config/firebase";
+import { FirebaseError } from "firebase/app";
 import { useUserContext } from "../../context/UserContext";
 import API_URL from "../../config/ngrok-api";
 
@@ -38,48 +45,31 @@ const Login: React.FC = () => {
       return;
     }
 
-    setLoading(true);
-    // try {
-    //   console.log("Logging in with:", { email, password });
-    //   const response = await axios.post(
-    //     "https://your-backend-endpoint/login",
-    //     { email, password },
-    //     { headers: { "Content-Type": "application/json" } }
-    //   );
+    const isValidEmail = (email: string) =>
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!isValidEmail(email)) {
+      alert("Please enter a valid email address.");
+      return;
+    }
 
-    //   if (response.data.success) {
-    //     console.log("User authenticated!");
-    //   } else {
-    //     alert("Invalid credentials. Please try again.");
-    //   }
-    // } catch (error) {
-    //   console.error("Login error:", error);
-    //   alert("An error occurred. Please try again.");
-    // } finally {
-    //   setLoading(false);
-    // }
-  };
-
-  const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      await GoogleSignin.hasPlayServices();
-      const userInfo = await GoogleSignin.signIn();
-      const { idToken, user: googleUser } = userInfo;
-
+      // Send the email to the backend to fetch additional user data
       const response = await axios.post(
-        `${API_URL}/googleSignIn`,
-        { email: googleUser.email },
+        `${API_URL}/auth/login`,
+        { email, password },
         { headers: { "Content-Type": "application/json" } }
       );
 
-      if (response.data.exists) {
-        const googleCredential = GoogleAuthProvider.credential(idToken);
-        await signInWithCredential(auth, googleCredential);
+      if (response.data.success) {
+        const firebaseToken = response.data.firebaseToken;
+
+        const userCredential = await signInWithCustomToken(auth, firebaseToken);
+        const firebaseUser = userCredential.user;
 
         const userData = response.data.user;
 
-        // Map the response data to the User type, including avatar
+        // Map the response data to the User type
         const mappedUser = {
           id: userData.id,
           firstName: userData.firstName,
@@ -90,8 +80,86 @@ const Login: React.FC = () => {
           avatar: userData.avatar,
         };
 
-        // Set the mapped user in context
-        setUser(mappedUser); // This should now work without error
+        // Set the user in the context
+        setUser(mappedUser);
+
+        console.log("Login successful and context updated!");
+      } else {
+        alert("User not found or invalid credentials.");
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          const { status, data } = error.response;
+
+          switch (status) {
+            case 401:
+              alert(
+                data.message || "Incorrect email or password. Please try again."
+              );
+              break;
+            case 404:
+              alert(data.message || "User not found. Please register first.");
+              break;
+            default:
+              alert(data.message || "An error occurred. Please try again.");
+              break;
+          }
+        } else {
+          alert(
+            "A network error occurred. Please check your connection and try again."
+          );
+        }
+      } else if (error instanceof FirebaseError) {
+        switch (error.code) {
+          case "auth/wrong-password":
+            alert("Incorrect password. Please try again.");
+            break;
+          case "auth/user-not-found":
+            alert("User not found. Please register first.");
+            break;
+          default:
+            alert("An error occurred. Please try again.");
+            break;
+        }
+      } else {
+        alert("An unknown error occurred.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    try {
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      const { idToken, user: googleUser } = userInfo;
+
+      const response = await axios.post(
+        `${API_URL}/auth/googleSignIn`,
+        { email: googleUser.email },
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+      if (response.data.exists) {
+        const googleCredential = GoogleAuthProvider.credential(idToken);
+        await signInWithCredential(auth, googleCredential);
+
+        const userData = response.data.user;
+
+        const mappedUser = {
+          id: userData.id,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          email: userData.email,
+          idNumber: userData.idNumber,
+          userType: userData.userType,
+          avatar: userData.avatar,
+        };
+
+        setUser(mappedUser);
 
         console.log("Google sign-in successful and context updated!");
       } else {

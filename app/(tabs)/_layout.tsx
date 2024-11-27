@@ -17,7 +17,8 @@ import access from "../../assets/icons/access.png";
 import attendance from "../../assets/icons/attendance.png";
 import laboratory from "../../assets/icons/laboratory.png";
 import chronolockLogo from "../../assets/images/chronolock-logo2a.png";
-import settings from "../../assets/icons/gear.png";
+import { useUserContext } from "@/context/UserContext";
+
 import messages from "../../assets/icons/message-circle.png";
 
 interface TabIconProps {
@@ -45,8 +46,14 @@ const TabIcon: React.FC<TabIconProps> = ({ icon, color, name, focused }) => {
 };
 
 const CustomHeader = () => {
+  const { user } = useUserContext();
   const router = useRouter();
-  const navigation = useNavigation(); // Hook to navigate between screens
+  const navigation = useNavigation();
+
+  const avatarSource =
+    user?.avatar && user.avatar !== ""
+      ? { uri: user.avatar }
+      : require("@/assets/images/default_avatar.png"); // Fallback to default avatar
 
   return (
     <SafeAreaView style={styles.headerContainer}>
@@ -60,12 +67,12 @@ const CustomHeader = () => {
         <Text style={styles.appName}>ChronoLock</Text>
       </View>
 
-      {/* Right side with Chat and Settings buttons */}
+      {/* Right side with Chat and Account buttons */}
       <View style={styles.headerRight}>
         {/* Chat Button */}
         <TouchableOpacity
           onPress={() => router.push("/chat")}
-          style={styles.headerButton}
+          style={styles.accountButton}
         >
           <Image
             source={messages}
@@ -74,18 +81,17 @@ const CustomHeader = () => {
           />
         </TouchableOpacity>
 
-        {/* Settings Button */}
+        {/* Account Button */}
         <TouchableOpacity
           onPress={() => {
-            console.log("Settings Button Pressed"); // Debugging Log
-            // navigation.navigate("settings");
+            router.push("/account");
           }}
-          style={styles.headerButton}
+          style={styles.accountButton}
         >
           <Image
-            source={settings}
-            style={styles.headerIcon}
-            resizeMode="contain"
+            source={avatarSource}
+            style={styles.avatar}
+            resizeMode="cover"
           />
         </TouchableOpacity>
       </View>
@@ -215,8 +221,18 @@ const styles = StyleSheet.create({
   headerRight: {
     flexDirection: "row",
   },
-  headerButton: {
+  avatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    backgroundColor: "#f0f0f0",
+  },
+  accountButton: {
     marginHorizontal: 10,
+    alignItems: "center",
+    justifyContent: "center",
   },
   headerIcon: {
     width: 24,

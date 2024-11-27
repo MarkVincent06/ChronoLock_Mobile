@@ -46,7 +46,9 @@ const GroupChatList = () => {
   const fetchGroups = async () => {
     setLoading(true);
     try {
-      const response = await axios.get<Group[]>(`${API_URL}/groups`);
+      const response = await axios.get<Group[]>(
+        `${API_URL}/groups/fetchAllgroups`
+      );
       setGroups(response.data);
       setFilteredGroups(response.data);
     } catch (error) {
@@ -81,7 +83,9 @@ const GroupChatList = () => {
     groupName: string
   ) => {
     try {
-      await axios.post(`${API_URL}/group/${groupId}/markAsSeen`);
+      await axios.post(
+        `${API_URL}/messages/group/${groupId}/markMessageAsSeen`
+      );
       router.push({
         pathname: "/chat/message",
         params: { group_id: groupId, group_name: groupName },
@@ -248,7 +252,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     borderWidth: 3,
     borderColor: "#fff",
-    marginRight: 10,
+    marginRight: 1,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,

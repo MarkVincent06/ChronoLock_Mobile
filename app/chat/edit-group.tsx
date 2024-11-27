@@ -92,7 +92,7 @@ const EditGroupChat = () => {
       const hasNameChanged = group_name !== name;
       const hasAvatarChanged = group_avatar !== avatar;
 
-      await axios.put(`${API_URL}/groups/${group_id}`, formData, {
+      await axios.put(`${API_URL}/groups/updateGroup/${group_id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -104,10 +104,13 @@ const EditGroupChat = () => {
 
         const message = `${changes.join(" and ")}.`;
 
-        await axios.post(`${API_URL}/group/${group_id}/system-messages`, {
-          userId: user?.idNumber,
-          text: message,
-        });
+        await axios.post(
+          `${API_URL}/messages/group/${group_id}/newSystemMessage`,
+          {
+            userId: user?.idNumber,
+            text: message,
+          }
+        );
       }
 
       Alert.alert("Success", "Group details updated!");
@@ -144,7 +147,7 @@ const EditGroupChat = () => {
           style: "destructive",
           onPress: async () => {
             try {
-              await axios.delete(`${API_URL}/groups/${group_id}`);
+              await axios.delete(`${API_URL}/groups/deleteGroup/${group_id}`);
               Alert.alert("Success", "Group deleted successfully.");
               router.push("/chat");
             } catch (error) {

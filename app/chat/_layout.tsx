@@ -24,6 +24,13 @@ const ChatLayout = () => {
         }}
       />
       <Stack.Screen
+        name="message"
+        options={{
+          title: "Message",
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
         name="create-group"
         options={{
           title: "Create Group",
