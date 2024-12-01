@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 25, 2024 at 04:34 PM
+-- Generation Time: Dec 01, 2024 at 02:49 PM
 -- Server version: 10.4.24-MariaDB
 -- PHP Version: 8.1.6
 
@@ -164,16 +164,37 @@ CREATE TABLE `groups` (
 --
 
 INSERT INTO `groups` (`group_id`, `group_name`, `group_key`, `created_at`, `avatar`) VALUES
-(1, 'Senpai', 'nugwdilfb', '2024-11-21 09:03:13', NULL),
-(2, 'BSIT3C', 'bsit3c', '2024-11-21 22:05:09', NULL),
-(3, 'BSOT4C', 'nsdafbw', '2024-11-22 08:06:16', NULL),
-(4, 'BSIT5C', 'bsit5c', '2024-11-22 19:40:19', '/uploads/1732333218747-462752303.jpg'),
-(5, 'Tekaka', 'jjhhh', '2024-11-22 20:12:07', '/uploads/1732545590474-467667174.jpeg'),
-(6, 'rusuf', 'jfkf', '2024-11-22 20:16:04', '/uploads/1732335364716-469083880.jpeg'),
-(7, 'Vey', 'ggiufx', '2024-11-22 20:18:01', '/uploads/1732335481281-462847843.png'),
-(8, 'BSIT2D', 'bsit2d', '2024-11-25 10:02:07', '/uploads/1732528927618-569711496.png'),
-(9, 'Test', 'test', '2024-11-25 13:26:18', '/uploads/1732541178452-401155422.jpeg'),
-(10, 'huil', 'hii', '2024-11-25 13:30:30', NULL);
+(22, 'hello there', 'hithwrw', '2024-11-26 15:38:36', '/uploads/1732635864964-531839556.png'),
+(23, 'gagi', 'hahah', '2024-11-26 15:39:08', '/uploads/1732635849318-125366174.jpeg'),
+(24, 'huhu', 'haha', '2024-11-26 15:44:42', NULL),
+(25, 'okay nice', 'gagag', '2024-11-26 15:44:58', '/uploads/1732635898591-781936333.jpeg'),
+(26, 'test', 'hi', '2024-12-01 05:26:11', NULL),
+(27, 'MARK GROUP', 'mark', '2024-12-01 12:21:32', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `group_members`
+--
+
+CREATE TABLE `group_members` (
+  `id` int(11) NOT NULL,
+  `idNumber` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `group_id` int(11) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `group_members`
+--
+
+INSERT INTO `group_members` (`id`, `idNumber`, `group_id`, `created_at`) VALUES
+(1, '221007264', 23, '2024-12-01 11:07:44'),
+(2, '221006666', 23, '2024-12-01 11:07:44'),
+(3, '221007722', 22, '2024-12-01 11:08:32'),
+(4, '2411361', 22, '2024-12-01 11:08:32'),
+(5, '221007141', 22, '2024-12-01 11:08:44'),
+(8, 'C21102324', 27, '2024-12-01 13:24:16');
 
 -- --------------------------------------------------------
 
@@ -187,63 +208,25 @@ CREATE TABLE `messages` (
   `user_id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `text` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `isSeen` tinyint(1) NOT NULL DEFAULT 0
+  `isSeen` tinyint(1) NOT NULL DEFAULT 0,
+  `isSystem` tinyint(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `messages`
 --
 
-INSERT INTO `messages` (`id`, `group_id`, `user_id`, `text`, `created_at`, `isSeen`) VALUES
-(1, 1, 'C21102324', 'hello', '2024-11-21 09:10:22', 1),
-(2, 1, 'C21102324', 'asjfbsaasd', '2024-11-21 09:12:36', 1),
-(3, 1, 'C21102324', 'ho', '2024-11-21 09:28:20', 1),
-(4, 1, 'Y9QCqtQgrPUyUUZS1MxSYgnOEjI3', 'hahaha', '2024-11-21 18:18:50', 1),
-(5, 1, 'Y9QCqtQgrPUyUUZS1MxSYgnOEjI3', 'gumagana na yey', '2024-11-21 18:33:56', 1),
-(6, 1, '100', 'hi', '2024-11-22 00:20:36', 1),
-(7, 1, 'C21102324', 'hey', '2024-11-22 00:22:14', 1),
-(8, 1, 'C21101162', 'Hiii', '2024-11-22 07:14:52', 1),
-(9, 1, 'C21102324', 'fgfr.', '2024-11-22 07:14:59', 1),
-(10, 1, 'C21101162', 'He', '2024-11-22 07:15:02', 1),
-(11, 1, 'C21101162', '3gwgw', '2024-11-22 07:15:44', 1),
-(12, 1, 'C21101162', 'Kahit ano', '2024-11-22 07:24:00', 1),
-(13, 1, 'C21102324', 'okay na yan', '2024-11-22 07:24:14', 1),
-(14, 2, 'C21101162', 'H', '2024-11-22 07:46:59', 1),
-(15, 1, 'C21102324', 'hello', '2024-11-23 06:22:49', 1),
-(16, 4, 'C21102324', 'hi', '2024-11-23 06:24:03', 1),
-(17, 2, 'C21102324', 'hi', '2024-11-24 09:04:27', 1),
-(18, 1, 'C21102324', 'hello', '2024-11-24 09:04:38', 1),
-(19, 1, 'C21102324', 'gago ka', '2024-11-24 09:04:47', 1),
-(20, 1, 'C21102324', 'gago', '2024-11-24 09:05:14', 1),
-(21, 3, 'C21102324', 'po', '2024-11-24 09:15:19', 1),
-(22, 4, 'C21102324', 'hmm', '2024-11-24 09:15:42', 1),
-(23, 1, 'C21102324', 'hayys', '2024-11-24 09:22:52', 1),
-(24, 1, 'C21102324', 'hmmm', '2024-11-24 09:23:07', 1),
-(25, 3, 'C21102324', 'grr', '2024-11-24 09:23:33', 1),
-(26, 3, 'C21102324', 'test', '2024-11-24 09:33:44', 1),
-(27, 3, 'C21102324', 'testmike', '2024-11-24 09:33:52', 1),
-(28, 4, 'C21102324', 'ga', '2024-11-24 10:00:14', 1),
-(29, 4, 'C21102324', 'hahaha', '2024-11-24 10:27:10', 1),
-(30, 2, 'C21102324', 'test', '2024-11-25 10:06:36', 1),
-(31, 2, 'C21101162', 'Hi', '2024-11-25 10:06:55', 1),
-(32, 2, 'C21101162', 'Heyyyyy', '2024-11-25 10:07:28', 1),
-(33, 2, 'C21101162', 'Heeeeeryyyyy', '2024-11-25 10:10:31', 1),
-(34, 2, 'C21102324', 'po', '2024-11-25 10:16:34', 1),
-(35, 1, 'C21102324', '-@-@-@-@', '2024-11-25 10:17:49', 1),
-(36, 2, 'C21102324', 'hi', '2024-11-25 11:13:34', 1),
-(37, 2, 'C21101162', 'Hi', '2024-11-25 11:15:00', 1),
-(38, 2, 'C21102324', 'gh', '2024-11-25 11:15:12', 1),
-(39, 1, 'C21101162', 'Hiii', '2024-11-25 11:51:56', 1),
-(40, 1, 'C21101162', 'Hello', '2024-11-25 11:52:05', 1),
-(41, 1, 'C21101162', 'Okay', '2024-11-25 11:52:14', 1),
-(42, 1, 'C21101162', 'Hsususj', '2024-11-25 11:52:22', 1),
-(43, 1, 'C21101162', 'Hsususj', '2024-11-25 11:52:24', 1),
-(44, 1, 'C21101162', 'Ususu', '2024-11-25 11:52:29', 1),
-(45, 1, 'C21101162', 'Hsususjsj', '2024-11-25 11:52:36', 1),
-(46, 1, 'C21101162', 'Hahajaj', '2024-11-25 11:52:55', 1),
-(47, 4, 'C21101162', 'Sysusisj', '2024-11-25 11:53:10', 1),
-(48, 4, 'C21101162', 'Jajaiwi', '2024-11-25 11:59:40', 1),
-(49, 5, 'C21102324', 'okay', '2024-11-25 12:46:02', 1);
+INSERT INTO `messages` (`id`, `group_id`, `user_id`, `text`, `created_at`, `isSeen`, `isSystem`) VALUES
+(60, 22, 'C21102324', 'Welcome to hello there! This group is now active. Feel free to start discussions and collaborate with others.', '2024-11-26 15:38:36', 0, 1),
+(61, 23, 'C21102324', 'Welcome to gagi! This group is now active. Feel free to start discussions and collaborate with others.', '2024-11-26 15:39:08', 0, 1),
+(62, 23, 'C21102324', 'Group avatar updated.', '2024-11-26 15:39:18', 1, 1),
+(63, 23, 'C21102324', 'Group avatar updated.', '2024-11-26 15:44:09', 0, 1),
+(64, 22, 'C21102324', 'Group avatar updated.', '2024-11-26 15:44:25', 0, 1),
+(65, 24, 'C21102324', 'Welcome to huhu! This group is now active. Feel free to start discussions and collaborate with others.', '2024-11-26 15:44:42', 1, 1),
+(66, 25, 'C21102324', 'Welcome to nicesdd! This group is now active. Feel free to start discussions and collaborate with others.', '2024-11-26 15:44:58', 0, 1),
+(67, 25, 'C21102324', 'Group name changed to \"okay nice\".', '2024-11-26 15:45:22', 0, 1),
+(68, 24, 'C21102324', 'heya', '2024-11-27 04:06:46', 1, 0),
+(69, 26, 'C21102324', 'Welcome to test! This group is now active. Feel free to start discussions and collaborate with others.', '2024-12-01 05:26:12', 1, 1);
 
 -- --------------------------------------------------------
 
@@ -618,7 +601,7 @@ INSERT INTO `users` (`id`, `accountName`, `firstName`, `lastName`, `email`, `idN
 (94, NULL, 'rendel', 'berdol', 'reberdol@my.cspc.edu.ph', '2411476', 'Student', '$2y$12$mxse1PkWMHFo.qIWBH61S.DAGXTpveetEAkdqrNWH9nphEI8T2TxC', NULL, NULL, '942276641325', 'hxWNxwfJrhZHAroQ1DI0gQJsIAZOGKGDdDT94KygOguFN1g9CefTeqIwbL9u', '2024-09-27 02:10:23', '2024-09-27 02:11:39', NULL, NULL),
 (95, NULL, 'adrian', 'aliparo', 'adaliparo@my.cspc.edu.ph', '2411310', 'Student', '$2y$12$EF0qmOVVfli8YWZGmLRtJOECEgd2Nve1ZGUeB4qIaFE.Pk.EJJYiG', NULL, NULL, '872237138494', 'Ck3uUUTHLwXsFTLHH10n2TlXdxGIqUAwDi5iu2svDldVfNuuMUM6rJpueX63', '2024-09-27 02:11:51', '2024-09-27 02:12:31', NULL, NULL),
 (96, NULL, 'jerry', 'balaguer', 'jebalaguer@my.cspc.edu.ph', '2411312', 'Student', '$2y$12$8ER9TNSpPAzEyLmnaSwQEuCs3gXaB8XaRTCqErrT1XgJEy9lJpt52', NULL, NULL, '131718404069', 'oIswkGUnZc7PC5MMKkccxcMilTwZ3GIy6dsqlL0oYbjswNBUSxvWCayrXJc3', '2024-09-27 02:13:14', '2024-09-27 02:14:32', NULL, NULL),
-(100, NULL, 'Mark Vincent', 'Cleofe', 'macleofe@my.cspc.edu.ph', 'C21102324', 'Instructor', 'markvincent', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(100, NULL, 'Mark Vincent', 'Cleofe', 'macleofe@my.cspc.edu.ph', 'C21102324', 'Instructor', 'markvincent', '/uploads/1733033411212-870126092.jpeg', NULL, NULL, NULL, NULL, '2024-12-01 06:10:11', NULL, NULL),
 (101, NULL, 'Lyme', 'Lavarias', 'lylavarias@my.cspc.edu.ph', 'C21101162', 'Student', 'lymelavarias', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
@@ -1246,6 +1229,14 @@ ALTER TABLE `groups`
   ADD PRIMARY KEY (`group_id`);
 
 --
+-- Indexes for table `group_members`
+--
+ALTER TABLE `group_members`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idNumber` (`idNumber`),
+  ADD KEY `group_id` (`group_id`);
+
+--
 -- Indexes for table `messages`
 --
 ALTER TABLE `messages`
@@ -1339,13 +1330,19 @@ ALTER TABLE `class_lists`
 -- AUTO_INCREMENT for table `groups`
 --
 ALTER TABLE `groups`
-  MODIFY `group_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `group_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+
+--
+-- AUTO_INCREMENT for table `group_members`
+--
+ALTER TABLE `group_members`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `messages`
 --
 ALTER TABLE `messages`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=70;
 
 --
 -- AUTO_INCREMENT for table `migrations`
@@ -1407,10 +1404,17 @@ ALTER TABLE `class_lists`
   ADD CONSTRAINT `class_lists_scheduleid_foreign` FOREIGN KEY (`scheduleID`) REFERENCES `schedules` (`scheduleID`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
+-- Constraints for table `group_members`
+--
+ALTER TABLE `group_members`
+  ADD CONSTRAINT `group_members_ibfk_1` FOREIGN KEY (`idNumber`) REFERENCES `users` (`idNumber`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `group_members_ibfk_2` FOREIGN KEY (`group_id`) REFERENCES `groups` (`group_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
 -- Constraints for table `messages`
 --
 ALTER TABLE `messages`
-  ADD CONSTRAINT `messages_ibfk_1` FOREIGN KEY (`group_id`) REFERENCES `groups` (`group_id`);
+  ADD CONSTRAINT `fk_messages_group_id` FOREIGN KEY (`group_id`) REFERENCES `groups` (`group_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `rfid_accounts`
