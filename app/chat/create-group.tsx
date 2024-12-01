@@ -28,6 +28,8 @@ const CreateGroupChat = () => {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  const userIdNumber = user?.idNumber;
+
   // Handle image selection
   const pickImage = async () => {
     const permissionResult =
@@ -61,6 +63,7 @@ const CreateGroupChat = () => {
       setLoading(true);
 
       const formData = new FormData();
+      formData.append("userIdNumber", userIdNumber);
       formData.append("name", name);
       formData.append("enrollmentKey", enrollmentKey);
 

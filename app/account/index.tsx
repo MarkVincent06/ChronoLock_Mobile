@@ -14,25 +14,29 @@ import { useUserContext } from "@/context/UserContext";
 import { Icon } from "react-native-elements";
 import * as ImagePicker from "expo-image-picker";
 import axios from "axios";
+import { useRouter } from "expo-router";
 import API_URL from "../../config/ngrok-api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { auth } from "../../config/firebase";
+import { signOut } from "firebase/auth";
 
 const AccountSettings = () => {
+  const router = useRouter();
   const { user, setUser } = useUserContext();
   const [formData, setFormData] = useState({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
     email: user?.email || "",
-    idNumber: user?.idNumber || "",
   });
   const [avatar, setAvatar] = useState(user?.avatar || null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
-  // Function to handle form input changes
   const handleInputChange = (field: string, value: string) => {
     setFormData({ ...formData, [field]: value });
   };
 
-  // Function to pick a new avatar using expo-image-picker
   const handlePickAvatar = async () => {
     const permissionResult =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -56,34 +60,49 @@ const AccountSettings = () => {
     }
   };
 
-  // Function to save changes
   const handleSaveChanges = async () => {
     setIsLoading(true);
     try {
-      // Make API call to update the user details
-      await axios.put(`${API_URL}/users/updateUser`, {
-        id: user?.id,
+      const updatedFormData = new FormData();
+
+      updatedFormData.append("id", user?.id?.toString() || "");
+      updatedFormData.append("firstName", formData.firstName || "");
+      updatedFormData.append("lastName", formData.lastName || "");
+      updatedFormData.append("email", formData.email || "");
+
+      // Append the avatar file if it exists
+      if (avatar) {
+        const filename = avatar.split("/").pop();
+        const fileType = filename?.split(".").pop();
+        updatedFormData.append("avatar", {
+          uri: avatar,
+          name: filename || "avatar.jpg",
+          type: `image/${fileType}`, // E.g., image/jpeg, image/png
+        } as any);
+      }
+
+      console.warn(updatedFormData);
+
+      // Send the data using Axios
+      await axios.put(`${API_URL}/users/updateUser`, updatedFormData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      // Update user context
+      setUser({
+        id: user?.id || 0,
+        idNumber: user?.idNumber || "",
+        userType: user?.userType || "",
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
-        avatar, // Pass the new avatar URL
+        avatar: avatar || null,
       });
 
-      // Ensure `user.id` is not undefined when setting the new state
-      if (user?.id !== undefined) {
-        setUser({
-          id: user.id,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          idNumber: formData.idNumber,
-          userType: user.userType || "", // Ensure userType is provided
-          avatar,
-        });
-        Alert.alert("Success", "Profile updated successfully!");
-      } else {
-        throw new Error("User ID is undefined.");
-      }
+      Alert.alert("Success", "Profile updated successfully!");
+      setIsEditing(false);
     } catch (error) {
       console.error("Failed to update profile:", error);
       Alert.alert("Error", "Failed to update profile.");
@@ -92,36 +111,88 @@ const AccountSettings = () => {
     }
   };
 
+  const handleGoogleLogout = async () => {
+    setIsLoading(true);
+    try {
+      await GoogleSignin.signOut(); // Sign out from Google
+      await signOut(auth); // Sign out from Firebase
+      await AsyncStorage.removeItem("user");
+      setUser(null);
+
+      Alert.alert("Success", "You have been logged out.");
+      router.replace("/(auth)/login");
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Failed to log out.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    Alert.alert(
+      "Confirm Deletion",
+      "Are you sure you want to delete your account? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await axios.delete(`${API_URL}/users/${user?.id}`);
+              setUser(null);
+              Alert.alert("Account Deleted", "Your account has been deleted.");
+              router.replace("/(auth)/login");
+            } catch (error) {
+              console.error("Error deleting account:", error);
+              Alert.alert("Error", "Failed to delete account.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Avatar Section */}
       <View style={styles.avatarContainer}>
-        <TouchableOpacity onPress={handlePickAvatar}>
+        <TouchableOpacity onPress={isEditing ? handlePickAvatar : undefined}>
           <Image
             source={
               avatar
                 ? {
-                    uri: avatar.startsWith("http")
-                      ? avatar
-                      : `${API_URL}${avatar}`,
+                    uri:
+                      avatar.startsWith("http") || avatar.startsWith("file")
+                        ? avatar
+                        : `${API_URL}${avatar}`,
                   }
-                : require("@/assets/images/default_avatar.png") // Default avatar image
+                : require("@/assets/images/default_avatar.png")
             }
             style={styles.avatar}
           />
-          <View style={styles.editIcon}>
-            <Icon name="edit" type="feather" color="#fff" size={16} />
-          </View>
+          {isEditing && (
+            <View style={styles.editIcon}>
+              <Icon name="edit" type="feather" color="#fff" size={16} />
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
-      {/* User Details */}
       <View style={styles.form}>
+        <Text style={styles.label}>User Type</Text>
+        <TextInput
+          style={[styles.input, { backgroundColor: "#f0f0f0" }]}
+          value={user?.userType || ""}
+          editable={false}
+        />
+
         <Text style={styles.label}>First Name</Text>
         <TextInput
           style={styles.input}
           value={formData.firstName}
           onChangeText={(value) => handleInputChange("firstName", value)}
+          editable={isEditing}
         />
 
         <Text style={styles.label}>Last Name</Text>
@@ -129,6 +200,7 @@ const AccountSettings = () => {
           style={styles.input}
           value={formData.lastName}
           onChangeText={(value) => handleInputChange("lastName", value)}
+          editable={isEditing}
         />
 
         <Text style={styles.label}>Email</Text>
@@ -136,27 +208,45 @@ const AccountSettings = () => {
           style={styles.input}
           value={formData.email}
           onChangeText={(value) => handleInputChange("email", value)}
-        />
-
-        <Text style={styles.label}>ID Number</Text>
-        <TextInput
-          style={[styles.input, { backgroundColor: "#f0f0f0" }]}
-          value={formData.idNumber}
-          editable={false}
+          editable={isEditing}
         />
       </View>
 
-      {/* Save Changes Button */}
       <TouchableOpacity
-        style={styles.saveButton}
-        onPress={handleSaveChanges}
+        style={[styles.button, { backgroundColor: "#007bff" }]}
+        onPress={isEditing ? handleSaveChanges : () => setIsEditing(true)}
         disabled={isLoading}
       >
         {isLoading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.saveButtonText}>Save Changes</Text>
+          <Text style={styles.buttonText}>
+            {isEditing ? "Save Changes" : "Edit Details"}
+          </Text>
         )}
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: "#ff9800" }]}
+        onPress={() => {
+          router.push(`/account/change-password`);
+        }}
+      >
+        <Text style={styles.buttonText}>Change Password</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: "#f44336" }]}
+        onPress={handleGoogleLogout}
+      >
+        <Text style={styles.buttonText}>Logout</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: "#d32f2f" }]}
+        onPress={handleDeleteAccount}
+      >
+        <Text style={styles.buttonText}>Delete Account</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -165,22 +255,9 @@ const AccountSettings = () => {
 export default AccountSettings;
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    padding: 20,
-    backgroundColor: "#fff",
-  },
-  avatarContainer: {
-    alignItems: "center",
-    marginBottom: 30,
-  },
-  avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 3,
-    borderColor: "#ccc",
-  },
+  container: { flexGrow: 1, padding: 20, backgroundColor: "#fff" },
+  avatarContainer: { alignItems: "center", marginBottom: 30 },
+  avatar: { width: 120, height: 120, borderRadius: 60 },
   editIcon: {
     position: "absolute",
     bottom: 0,
@@ -189,14 +266,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 5,
   },
-  form: {
-    marginBottom: 30,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 5,
-  },
+  form: { marginBottom: 30 },
+  label: { fontSize: 16, fontWeight: "600", marginBottom: 5 },
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
@@ -205,15 +276,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 15,
   },
-  saveButton: {
-    backgroundColor: "#007bff",
+  button: {
     padding: 15,
     borderRadius: 8,
     alignItems: "center",
+    marginBottom: 10,
   },
-  saveButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
+  buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
 });

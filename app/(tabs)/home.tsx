@@ -71,7 +71,7 @@ export default function Home() {
       {/* Welcome Section */}
       <Card containerStyle={styles.welcomeCard}>
         <Card.Title style={styles.welcomeText}>
-          Welcome, {user?.firstName} {user?.lastName}!
+          Welcome, {user?.firstName}!
         </Card.Title>
         <Text style={styles.userTypeText}>{user?.userType}</Text>
         <Text style={styles.statusText}>

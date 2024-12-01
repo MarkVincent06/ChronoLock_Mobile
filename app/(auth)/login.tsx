@@ -82,8 +82,6 @@ const Login: React.FC = () => {
 
         // Set the user in the context
         setUser(mappedUser);
-
-        console.log("Login successful and context updated!");
       } else {
         alert("User not found or invalid credentials.");
       }

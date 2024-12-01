@@ -118,7 +118,7 @@ const AccessControl = () => {
       // Check if device is not null and matches the target name and ID
       if (
         device &&
-        (device.name === "raspberrypi" || device.id === targetDeviceId)
+        (device.name === "RaspberryPiLock" || device.id === targetDeviceId)
       ) {
         bleManager.stopDeviceScan();
         Alert.alert(`Found device: ${device.name}`);

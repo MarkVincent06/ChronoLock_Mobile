@@ -10,7 +10,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import React from "react";
 import { Tabs, Redirect } from "expo-router";
 import { useRouter } from "expo-router";
-import { useNavigation } from "@react-navigation/native"; // Import to use navigation hook
+import API_URL from "../../config/ngrok-api";
+import { useNavigation } from "@react-navigation/native";
 
 import home from "../../assets/icons/home.png";
 import access from "../../assets/icons/access.png";
@@ -52,7 +53,12 @@ const CustomHeader = () => {
 
   const avatarSource =
     user?.avatar && user.avatar !== ""
-      ? { uri: user.avatar }
+      ? {
+          uri:
+            user.avatar.startsWith("http") || user.avatar.startsWith("file")
+              ? user.avatar
+              : `${API_URL}${user.avatar}`,
+        }
       : require("@/assets/images/default_avatar.png"); // Fallback to default avatar
 
   return (

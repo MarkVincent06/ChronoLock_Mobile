@@ -42,7 +42,7 @@ export default function Onboarding() {
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.continueButton}
-          onPress={handleContinue} // Call the function to save the flag and navigate to login
+          onPress={handleContinue}
         >
           <Text style={styles.buttonText}>Continue</Text>
         </TouchableOpacity>

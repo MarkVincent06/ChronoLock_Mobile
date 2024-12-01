@@ -25,6 +25,13 @@ const AccountLayout = () => {
             ),
           }}
         />
+        <Stack.Screen
+          name="change-password"
+          options={{
+            title: "Change Password",
+            headerShown: true,
+          }}
+        />
       </Stack>
     </>
   );
