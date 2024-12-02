@@ -38,6 +38,13 @@ const ChatLayout = () => {
         }}
       />
       <Stack.Screen
+        name="group-details"
+        options={{
+          title: "Group Details",
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
         name="edit-group"
         options={{
           title: "Edit Group",

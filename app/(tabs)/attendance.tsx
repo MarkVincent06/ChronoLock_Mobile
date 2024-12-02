@@ -10,7 +10,7 @@ type AttendanceRecord = {
   status: string;
 };
 
-const Attendance = ({ userType }: { userType: "instructor" | "student" }) => {
+const Attendance = ({ userType }: { userType: "Faculty" | "Student" }) => {
   const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([
     { id: 1, name: "John Doe", date: "2024-09-01", status: "Present" },
     { id: 2, name: "Jane Smith", date: "2024-09-01", status: "Absent" },
@@ -103,7 +103,7 @@ const Attendance = ({ userType }: { userType: "instructor" | "student" }) => {
 
   return (
     <ScrollView style={styles.container}>
-      {userType === "student" ? renderStudentView() : renderInstructorView()}
+      {userType === "Student" ? renderStudentView() : renderInstructorView()}
     </ScrollView>
   );
 };

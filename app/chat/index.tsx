@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -16,6 +16,12 @@ import API_URL from "../../config/ngrok-api";
 import { useFocusEffect } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useUserContext } from "../../context/UserContext";
+import {
+  Menu,
+  MenuOptions,
+  MenuOption,
+  MenuTrigger,
+} from "react-native-popup-menu";
 
 interface Group {
   group_id: number;
@@ -35,20 +41,16 @@ const GroupChatList = () => {
   const [searchText, setSearchText] = useState("");
   const router = useRouter();
 
-  console.warn(user);
-
-  // useEffect(() => {
-  //   const interval = setInterval(fetchGroups, 5000); // Fetch groups every 5 seconds
-  //   return () => clearInterval(interval);
-  // }, []);
-
   // Fetch groups from the server
   const fetchGroups = async () => {
     setLoading(true);
     try {
-      const response = await axios.get<Group[]>(
-        `${API_URL}/groups/fetchAllgroups`
-      );
+      const apiEndPoint =
+        user?.userType === "Faculty"
+          ? `${API_URL}/groups/fetchFilteredGroups/${user?.idNumber}`
+          : `${API_URL}/groups/fetchAllgroups`;
+
+      const response = await axios.get<Group[]>(apiEndPoint);
       setGroups(response.data);
       setFilteredGroups(response.data);
     } catch (error) {
@@ -88,14 +90,32 @@ const GroupChatList = () => {
       );
       router.push({
         pathname: "/chat/message",
-        params: { group_id: groupId, group_name: groupName },
+        params: {
+          group_id: groupId,
+          group_name: groupName,
+        },
       });
     } catch (error) {
       console.error("Error marking messages as seen:", error);
     }
   };
 
-  const handleSettingsPress = (
+  const handleGroupDetails = (
+    groupId: number,
+    groupName: string,
+    avatar: string
+  ) => {
+    router.push({
+      pathname: "/chat/group-details",
+      params: {
+        group_id: groupId,
+        group_name: groupName,
+        group_avatar: avatar,
+      },
+    });
+  };
+
+  const handleEditGroup = (
     groupId: string | number,
     groupName: string,
     groupKey: string,
@@ -112,7 +132,14 @@ const GroupChatList = () => {
     });
   };
 
-  const renderItem = ({ item }: { item: Group }) => (
+  const handleJoinGroup = (groupId: number) => {
+    // router.push({
+    //   pathname: "/chat/join-group",
+    //   params: { group_id: groupId },
+    // });
+  };
+
+  const renderInstructorItem = ({ item }: { item: Group }) => (
     <TouchableOpacity
       style={styles.groupItem}
       onPress={() => handleGroupClick(item.group_id, item.group_name)}
@@ -130,7 +157,9 @@ const GroupChatList = () => {
         style={styles.groupAvatar}
       />
       <View style={styles.groupDetails}>
-        <Text style={styles.groupName}>{item.group_name}</Text>
+        <Text numberOfLines={1} ellipsizeMode="tail" style={styles.groupName}>
+          {item.group_name}
+        </Text>
         <Text
           style={[
             styles.latestMessage,
@@ -144,19 +173,62 @@ const GroupChatList = () => {
             : "No messages yet"}
         </Text>
       </View>
-      <TouchableOpacity
-        style={styles.settingsIconContainer}
-        onPress={() =>
-          handleSettingsPress(
-            item.group_id,
-            item.group_name,
-            item.group_key || "",
-            item.avatar || ""
-          )
+      {/* Dropdown Menu */}
+      <Menu>
+        <MenuTrigger>
+          <View style={styles.dropdownTrigger}>
+            <Icon name="ellipsis-horizontal" size={24} color="#777" />
+          </View>
+        </MenuTrigger>
+        <MenuOptions>
+          <MenuOption
+            onSelect={() =>
+              handleGroupDetails(
+                item.group_id,
+                item.group_name,
+                item.avatar || ""
+              )
+            }
+          >
+            <Text style={styles.menuOption}>Group Details</Text>
+          </MenuOption>
+          <MenuOption
+            onSelect={() =>
+              handleEditGroup(
+                item.group_id,
+                item.group_name,
+                item.group_key || "",
+                item.avatar || ""
+              )
+            }
+          >
+            <Text style={styles.menuOption}>Edit Group</Text>
+          </MenuOption>
+        </MenuOptions>
+      </Menu>
+    </TouchableOpacity>
+  );
+
+  const renderStudentItem = ({ item }: { item: Group }) => (
+    <TouchableOpacity
+      style={styles.groupItem}
+      onPress={() => handleJoinGroup(item.group_id)}
+    >
+      <Image
+        source={
+          item.avatar
+            ? {
+                uri: item.avatar.startsWith("http")
+                  ? item.avatar
+                  : `${API_URL}${item.avatar}`,
+              }
+            : require("@/assets/images/default_avatar.png")
         }
-      >
-        <Icon name="settings-outline" size={24} color="#777" />
-      </TouchableOpacity>
+        style={styles.groupAvatar}
+      />
+      <View style={styles.groupDetails}>
+        <Text style={styles.groupName}>{item.group_name}</Text>
+      </View>
     </TouchableOpacity>
   );
 
@@ -172,10 +244,12 @@ const GroupChatList = () => {
         <Text style={styles.emptySubText}>
           Create your first group chat to get started!
         </Text>
-        <Button
-          title="Create Group Chat"
-          onPress={() => router.push("/chat/create-group")}
-        />
+        {user?.userType === "Faculty" && (
+          <Button
+            title="Create Group Chat"
+            onPress={() => router.push("/chat/create-group")}
+          />
+        )}
       </View>
     );
   }
@@ -188,31 +262,58 @@ const GroupChatList = () => {
         value={searchText}
         onChangeText={handleSearch}
       />
+      {user?.userType !== "Faculty" && (
+        <Text style={styles.titleText}>Choose a chat to join</Text>
+      )}
 
       {/* Show loading indicator while fetching */}
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />
+      ) : user?.userType === "Faculty" ? (
+        <>
+          <FlatList
+            data={filteredGroups}
+            keyExtractor={(item) => item.group_id.toString()}
+            renderItem={renderInstructorItem}
+            ListEmptyComponent={
+              <Text style={styles.emptyMessage}>No groups found</Text>
+            }
+          />
+          <View style={{ marginBottom: 10 }}>
+            <Button
+              title="Create Group Chat"
+              onPress={() => router.push("/chat/create-group")}
+            />
+          </View>
+        </>
       ) : (
         <FlatList
           data={filteredGroups}
           keyExtractor={(item) => item.group_id.toString()}
-          renderItem={renderItem}
+          renderItem={renderStudentItem}
           ListEmptyComponent={
             <Text style={styles.emptyMessage}>No groups found</Text>
           }
         />
       )}
-      <View style={{ marginBottom: 10 }}>
-        <Button
-          title="Create Group Chat"
-          onPress={() => router.push("/chat/create-group")}
-        />
-      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  dropdownTrigger: {
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 8,
+    borderRadius: 50,
+    backgroundColor: "#f9f9f9",
+  },
+  menuOption: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: "#333",
+  },
   container: {
     flex: 1,
     paddingHorizontal: 16,
@@ -225,6 +326,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
     fontSize: 16,
+  },
+  titleText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 10,
   },
   loader: {
     flex: 1,
@@ -245,6 +352,20 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
+  },
+  studentGroupItem: {
+    flexDirection: "column",
+    alignItems: "center",
+    padding: 8,
+    margin: 8,
+    borderRadius: 10,
+    backgroundColor: "#f9f9f9",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+    width: "30%",
   },
   groupAvatar: {
     width: 60,

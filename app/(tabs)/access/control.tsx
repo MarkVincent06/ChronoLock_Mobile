@@ -31,6 +31,16 @@ const AccessControl = () => {
   }, [bleManager]);
 
   useEffect(() => {
+    if (connectedDevice) {
+      connectedDevice.onDisconnected(() => {
+        console.warn("Device disconnected");
+        setConnectionStatus("Disconnected");
+        setConnectedDevice(null);
+      });
+    }
+  }, [connectedDevice]);
+
+  useEffect(() => {
     const checkPermissions = async () => {
       if (Platform.OS === "android") {
         await requestPermissions();
@@ -112,14 +122,23 @@ const AccessControl = () => {
         return;
       }
 
-      console.log("Discovered device:", device); // Log discovered devices
-      console.warn("Discovered device:", device); // Log discovered devices
+      //console.log("Discovered device:", device); // Log discovered devices
+      //console.warn("Discovered device:", device); // Log discovered devices
 
-      // Check if device is not null and matches the target name and ID
-      if (
-        device &&
-        (device.name === "RaspberryPiLock" || device.id === targetDeviceId)
-      ) {
+      // Check if device is not null and matches the target name and ID8
+
+      // if (
+      //   device &&
+      //   (device.name === "RaspberryPiLock" || device.id === targetDeviceId)
+      // ) {
+      //   bleManager.stopDeviceScan();
+      //   Alert.alert(`Found device: ${device.name}`);
+      //   setConnectionStatus("Connecting...");
+      //   connectToDevice(device);
+      // }
+
+      if (device && device.name?.includes("Raspberry")) {
+        console.warn("FOUND!", device);
         bleManager.stopDeviceScan();
         Alert.alert(`Found device: ${device.name}`);
         setConnectionStatus("Connecting...");
@@ -127,46 +146,96 @@ const AccessControl = () => {
       }
     });
   };
-
   const connectToDevice = async (device: Device) => {
     try {
+      setConnectionStatus("Connecting to device...");
       const connectedDevice = await device.connect();
+      console.log("Device connected:", connectedDevice);
+
+      // Discover all services and characteristics
       await connectedDevice.discoverAllServicesAndCharacteristics();
+      console.log("Services and characteristics discovered");
+
+      // Save the connected device
       setConnectedDevice(connectedDevice);
-      Alert.alert("Connected to the device successfully!");
       setConnectionStatus("Connected!");
+
+      // Verify the services and characteristics
+      await verifyServiceAndCharacteristic(connectedDevice);
+
+      Alert.alert("Connected to the device successfully!");
     } catch (error) {
       console.error("Connection failed:", error);
       Alert.alert("Failed to connect to the device.");
-      setConnectionStatus("Failed!");
-    } finally {
-      setIsLoading(false); // Stop loading once connected or failed
+      setConnectionStatus("Failed to connect.");
+    }
+  };
+
+  const verifyServiceAndCharacteristic = async (device: Device) => {
+    try {
+      const services = await device.services();
+      console.log("Discovered services:", services);
+
+      const targetService = services.find((s) => s.uuid === serviceUUID);
+      if (!targetService) {
+        console.error(`Service with UUID ${serviceUUID} not found.`);
+        Alert.alert("Error", `Target service not found: ${serviceUUID}`);
+        return;
+      }
+
+      const characteristics = await targetService.characteristics();
+      console.log("Discovered characteristics:", characteristics);
+
+      const targetCharacteristic = characteristics.find(
+        (c) => c.uuid === characteristicUUID
+      );
+      if (!targetCharacteristic) {
+        console.error(
+          `Characteristic with UUID ${characteristicUUID} not found.`
+        );
+        Alert.alert(
+          "Error",
+          `Target characteristic not found: ${characteristicUUID}`
+        );
+        return;
+      }
+
+      console.log("Service and characteristic verified successfully.");
+      Alert.alert("Success", "Service and characteristic verified!");
+    } catch (error) {
+      console.error("Error verifying service/characteristic:", error);
+      Alert.alert("Error", "Failed to verify service or characteristic.");
     }
   };
 
   const sendCommand = async (command: number) => {
     if (!connectedDevice) {
-      Alert.alert("Not connected to any device.");
+      Alert.alert("Device not connected. Please connect first.");
       return;
     }
 
     try {
-      // Command should be a byte array; for unlock send [1] and for lock send [0]
+      // Encode command as Base64
       const commandArray = new Uint8Array([command]);
-
-      // Convert the byte array to a Base64 string
       const base64Command = Buffer.from(commandArray).toString("base64");
 
+      console.log("Sending command:", command);
       await connectedDevice.writeCharacteristicWithResponseForService(
-        serviceUUID, // Replace with your service UUID
-        characteristicUUID, // Replace with your characteristic UUID
+        serviceUUID,
+        characteristicUUID,
         base64Command
       );
 
       Alert.alert(`Command sent: ${command === 1 ? "Unlock" : "Lock"}`);
     } catch (error) {
-      console.error("Failed to send command:", error);
-      Alert.alert("Failed to send command.");
+      // Narrow down the type of error
+      if (error instanceof Error) {
+        console.error("Failed to send command:", error.message);
+        Alert.alert("Failed to send command", error.message);
+      } else {
+        console.error("Failed to send command:", error);
+        Alert.alert("Failed to send command", "An unknown error occurred.");
+      }
     }
   };
 

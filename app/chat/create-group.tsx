@@ -21,10 +21,10 @@ import { useUserContext } from "../../context/UserContext";
 const CreateGroupChat = () => {
   const { user } = useUserContext();
   const [name, setName] = useState("");
-  const [enrollmentKey, setEnrollmentKey] = useState("");
+  const [groupKey, setGroupKey] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
   const [image, setImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
-  const [showEnrollmentKey, setShowEnrollmentKey] = useState(false);
+  const [showGroupKey, setShowGroupKey] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -55,7 +55,7 @@ const CreateGroupChat = () => {
 
   const handleCreateGroup = async () => {
     try {
-      if (!name || !enrollmentKey) {
+      if (!name || !groupKey) {
         Alert.alert("Error", "All fields are required.");
         return;
       }
@@ -63,9 +63,15 @@ const CreateGroupChat = () => {
       setLoading(true);
 
       const formData = new FormData();
-      formData.append("userIdNumber", userIdNumber);
+
+      if (userIdNumber) {
+        formData.append("userIdNumber", userIdNumber);
+      } else {
+        throw new Error("User ID is missing.");
+      }
+
       formData.append("name", name);
-      formData.append("enrollmentKey", enrollmentKey);
+      formData.append("groupKey", groupKey);
 
       if (avatar && image) {
         formData.append("avatar", {
@@ -116,20 +122,17 @@ const CreateGroupChat = () => {
         placeholder="Enter group name"
       />
 
-      <Text style={styles.label}>Enrollment Key</Text>
+      <Text style={styles.label}>Group Key</Text>
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.inputWithIcon}
-          value={enrollmentKey}
-          onChangeText={setEnrollmentKey}
-          placeholder="Enter enrollment key"
-          secureTextEntry={!showEnrollmentKey}
+          value={groupKey}
+          onChangeText={setGroupKey}
+          placeholder="Enter group key"
+          secureTextEntry={!showGroupKey}
         />
-        <TouchableOpacity onPress={() => setShowEnrollmentKey((prev) => !prev)}>
-          <Image
-            source={showEnrollmentKey ? eyeHide : eye}
-            style={styles.icon}
-          />
+        <TouchableOpacity onPress={() => setShowGroupKey((prev) => !prev)}>
+          <Image source={showGroupKey ? eyeHide : eye} style={styles.icon} />
         </TouchableOpacity>
       </View>
 
