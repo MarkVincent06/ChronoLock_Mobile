@@ -81,8 +81,6 @@ const AccountSettings = () => {
         } as any);
       }
 
-      console.warn(updatedFormData);
-
       // Send the data using Axios
       await axios.put(`${API_URL}/users/updateUser`, updatedFormData, {
         headers: {

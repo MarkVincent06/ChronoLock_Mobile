@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -33,7 +33,7 @@ interface Group {
   latest_message_isSeen?: boolean;
 }
 
-const GroupChatList = () => {
+const FacultyGroupChat = () => {
   const { user } = useUserContext();
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,7 +71,7 @@ const GroupChatList = () => {
   const handleSearch = (text: string) => {
     setSearchText(text);
     if (text.trim() === "") {
-      setFilteredGroups(groups); // Reset to all groups if search is empty
+      setFilteredGroups(groups);
     } else {
       const filtered = groups.filter((group) =>
         group.group_name.toLowerCase().includes(text.toLowerCase())
@@ -132,14 +132,7 @@ const GroupChatList = () => {
     });
   };
 
-  const handleJoinGroup = (groupId: number) => {
-    // router.push({
-    //   pathname: "/chat/join-group",
-    //   params: { group_id: groupId },
-    // });
-  };
-
-  const renderInstructorItem = ({ item }: { item: Group }) => (
+  const renderFacultyItem = ({ item }: { item: Group }) => (
     <TouchableOpacity
       style={styles.groupItem}
       onPress={() => handleGroupClick(item.group_id, item.group_name)}
@@ -209,29 +202,6 @@ const GroupChatList = () => {
     </TouchableOpacity>
   );
 
-  const renderStudentItem = ({ item }: { item: Group }) => (
-    <TouchableOpacity
-      style={styles.groupItem}
-      onPress={() => handleJoinGroup(item.group_id)}
-    >
-      <Image
-        source={
-          item.avatar
-            ? {
-                uri: item.avatar.startsWith("http")
-                  ? item.avatar
-                  : `${API_URL}${item.avatar}`,
-              }
-            : require("@/assets/images/default_avatar.png")
-        }
-        style={styles.groupAvatar}
-      />
-      <View style={styles.groupDetails}>
-        <Text style={styles.groupName}>{item.group_name}</Text>
-      </View>
-    </TouchableOpacity>
-  );
-
   // If no groups, show the 'No Groups' message
   if (groups.length === 0 && !loading) {
     return (
@@ -262,19 +232,16 @@ const GroupChatList = () => {
         value={searchText}
         onChangeText={handleSearch}
       />
-      {user?.userType !== "Faculty" && (
-        <Text style={styles.titleText}>Choose a chat to join</Text>
-      )}
 
       {/* Show loading indicator while fetching */}
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />
-      ) : user?.userType === "Faculty" ? (
+      ) : (
         <>
           <FlatList
             data={filteredGroups}
             keyExtractor={(item) => item.group_id.toString()}
-            renderItem={renderInstructorItem}
+            renderItem={renderFacultyItem}
             ListEmptyComponent={
               <Text style={styles.emptyMessage}>No groups found</Text>
             }
@@ -286,15 +253,6 @@ const GroupChatList = () => {
             />
           </View>
         </>
-      ) : (
-        <FlatList
-          data={filteredGroups}
-          keyExtractor={(item) => item.group_id.toString()}
-          renderItem={renderStudentItem}
-          ListEmptyComponent={
-            <Text style={styles.emptyMessage}>No groups found</Text>
-          }
-        />
       )}
     </View>
   );
@@ -352,20 +310,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
-  },
-  studentGroupItem: {
-    flexDirection: "column",
-    alignItems: "center",
-    padding: 8,
-    margin: 8,
-    borderRadius: 10,
-    backgroundColor: "#f9f9f9",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-    width: "30%",
   },
   groupAvatar: {
     width: 60,
@@ -435,4 +379,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default GroupChatList;
+export default FacultyGroupChat;
