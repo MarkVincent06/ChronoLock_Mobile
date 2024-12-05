@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 01, 2024 at 02:49 PM
+-- Generation Time: Dec 05, 2024 at 01:08 PM
 -- Server version: 10.4.24-MariaDB
 -- PHP Version: 8.1.6
 
@@ -164,12 +164,10 @@ CREATE TABLE `groups` (
 --
 
 INSERT INTO `groups` (`group_id`, `group_name`, `group_key`, `created_at`, `avatar`) VALUES
-(22, 'hello there', 'hithwrw', '2024-11-26 15:38:36', '/uploads/1732635864964-531839556.png'),
-(23, 'gagi', 'hahah', '2024-11-26 15:39:08', '/uploads/1732635849318-125366174.jpeg'),
-(24, 'huhu', 'haha', '2024-11-26 15:44:42', NULL),
-(25, 'okay nice', 'gagag', '2024-11-26 15:44:58', '/uploads/1732635898591-781936333.jpeg'),
-(26, 'test', 'hi', '2024-12-01 05:26:11', NULL),
-(27, 'MARK GROUP', 'mark', '2024-12-01 12:21:32', NULL);
+(28, 'Mark\'s First Group', 'mark', '2024-12-01 14:14:01', NULL),
+(29, 'BSIT 4F - System Administration and Maintenance', 'bsit4f', '2024-12-01 15:02:54', '/uploads/1733065374319-73334341.jpeg'),
+(30, 'Lyme\'s Group', 'lyme', '2024-12-02 13:49:46', '/uploads/1733147386231-713793891.jpeg'),
+(31, 'BSIT 4C - CAPSTONE PROJ 2', 'bsit4c', '2024-12-02 15:04:43', '/uploads/1733151883706-352579648.jpeg');
 
 -- --------------------------------------------------------
 
@@ -189,12 +187,12 @@ CREATE TABLE `group_members` (
 --
 
 INSERT INTO `group_members` (`id`, `idNumber`, `group_id`, `created_at`) VALUES
-(1, '221007264', 23, '2024-12-01 11:07:44'),
-(2, '221006666', 23, '2024-12-01 11:07:44'),
-(3, '221007722', 22, '2024-12-01 11:08:32'),
-(4, '2411361', 22, '2024-12-01 11:08:32'),
-(5, '221007141', 22, '2024-12-01 11:08:44'),
-(8, 'C21102324', 27, '2024-12-01 13:24:16');
+(9, 'C21102324', 28, '2024-12-01 14:14:01'),
+(10, 'C21102324', 29, '2024-12-01 15:02:54'),
+(13, 'C21101162', 30, '2024-12-02 13:49:46'),
+(14, 'C21101162', 31, '2024-12-02 15:04:43'),
+(15, 'C21102351', 31, '2024-12-03 03:57:48'),
+(16, 'C21102351', 30, '2024-12-03 03:59:19');
 
 -- --------------------------------------------------------
 
@@ -217,16 +215,12 @@ CREATE TABLE `messages` (
 --
 
 INSERT INTO `messages` (`id`, `group_id`, `user_id`, `text`, `created_at`, `isSeen`, `isSystem`) VALUES
-(60, 22, 'C21102324', 'Welcome to hello there! This group is now active. Feel free to start discussions and collaborate with others.', '2024-11-26 15:38:36', 0, 1),
-(61, 23, 'C21102324', 'Welcome to gagi! This group is now active. Feel free to start discussions and collaborate with others.', '2024-11-26 15:39:08', 0, 1),
-(62, 23, 'C21102324', 'Group avatar updated.', '2024-11-26 15:39:18', 1, 1),
-(63, 23, 'C21102324', 'Group avatar updated.', '2024-11-26 15:44:09', 0, 1),
-(64, 22, 'C21102324', 'Group avatar updated.', '2024-11-26 15:44:25', 0, 1),
-(65, 24, 'C21102324', 'Welcome to huhu! This group is now active. Feel free to start discussions and collaborate with others.', '2024-11-26 15:44:42', 1, 1),
-(66, 25, 'C21102324', 'Welcome to nicesdd! This group is now active. Feel free to start discussions and collaborate with others.', '2024-11-26 15:44:58', 0, 1),
-(67, 25, 'C21102324', 'Group name changed to \"okay nice\".', '2024-11-26 15:45:22', 0, 1),
-(68, 24, 'C21102324', 'heya', '2024-11-27 04:06:46', 1, 0),
-(69, 26, 'C21102324', 'Welcome to test! This group is now active. Feel free to start discussions and collaborate with others.', '2024-12-01 05:26:12', 1, 1);
+(70, 28, 'C21102324', 'Welcome to Mark\'s First Group! This group is now active. Feel free to start discussions and collaborate with others.', '2024-12-01 14:14:01', 1, 1),
+(71, 29, 'C21102324', 'Welcome to KLym! This group is now active. Feel free to start discussions and collaborate with others.', '2024-12-01 15:02:54', 1, 1),
+(72, 29, 'C21102324', 'Group name changed to \"BSIT 4F - Capstone Project 2\".', '2024-12-02 05:53:32', 1, 1),
+(73, 29, 'C21102324', 'Group name changed to \"BSIT 4F - System Administration and Maintenance\".', '2024-12-02 05:54:22', 1, 1),
+(74, 30, 'C21101162', 'Welcome to Lyme\'s Group! This group is now active. Feel free to start discussions and collaborate with others.', '2024-12-02 13:49:47', 1, 1),
+(75, 31, 'C21101162', 'Welcome to BSIT 4C - CAPSTONE PROJ 2! This group is now active. Feel free to start discussions and collaborate with others.', '2024-12-02 15:04:43', 0, 1);
 
 -- --------------------------------------------------------
 
@@ -601,8 +595,9 @@ INSERT INTO `users` (`id`, `accountName`, `firstName`, `lastName`, `email`, `idN
 (94, NULL, 'rendel', 'berdol', 'reberdol@my.cspc.edu.ph', '2411476', 'Student', '$2y$12$mxse1PkWMHFo.qIWBH61S.DAGXTpveetEAkdqrNWH9nphEI8T2TxC', NULL, NULL, '942276641325', 'hxWNxwfJrhZHAroQ1DI0gQJsIAZOGKGDdDT94KygOguFN1g9CefTeqIwbL9u', '2024-09-27 02:10:23', '2024-09-27 02:11:39', NULL, NULL),
 (95, NULL, 'adrian', 'aliparo', 'adaliparo@my.cspc.edu.ph', '2411310', 'Student', '$2y$12$EF0qmOVVfli8YWZGmLRtJOECEgd2Nve1ZGUeB4qIaFE.Pk.EJJYiG', NULL, NULL, '872237138494', 'Ck3uUUTHLwXsFTLHH10n2TlXdxGIqUAwDi5iu2svDldVfNuuMUM6rJpueX63', '2024-09-27 02:11:51', '2024-09-27 02:12:31', NULL, NULL),
 (96, NULL, 'jerry', 'balaguer', 'jebalaguer@my.cspc.edu.ph', '2411312', 'Student', '$2y$12$8ER9TNSpPAzEyLmnaSwQEuCs3gXaB8XaRTCqErrT1XgJEy9lJpt52', NULL, NULL, '131718404069', 'oIswkGUnZc7PC5MMKkccxcMilTwZ3GIy6dsqlL0oYbjswNBUSxvWCayrXJc3', '2024-09-27 02:13:14', '2024-09-27 02:14:32', NULL, NULL),
-(100, NULL, 'Mark Vincent', 'Cleofe', 'macleofe@my.cspc.edu.ph', 'C21102324', 'Instructor', 'markvincent', '/uploads/1733033411212-870126092.jpeg', NULL, NULL, NULL, NULL, '2024-12-01 06:10:11', NULL, NULL),
-(101, NULL, 'Lyme', 'Lavarias', 'lylavarias@my.cspc.edu.ph', 'C21101162', 'Student', 'lymelavarias', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+(100, NULL, 'Mark Vincent', 'Cleofe', 'macleofe@my.cspc.edu.ph', 'C21102324', 'Faculty', 'markvincent', '/uploads/1733322439416-91419862.jpeg', NULL, NULL, NULL, NULL, '2024-12-04 14:27:19', NULL, NULL),
+(101, NULL, 'Lyme', 'Lavarias', 'lylavarias@my.cspc.edu.ph', 'C21101162', 'Student', 'lymelavarias', '/uploads/1733197067852-469885969.jpeg', NULL, NULL, NULL, NULL, '2024-12-03 03:37:48', NULL, NULL),
+(102, NULL, 'John Llenard', 'Nagal', 'jonagal@my.cspc.edu.ph', 'C21102351', 'Student', 'john', '/uploads/1733323424015-9154169.jpeg', NULL, NULL, NULL, NULL, '2024-12-04 14:43:44', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1330,19 +1325,19 @@ ALTER TABLE `class_lists`
 -- AUTO_INCREMENT for table `groups`
 --
 ALTER TABLE `groups`
-  MODIFY `group_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `group_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT for table `group_members`
 --
 ALTER TABLE `group_members`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `messages`
 --
 ALTER TABLE `messages`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=70;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=76;
 
 --
 -- AUTO_INCREMENT for table `migrations`
@@ -1378,7 +1373,7 @@ ALTER TABLE `student_masterlists`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=102;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=103;
 
 --
 -- AUTO_INCREMENT for table `user_logs`

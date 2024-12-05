@@ -133,7 +133,7 @@ const EditGroupChat = () => {
 
     Alert.alert(
       "Delete Group",
-      "Are you sure you want to delete this group? This action cannot be undone.",
+      "Are you sure you want to delete this group chat? This action cannot be undone.",
       [
         {
           text: "Cancel",
