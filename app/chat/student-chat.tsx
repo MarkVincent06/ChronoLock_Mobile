@@ -8,6 +8,8 @@ import {
   Image,
   ActivityIndicator,
   TextInput,
+  Modal,
+  Alert,
 } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Icon from "react-native-vector-icons/Ionicons";
@@ -23,18 +25,16 @@ interface Group {
   group_id: number;
   group_name: string;
   avatar?: string;
-  group_key: string;
-  sender?: string;
-  latest_message?: string;
-  latest_message_isSeen?: boolean;
 }
 
 const GroupList = ({
   fetchGroupsApi,
   emptyMessage,
+  onGroupPress,
 }: {
   fetchGroupsApi: () => Promise<Group[]>;
   emptyMessage: string;
+  onGroupPress: (group: Group) => void;
 }) => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [filteredGroups, setFilteredGroups] = useState<Group[]>([]);
@@ -75,7 +75,7 @@ const GroupList = ({
   const renderGroupItem = ({ item }: { item: Group }) => (
     <TouchableOpacity
       style={styles.groupItem}
-      onPress={() => handleJoinGroup(item.group_id)}
+      onPress={() => onGroupPress(item)}
     >
       <Image
         source={
@@ -105,7 +105,7 @@ const GroupList = ({
     <View style={styles.container}>
       <TextInput
         style={styles.searchInput}
-        placeholder="Search groups..."
+        placeholder="Search chats..."
         value={searchText}
         onChangeText={handleSearch}
       />
@@ -121,11 +121,8 @@ const GroupList = ({
   );
 };
 
-const handleJoinGroup = (groupId: number) => {
-  console.warn(groupId);
-};
-
 const MyChats = () => {
+  const router = useRouter();
   const { user } = useUserContext();
 
   const fetchMyGroups = async () => {
@@ -135,24 +132,168 @@ const MyChats = () => {
     return response.data;
   };
 
-  return (
-    <GroupList fetchGroupsApi={fetchMyGroups} emptyMessage="No Chats Found" />
-  );
-};
+  const openChat = async (groupId: number, groupName: string) => {
+    try {
+      await axios.post(
+        `${API_URL}/messages/group/${groupId}/markMessageAsSeen`
+      );
+      router.push({
+        pathname: "/chat/message",
+        params: {
+          group_id: groupId,
+          group_name: groupName,
+        },
+      });
+    } catch (error) {
+      console.error("Error marking messages as seen:", error);
+    }
+  };
 
-const JoinChats = () => {
-  const fetchAllGroups = async () => {
-    const response = await axios.get<Group[]>(
-      `${API_URL}/groups/fetchAllGroups`
-    );
-    return response.data;
+  const handleGroupPress = (group: Group) => {
+    openChat(group.group_id, group.group_name);
   };
 
   return (
     <GroupList
-      fetchGroupsApi={fetchAllGroups}
-      emptyMessage="No Chats Available"
+      fetchGroupsApi={fetchMyGroups}
+      emptyMessage="No Chats Found"
+      onGroupPress={handleGroupPress}
     />
+  );
+};
+
+const JoinChats = () => {
+  const { user } = useUserContext();
+  const router = useRouter();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [groupKey, setGroupKey] = useState("");
+  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchAvailableGroups = async () => {
+    const response = await axios.get<Group[]>(
+      `${API_URL}/groups/fetchAvailableGroups/${user?.idNumber}`
+    );
+    return response.data;
+  };
+
+  const handleGroupPress = (group: Group) => {
+    setSelectedGroup(group);
+    setModalVisible(true);
+  };
+
+  const handleSubmitGroupKey = async () => {
+    if (!groupKey.trim()) {
+      Alert.alert("Error", "Please enter a valid group key.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.post(
+        `${API_URL}/group-members/insertMemberByGroupKey`,
+        {
+          userIdNumber: user?.idNumber,
+          groupKey,
+        }
+      );
+
+      if (response.data.success) {
+        // Post a system message
+        const joinMessage = `${user?.firstName} ${user?.lastName} has joined the group ${selectedGroup?.group_name}. Welcome!`;
+        await axios.post(
+          `${API_URL}/messages/group/${selectedGroup?.group_id}/newSystemMessage`,
+          {
+            userId: user?.idNumber,
+            text: joinMessage,
+          }
+        );
+
+        Alert.alert("Success", "You have joined the group!");
+        try {
+          await axios.post(
+            `${API_URL}/messages/group/${selectedGroup?.group_id}/markMessageAsSeen`
+          );
+          router.push({
+            pathname: "/chat/message",
+            params: {
+              group_id: selectedGroup?.group_id,
+              group_name: selectedGroup?.group_name,
+            },
+          });
+        } catch (innerError) {
+          console.error("Error marking messages as seen:", innerError);
+        }
+      } else {
+        Alert.alert("Error", response.data.error || "Invalid group key.");
+      }
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        Alert.alert(
+          "Error",
+          error.response?.data?.error || "Network error occurred."
+        );
+        console.error("Axios error:", error.response?.data || error.message);
+      } else if (error instanceof Error) {
+        Alert.alert("Error", error.message || "An unknown error occurred.");
+        console.error("Error message:", error.message);
+      } else {
+        Alert.alert("Error", "Failed to join the group. Please try again.");
+        console.error("Unknown error:", error);
+      }
+    } finally {
+      setLoading(false);
+      setModalVisible(false);
+      setGroupKey("");
+    }
+  };
+
+  return (
+    <>
+      <GroupList
+        fetchGroupsApi={fetchAvailableGroups}
+        emptyMessage="No Chats Available"
+        onGroupPress={handleGroupPress}
+      />
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>
+              Join {selectedGroup?.group_name}
+            </Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter Group Key"
+              value={groupKey}
+              onChangeText={setGroupKey}
+              secureTextEntry
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#28a745" }]}
+                onPress={handleSubmitGroupKey}
+                disabled={loading}
+              >
+                <Text style={styles.modalButtonText}>
+                  {loading ? "Joining..." : "Submit"}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#dc3545" }]}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 };
 
@@ -237,6 +378,45 @@ const styles = StyleSheet.create({
   backButton: {
     paddingHorizontal: 10,
     marginRight: 12,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    width: "80%",
+    padding: 20,
+    borderRadius: 10,
+    backgroundColor: "#fff",
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 15,
+  },
+  modalActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  modalButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  modalButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
 
