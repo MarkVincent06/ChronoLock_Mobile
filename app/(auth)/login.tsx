@@ -26,6 +26,7 @@ import { auth } from "../../config/firebase";
 import { FirebaseError } from "firebase/app";
 import { useUserContext } from "../../context/UserContext";
 import API_URL from "../../config/ngrok-api";
+import { useRouter } from "expo-router";
 
 import eye from "../../assets/icons/eye.png";
 import eyeHide from "../../assets/icons/eye-hide.png";
@@ -38,6 +39,7 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
 
   const { setUser } = useUserContext();
+  const router = useRouter();
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -230,6 +232,14 @@ const Login: React.FC = () => {
             color={GoogleSigninButton.Color.Dark}
             onPress={handleGoogleSignIn}
           />
+
+          {/* Forgot Password Button */}
+          <TouchableOpacity
+            onPress={() => router.push("/forgot-password")}
+            style={styles.forgotPasswordButton}
+          >
+            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          </TouchableOpacity>
         </View>
 
         {loading && (
@@ -281,8 +291,8 @@ const styles = StyleSheet.create({
   },
   eyeContainer: {
     position: "absolute",
-    right: 5,
-    top: 25,
+    right: 10,
+    top: 21,
   },
   eyeIcon: {
     width: 24,
@@ -306,6 +316,15 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 48,
     marginTop: 20,
+  },
+  forgotPasswordButton: {
+    marginTop: 15,
+    alignSelf: "center",
+  },
+  forgotPasswordText: {
+    color: "#1A73E8",
+    fontSize: 16,
+    fontWeight: "500",
   },
   loaderContainer: {
     position: "absolute",

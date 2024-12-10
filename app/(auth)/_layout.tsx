@@ -15,8 +15,7 @@ const AuthLayout = () => {
         <Stack.Screen
           name="forgot-password"
           options={{
-            headerShown: true,
-            title: "Forgot Password",
+            headerShown: false,
           }}
         />
       </Stack>

@@ -93,7 +93,7 @@ const CreateGroupChat = () => {
       const groupId = response.data.groupId;
 
       // Post a system message
-      const welcomeMessage = `Welcome to ${name}! This group is now active. Feel free to start discussions and collaborate with others.`;
+      const welcomeMessage = `This group is now active. Feel free to start discussions and collaborate with others.`;
       await axios.post(
         `${API_URL}/messages/group/${groupId}/newSystemMessage`,
         {

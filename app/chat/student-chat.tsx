@@ -34,10 +34,12 @@ const GroupList = ({
   fetchGroupsApi,
   emptyMessage,
   onGroupPress,
+  showLatestMessage,
 }: {
   fetchGroupsApi: () => Promise<Group[]>;
   emptyMessage: string;
   onGroupPress: (group: Group) => void;
+  showLatestMessage?: boolean;
 }) => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [filteredGroups, setFilteredGroups] = useState<Group[]>([]);
@@ -96,18 +98,20 @@ const GroupList = ({
         <Text numberOfLines={1} ellipsizeMode="tail" style={styles.groupName}>
           {item.group_name}
         </Text>
-        <Text
-          style={[
-            styles.latestMessage,
-            !item.latest_message_isSeen && styles.unseenMessage,
-          ]}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {item.sender && item.latest_message
-            ? `${item.sender}: ${item.latest_message}`
-            : "No messages yet"}
-        </Text>
+        {showLatestMessage && (
+          <Text
+            style={[
+              styles.latestMessage,
+              !item.latest_message_isSeen && styles.unseenMessage,
+            ]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {item.sender && item.latest_message
+              ? `${item.sender}: ${item.latest_message}`
+              : "No messages yet"}
+          </Text>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -173,6 +177,7 @@ const MyChats = () => {
       fetchGroupsApi={fetchMyGroups}
       emptyMessage="No Chats Found"
       onGroupPress={handleGroupPress}
+      showLatestMessage={true}
     />
   );
 };
