@@ -2,72 +2,69 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
 import { Card } from "@rneui/themed";
 import { useUserContext } from "../../context/UserContext";
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Import AsyncStorage
 import API_URL from "../../config/ngrok-api"; // Adjust the path as needed
 
+// Define the type for a schedule
+interface Schedule {
+  scheduleID: number;
+  courseName: string;
+  courseCode: string;
+  instFirstName: string;
+  instLastName: string;
+  section: string;
+  startTime: string;
+  endTime: string;
+  program: string;
+  year: string;
+  userID: string;
+}
+
 export default function Home() {
-  const [isLoading, setIsLoading] = useState(false);
   const { user } = useUserContext();
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [subjects, setSubjects] = useState([]);
-  const [events, setEvents] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [schedules, setSchedules] = useState<Schedule[]>([]); // State for schedules with proper type
+  const [filteredSchedules, setFilteredSchedules] = useState<Schedule[]>([]); // State for filtered schedules with proper type
 
-  // Update time every minute
+  // Fetch schedule data
   useEffect(() => {
-    setCurrentTime(new Date());
-    const interval = setInterval(() => setCurrentTime(new Date()), 60000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Fetch data for subjects and events
-  useEffect(() => {
-    const fetchData = async () => {
+    const fetchSchedules = async () => {
       setIsLoading(true);
       try {
-        // Fetch both subjects and events concurrently using Promise.all
-        const [subjectsResponse, eventsResponse] = await Promise.all([
-          fetch(`${API_URL}/subjects`),
-          fetch(`${API_URL}/events`),
-        ]);
+        // Fetch the schedule data from the API
+        const response = await fetch(`${API_URL}/schedules/schedules`);
 
-        // Check if responses are okay, otherwise throw error
-        if (!subjectsResponse.ok) {
-          throw new Error("Failed to fetch subjects");
-        }
-        if (!eventsResponse.ok) {
-          throw new Error("Failed to fetch events");
+        // Check if the response is okay
+        if (!response.ok) {
+          throw new Error("Failed to fetch schedules");
         }
 
-        const subjectsData = await subjectsResponse.json();
-        const eventsData = await eventsResponse.json();
+        const data = await response.json();
+        setSchedules(data.data); // Assuming 'data' contains the schedule data
 
-        setSubjects(subjectsData);
-        setEvents(eventsData);
+        // Retrieve the idnumber from AsyncStorage
+        const storedIdNumber = await AsyncStorage.getItem("idNumber");
+        console.log("Stored idNumber in AsyncStorage:", storedIdNumber); // Log the stored idNumber
+
+        // Filter schedules based on the stored idnumber
+        if (storedIdNumber) {
+          const filtered = data.data.filter(
+            (schedule: Schedule) => schedule.userID === storedIdNumber // Type-safe filtering
+          );
+          setFilteredSchedules(filtered); // Update the filteredSchedules state
+          
+          // Log the filtered schedules
+          console.log("Filtered Schedules:", filtered);
+        }
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching schedules:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchData();
+    fetchSchedules();
   }, []);
-
-  // Filter for ongoing subjects
-  const matchingSubjects = subjects.filter(subject => {
-    const isToday = subject.day === currentTime.toLocaleDateString("en-US", { weekday: "long" });
-    const currentTimeMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
-    const [startHour, startMinute] = subject.start_time.split(":").map(Number);
-    const startMinutes = startHour * 60 + startMinute;
-    const [endHour, endMinute] = subject.end_time.split(":").map(Number);
-    const endMinutes = endHour * 60 + endMinute;
-
-    return isToday && currentTimeMinutes >= startMinutes && currentTimeMinutes < endMinutes;
-  });
-
-  // Filter and sort upcoming events
-  const upcomingEvents = events
-    .filter(event => new Date(event.date) >= currentTime)
-    .sort((a, b) => new Date(a.date) - new Date(b.date));
 
   return (
     <ScrollView style={styles.container}>
@@ -77,83 +74,38 @@ export default function Home() {
           Welcome, {user?.firstName}!
         </Card.Title>
         <Text style={styles.userTypeText}>{user?.userType}</Text>
-        <Text style={styles.statusText}>
-          You have {matchingSubjects.length} ongoing classes.
-        </Text>
       </Card>
 
-      {/* Ongoing Classes Section */}
+      {/* Loading Indicator */}
       {isLoading ? (
-        <ActivityIndicator size="large" color="#3d85c6" />
-      ) : matchingSubjects.length > 0 ? (
-        <Card containerStyle={styles.card}>
-          <Card.Title style={styles.cardTitle}>Ongoing Classes</Card.Title>
-          <Card.Divider />
-          {matchingSubjects.map(subject => (
-            <View key={subject.id} style={styles.occupiedCard}>
-              <Text style={styles.occupiedText}>OCCUPIED</Text>
-              <Text style={styles.subjectTitle}>{subject.name}</Text>
-              <Text style={styles.subjectTime}>
-                {subject.start_time} - {subject.end_time}
-              </Text>
-            </View>
-          ))}
-        </Card>
+        <ActivityIndicator size="large" color="#3d85c6" style={styles.loader} />
       ) : (
-        <Card containerStyle={styles.card}>
-          <Card.Title style={styles.cardTitle}>No Ongoing Classes</Card.Title>
-          <Card.Divider />
-          <Text style={styles.noDataText}>No subjects are ongoing right now.</Text>
-        </Card>
-      )}
+        <>
+          {/* My Schedule Section */}
+          <Text style={styles.myScheduleText}>My Schedule</Text>
 
-      {/* Upcoming Events Section */}
-      <Card containerStyle={styles.card}>
-        <Card.Title style={styles.cardTitle}>Upcoming Events</Card.Title>
-        <Card.Divider />
-        {upcomingEvents.length > 0 ? (
-          upcomingEvents.map(event => (
-            <View key={event.id} style={styles.eventCard}>
-              <Text style={styles.eventTitle}>{event.name}</Text>
-              <Text style={styles.eventTime}>
-                {new Date(event.date).toLocaleDateString("en-US", {
-                  weekday: "long",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </Text>
-            </View>
-          ))
-        ) : (
-          <Text style={styles.noDataText}>No upcoming events.</Text>
-        )}
-      </Card>
-
-      {/* My Schedule Section */}
-      <Card containerStyle={styles.card}>
-        <Card.Title style={styles.cardTitle}>My Schedule</Card.Title>
-        <Card.Divider />
-        {subjects.length > 0 ? (
-          subjects
-            .filter(subject => subject.day === currentTime.toLocaleDateString("en-US", { weekday: "long" }))
-            .sort((a, b) => {
-              const [aHour, aMinute] = a.start_time.split(":").map(Number);
-              const [bHour, bMinute] = b.start_time.split(":").map(Number);
-              return aHour * 60 + aMinute - (bHour * 60 + bMinute);
-            })
-            .map(subject => (
-              <View key={subject.id} style={styles.scheduleCard}>
-                <Text style={styles.subjectTitle}>{subject.name}</Text>
-                <Text style={styles.subjectTime}>
-                  {subject.start_time} - {subject.end_time}
+          {/* Display filtered schedule data */}
+          {filteredSchedules.length > 0 ? (
+            filteredSchedules.map((schedule) => (
+              <Card key={schedule.scheduleID} containerStyle={styles.card}>
+                <Text style={styles.cardTitle}>{schedule.courseName}</Text>
+                <Text style={styles.cardSubtitle}>Code: {schedule.courseCode}</Text>
+                <Text style={styles.cardDetails}>
+                  Instructor: {schedule.instFirstName} {schedule.instLastName}
                 </Text>
-                <Text style={styles.subjectDetails}>Section: {subject.section}</Text>
-              </View>
+                <Text style={styles.cardDetails}>
+                  Section: {schedule.section} | Time: {schedule.startTime} - {schedule.endTime}
+                </Text>
+                <Text style={styles.cardDetails}>
+                  Program: {schedule.program} | Year: {schedule.year}
+                </Text>
+              </Card>
             ))
-        ) : (
-          <Text style={styles.noDataText}>No schedule available for today.</Text>
-        )}
-      </Card>
+          ) : (
+            <Text style={styles.noScheduleText}>No schedules found for this user.</Text>
+          )}
+        </>
+      )}
     </ScrollView>
   );
 }
@@ -161,19 +113,23 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    padding: 16,
-    backgroundColor: "#f8f9fa",
+    padding: 20,
+    backgroundColor: "#f4f7fc",  // Soft background color
     paddingBottom: 100,
   },
   welcomeCard: {
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 20,
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 25,
     backgroundColor: "#3d85c6",
-    elevation: 3,
+    shadowColor: "#000",  // Soft shadow
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 5,
   },
   welcomeText: {
-    fontSize: 26,
+    fontSize: 30,
     fontWeight: "bold",
     color: "#fff",
     textAlign: "center",
@@ -181,74 +137,56 @@ const styles = StyleSheet.create({
   },
   userTypeText: {
     fontSize: 16,
-    color: "#fff",
+    color: "#f1f1f1",
     textAlign: "center",
-    marginBottom: 10,
+    marginBottom: 15,
     fontStyle: "italic",
-    fontWeight: "bold",
+    fontWeight: "600",
   },
-  statusText: {
-    fontSize: 16,
-    color: "#e0f7fa",
+  loader: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 50,
+  },
+  myScheduleText: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: -5,
     textAlign: "center",
+    textTransform: "uppercase",
   },
   card: {
-    borderRadius: 10,
-    padding: 0,
-    elevation: 3,
+    borderRadius: 15,
+    marginBottom: 20,
+    padding: 20,
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
-    marginTop: 5,
+    color: "#333",
   },
-  occupiedCard: {
-    padding: 10,
-    marginBottom: 10,
-    backgroundColor: "#f8d7da",
-    borderRadius: 5,
-  },
-  occupiedText: {
+  cardSubtitle: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#d9534f",
-    marginBottom: 5,
+    color: "#777",
+    marginVertical: 5,
   },
-  subjectTitle: {
+  cardDetails: {
+    fontSize: 14,
+    color: "#555",
+    marginVertical: 3,
+  },
+  noScheduleText: {
     fontSize: 16,
-    fontWeight: "bold",
-  },
-  subjectTime: {
-    fontSize: 14,
-    color: "#6c757d",
-  },
-  subjectDetails: {
-    fontSize: 14,
-    color: "#6c757d",
-  },
-  noDataText: {
-    fontSize: 14,
-    color: "#6c757d",
+    color: "#555",
     textAlign: "center",
-  },
-  scheduleCard: {
-    padding: 10,
-    marginBottom: 10,
-    backgroundColor: "#e9ecef",
-    borderRadius: 5,
-  },
-  eventCard: {
-    padding: 10,
-    marginBottom: 10,
-    backgroundColor: "#d9edf7",
-    borderRadius: 5,
-  },
-  eventTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  eventTime: {
-    fontSize: 14,
-    color: "#6c757d",
+    marginTop: 20,
   },
 });

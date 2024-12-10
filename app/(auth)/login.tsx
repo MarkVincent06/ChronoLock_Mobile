@@ -18,14 +18,12 @@ import axios from "axios";
 import {
   GoogleAuthProvider,
   signInWithCredential,
-  signInWithEmailAndPassword,
   signInWithCustomToken,
-  getAuth,
 } from "firebase/auth";
 import { auth } from "../../config/firebase";
-import { FirebaseError } from "firebase/app";
 import { useUserContext } from "../../context/UserContext";
 import API_URL from "../../config/ngrok-api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import eye from "../../assets/icons/eye.png";
 import eyeHide from "../../assets/icons/eye-hide.png";
@@ -41,6 +39,7 @@ const Login: React.FC = () => {
 
   const handleLogin = async () => {
     if (!email || !password) {
+      console.log("Login attempt with missing email or password.");
       alert("Please enter both email and password.");
       return;
     }
@@ -48,13 +47,14 @@ const Login: React.FC = () => {
     const isValidEmail = (email: string) =>
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     if (!isValidEmail(email)) {
+      console.log("Invalid email address provided:", email);
       alert("Please enter a valid email address.");
       return;
     }
 
     setLoading(true);
     try {
-      // Send the email to the backend to fetch additional user data
+      console.log("Attempting login for email:", email);
       const response = await axios.post(
         `${API_URL}/auth/login`,
         { email, password },
@@ -69,7 +69,6 @@ const Login: React.FC = () => {
 
         const userData = response.data.user;
 
-        // Map the response data to the User type
         const mappedUser = {
           id: userData.id,
           firstName: userData.firstName,
@@ -80,48 +79,33 @@ const Login: React.FC = () => {
           avatar: userData.avatar,
         };
 
-        // Set the user in the context
+        // Store the user's idNumber in AsyncStorage
+        await AsyncStorage.setItem("idNumber", userData.idNumber);
+
+        // Log the data after storing it
+        const storedIdNumber = await AsyncStorage.getItem("idNumber");
+        console.log("Stored idNumber in AsyncStorage:", storedIdNumber);
+
         setUser(mappedUser);
+
+        // Log user login details
+        console.log("User logged in successfully:", {
+          id: userData.id,
+          email: userData.email,
+          userType: userData.userType,
+        });
       } else {
+        console.log("Login failed: User not found or invalid credentials.");
         alert("User not found or invalid credentials.");
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
+        console.error("Axios error during login:", error.message);
         if (error.response) {
-          const { status, data } = error.response;
-
-          switch (status) {
-            case 401:
-              alert(
-                data.message || "Incorrect email or password. Please try again."
-              );
-              break;
-            case 404:
-              alert(data.message || "User not found. Please register first.");
-              break;
-            default:
-              alert(data.message || "An error occurred. Please try again.");
-              break;
-          }
-        } else {
-          alert(
-            "A network error occurred. Please check your connection and try again."
-          );
-        }
-      } else if (error instanceof FirebaseError) {
-        switch (error.code) {
-          case "auth/wrong-password":
-            alert("Incorrect password. Please try again.");
-            break;
-          case "auth/user-not-found":
-            alert("User not found. Please register first.");
-            break;
-          default:
-            alert("An error occurred. Please try again.");
-            break;
+          console.log("Error response:", error.response.data);
         }
       } else {
-        alert("An unknown error occurred.");
+        console.error("An error occurred during login:", error);
       }
     } finally {
       setLoading(false);
@@ -131,6 +115,7 @@ const Login: React.FC = () => {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
+      console.log("Initiating Google sign-in...");
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
       const { idToken, user: googleUser } = userInfo;
@@ -157,16 +142,27 @@ const Login: React.FC = () => {
           avatar: userData.avatar,
         };
 
+        // Store the user's idNumber in AsyncStorage
+        await AsyncStorage.setItem("idNumber", userData.idNumber);
+
+        // Log the data after storing it
+        const storedIdNumber = await AsyncStorage.getItem("idNumber");
+        console.log("Stored idNumber in AsyncStorage after Google sign-in:", storedIdNumber);
+
         setUser(mappedUser);
 
-        console.log("Google sign-in successful and context updated!");
+        console.log("Google sign-in successful:", {
+          id: userData.id,
+          email: userData.email,
+          userType: userData.userType,
+        });
       } else {
+        console.log("Google sign-in failed:", response.data.message);
         alert(response.data.message);
         await GoogleSignin.signOut();
       }
     } catch (error) {
       console.error("Google Sign-In Error:", error);
-      alert("An error occurred during Google Sign-In.");
     } finally {
       setLoading(false);
     }
@@ -179,10 +175,7 @@ const Login: React.FC = () => {
           <Text style={styles.title}>Log in to ChronoLock</Text>
 
           <TextInput
-            style={[
-              styles.input,
-              focusedInput === "email" && styles.inputFocused,
-            ]}
+            style={[styles.input, focusedInput === "email" && styles.inputFocused]}
             placeholder="Email"
             placeholderTextColor="#888"
             keyboardType="email-address"
@@ -195,10 +188,7 @@ const Login: React.FC = () => {
 
           <View style={{ position: "relative" }}>
             <TextInput
-              style={[
-                styles.input,
-                focusedInput === "password" && styles.inputFocused,
-              ]}
+              style={[styles.input, focusedInput === "password" && styles.inputFocused]}
               placeholder="Password"
               placeholderTextColor="#888"
               secureTextEntry={!showPassword}
@@ -208,10 +198,7 @@ const Login: React.FC = () => {
               onFocus={() => setFocusedInput("password")}
               onBlur={() => setFocusedInput(null)}
             />
-            <TouchableOpacity
-              style={styles.eyeContainer}
-              onPress={() => setShowPassword((prev) => !prev)}
-            >
+            <TouchableOpacity style={styles.eyeContainer} onPress={() => setShowPassword((prev) => !prev)}>
               <Image
                 source={showPassword ? eyeHide : eye}
                 resizeMode="contain"
