@@ -26,7 +26,7 @@ export default function Onboarding() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.logoContainer}>
-        <Text style={styles.logoText}>ChronoLock</Text>
+        <Text style={styles.logoText}>ChronoLockk</Text>
         <Image source={logo} style={styles.logo} />
         <Text style={styles.slogan}>Secure Access. Anytime. Anywhere.</Text>
       </View>
