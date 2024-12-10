@@ -25,6 +25,9 @@ interface Group {
   group_id: number;
   group_name: string;
   avatar?: string;
+  sender?: string;
+  latest_message?: string;
+  latest_message_isSeen?: boolean;
 }
 
 const GroupList = ({
@@ -92,6 +95,18 @@ const GroupList = ({
       <View style={styles.groupDetails}>
         <Text numberOfLines={1} ellipsizeMode="tail" style={styles.groupName}>
           {item.group_name}
+        </Text>
+        <Text
+          style={[
+            styles.latestMessage,
+            !item.latest_message_isSeen && styles.unseenMessage,
+          ]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {item.sender && item.latest_message
+            ? `${item.sender}: ${item.latest_message}`
+            : "No messages yet"}
         </Text>
       </View>
     </TouchableOpacity>
@@ -368,6 +383,14 @@ const styles = StyleSheet.create({
   groupName: {
     fontSize: 16,
     fontWeight: "bold",
+  },
+  latestMessage: {
+    fontSize: 14,
+    color: "#777",
+  },
+  unseenMessage: {
+    fontWeight: "bold",
+    color: "#000",
   },
   emptyMessage: {
     textAlign: "center",
