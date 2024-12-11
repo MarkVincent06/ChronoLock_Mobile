@@ -63,9 +63,7 @@ export default {
       },
     },
     owner: "markvincentcleofe06",
-    runtimeVersion: {
-      policy: "appVersion",
-    },
+    runtimeVersion: "1.0.0", // Set explicit runtime version here
     updates: {
       url: "https://u.expo.dev/a601ec96-9028-42ff-a265-9cfec7ca0f2b",
     },

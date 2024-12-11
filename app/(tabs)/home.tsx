@@ -25,6 +25,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [schedules, setSchedules] = useState<Schedule[]>([]); // State for schedules with proper type
   const [filteredSchedules, setFilteredSchedules] = useState<Schedule[]>([]); // State for filtered schedules with proper type
+  const [currentDate, setCurrentDate] = useState<string>("");
 
   // Fetch schedule data
   useEffect(() => {
@@ -64,6 +65,18 @@ export default function Home() {
     };
 
     fetchSchedules();
+
+    // Update the current date and time every minute
+    const interval = setInterval(() => {
+      const date = new Date();
+      setCurrentDate(date.toLocaleString()); // Set the current date and time
+    }, 60000); // 60000ms = 1 minute
+
+    // Initial call to set the current time immediately
+    setCurrentDate(new Date().toLocaleString());
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -74,6 +87,8 @@ export default function Home() {
           Welcome, {user?.firstName}!
         </Card.Title>
         <Text style={styles.userTypeText}>{user?.userType}</Text>
+        {/* Display current time and date under faculty text */}
+        <Text style={styles.dateText}>{currentDate}</Text>
       </Card>
 
       {/* Loading Indicator */}
@@ -81,29 +96,31 @@ export default function Home() {
         <ActivityIndicator size="large" color="#3d85c6" style={styles.loader} />
       ) : (
         <>
-          {/* My Schedule Section */}
-          <Text style={styles.myScheduleText}>My Schedule</Text>
+          {/* My Schedule Section inside a single Card */}
+          <Card containerStyle={styles.scheduleCard}>
+            <Text style={styles.myScheduleText}>My Schedule</Text>
 
-          {/* Display filtered schedule data */}
-          {filteredSchedules.length > 0 ? (
-            filteredSchedules.map((schedule) => (
-              <Card key={schedule.scheduleID} containerStyle={styles.card}>
-                <Text style={styles.cardTitle}>{schedule.courseName}</Text>
-                <Text style={styles.cardSubtitle}>Code: {schedule.courseCode}</Text>
-                <Text style={styles.cardDetails}>
-                  Instructor: {schedule.instFirstName} {schedule.instLastName}
-                </Text>
-                <Text style={styles.cardDetails}>
-                  Section: {schedule.section} | Time: {schedule.startTime} - {schedule.endTime}
-                </Text>
-                <Text style={styles.cardDetails}>
-                  Program: {schedule.program} | Year: {schedule.year}
-                </Text>
-              </Card>
-            ))
-          ) : (
-            <Text style={styles.noScheduleText}>No schedules found for this user.</Text>
-          )}
+            {/* Display filtered schedule data */}
+            {filteredSchedules.length > 0 ? (
+              filteredSchedules.map((schedule) => (
+                <View key={schedule.scheduleID} style={styles.card}>
+                  <Text style={styles.cardTitle}>{schedule.courseName}</Text>
+                  <Text style={styles.cardSubtitle}>Code: {schedule.courseCode}</Text>
+                  <Text style={styles.cardDetails}>
+                    Instructor: {schedule.instFirstName} {schedule.instLastName}
+                  </Text>
+                  <Text style={styles.cardDetails}>
+                    Section: {schedule.section} | Time: {schedule.startTime} - {schedule.endTime}
+                  </Text>
+                  <Text style={styles.cardDetails}>
+                    Program: {schedule.program} | Year: {schedule.year}
+                  </Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.noScheduleText}>No schedules found for this user.</Text>
+            )}
+          </Card>
         </>
       )}
     </ScrollView>
@@ -114,15 +131,15 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 20,
-    backgroundColor: "#f4f7fc",  // Soft background color
+    backgroundColor: "#f4f7fc", // Soft background color
     paddingBottom: 100,
   },
   welcomeCard: {
     borderRadius: 15,
     padding: 20,
-    marginBottom: 25,
+    marginBottom: 2,
     backgroundColor: "#3d85c6",
-    shadowColor: "#000",  // Soft shadow
+    shadowColor: "#000", // Soft shadow
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
@@ -143,23 +160,21 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     fontWeight: "600",
   },
+  dateText: {
+    fontSize: 14,
+    color: "#fff",
+    textAlign: "center",
+    
+  },
   loader: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     marginTop: 50,
   },
-  myScheduleText: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: -5,
-    textAlign: "center",
-    textTransform: "uppercase",
-  },
-  card: {
+  scheduleCard: {
     borderRadius: 15,
-    marginBottom: 20,
+    marginBottom: 25,
     padding: 20,
     backgroundColor: "#fff",
     shadowColor: "#000",
@@ -168,8 +183,27 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  cardTitle: {
+  myScheduleText: {
     fontSize: 20,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 15,
+    textAlign: "center",
+    textTransform: "uppercase",
+  },
+  card: {
+    borderRadius: 15,
+    marginBottom: 15,
+    padding: 15,
+    backgroundColor: "#f9f9f9",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  cardTitle: {
+    fontSize: 18,
     fontWeight: "bold",
     color: "#333",
   },
