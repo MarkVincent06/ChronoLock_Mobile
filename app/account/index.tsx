@@ -138,7 +138,7 @@ const AccountSettings = () => {
           style: "destructive",
           onPress: async () => {
             try {
-              await axios.delete(`${API_URL}/users/${user?.id}`);
+              await axios.delete(`${API_URL}/users/deleteUser/${user?.id}`);
               setUser(null);
               Alert.alert("Account Deleted", "Your account has been deleted.");
               router.replace("/(auth)/login");
@@ -154,98 +154,103 @@ const AccountSettings = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.avatarContainer}>
-        <TouchableOpacity onPress={isEditing ? handlePickAvatar : undefined}>
-          <Image
-            source={
-              avatar
-                ? {
-                    uri:
-                      avatar.startsWith("http") || avatar.startsWith("file")
-                        ? avatar
-                        : `${API_URL}${avatar}`,
-                  }
-                : require("@/assets/images/default_avatar.png")
-            }
-            style={styles.avatar}
-          />
-          {isEditing && (
-            <View style={styles.editIcon}>
-              <Icon name="edit" type="feather" color="#fff" size={16} />
-            </View>
-          )}
-        </TouchableOpacity>
-      </View>
+      {isLoading ? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#007bff" />
+        </View>
+      ) : (
+        <>
+          <View style={styles.avatarContainer}>
+            <TouchableOpacity
+              onPress={isEditing ? handlePickAvatar : undefined}
+            >
+              <Image
+                source={
+                  avatar
+                    ? {
+                        uri:
+                          avatar.startsWith("http") || avatar.startsWith("file")
+                            ? avatar
+                            : `${API_URL}${avatar}`,
+                      }
+                    : require("@/assets/images/default_avatar.png")
+                }
+                style={styles.avatar}
+              />
+              {isEditing && (
+                <View style={styles.editIcon}>
+                  <Icon name="edit" type="feather" color="#fff" size={16} />
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
 
-      <View style={styles.form}>
-        <Text style={styles.label}>User Type</Text>
-        <TextInput
-          style={[styles.input, { backgroundColor: "#f0f0f0" }]}
-          value={user?.userType || ""}
-          editable={false}
-        />
+          <View style={styles.form}>
+            <Text style={styles.label}>User Type</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: "#f0f0f0" }]}
+              value={user?.userType || ""}
+              editable={false}
+            />
 
-        <Text style={styles.label}>First Name</Text>
-        <TextInput
-          style={styles.input}
-          value={formData.firstName}
-          onChangeText={(value) => handleInputChange("firstName", value)}
-          editable={isEditing}
-        />
+            <Text style={styles.label}>First Name</Text>
+            <TextInput
+              style={styles.input}
+              value={formData.firstName}
+              onChangeText={(value) => handleInputChange("firstName", value)}
+              editable={isEditing}
+            />
 
-        <Text style={styles.label}>Last Name</Text>
-        <TextInput
-          style={styles.input}
-          value={formData.lastName}
-          onChangeText={(value) => handleInputChange("lastName", value)}
-          editable={isEditing}
-        />
+            <Text style={styles.label}>Last Name</Text>
+            <TextInput
+              style={styles.input}
+              value={formData.lastName}
+              onChangeText={(value) => handleInputChange("lastName", value)}
+              editable={isEditing}
+            />
 
-        <Text style={styles.label}>Email</Text>
-        <TextInput
-          style={styles.input}
-          value={formData.email}
-          onChangeText={(value) => handleInputChange("email", value)}
-          editable={isEditing}
-        />
-      </View>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              style={styles.input}
+              value={formData.email}
+              onChangeText={(value) => handleInputChange("email", value)}
+              editable={isEditing}
+            />
+          </View>
 
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: "#007bff" }]}
-        onPress={isEditing ? handleSaveChanges : () => setIsEditing(true)}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>
-            {isEditing ? "Save Changes" : "Edit Details"}
-          </Text>
-        )}
-      </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: "#007bff" }]}
+            onPress={isEditing ? handleSaveChanges : () => setIsEditing(true)}
+          >
+            <Text style={styles.buttonText}>
+              {isEditing ? "Save Changes" : "Edit Details"}
+            </Text>
+          </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: "#ff9800" }]}
-        onPress={() => {
-          router.push(`/account/change-password`);
-        }}
-      >
-        <Text style={styles.buttonText}>Change Password</Text>
-      </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: "#ff9800" }]}
+            onPress={() => {
+              router.push(`/account/change-password`);
+            }}
+          >
+            <Text style={styles.buttonText}>Change Password</Text>
+          </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: "#f44336" }]}
-        onPress={handleGoogleLogout}
-      >
-        <Text style={styles.buttonText}>Logout</Text>
-      </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: "#f44336" }]}
+            onPress={handleGoogleLogout}
+          >
+            <Text style={styles.buttonText}>Logout</Text>
+          </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: "#d32f2f" }]}
-        onPress={handleDeleteAccount}
-      >
-        <Text style={styles.buttonText}>Delete Account</Text>
-      </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: "#d32f2f" }]}
+            onPress={handleDeleteAccount}
+          >
+            <Text style={styles.buttonText}>Delete Account</Text>
+          </TouchableOpacity>
+        </>
+      )}
     </ScrollView>
   );
 };
@@ -253,6 +258,11 @@ const AccountSettings = () => {
 export default AccountSettings;
 
 const styles = StyleSheet.create({
+  loaderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   container: { flexGrow: 1, padding: 20, backgroundColor: "#fff" },
   avatarContainer: { alignItems: "center", marginBottom: 30 },
   avatar: { width: 120, height: 120, borderRadius: 60 },

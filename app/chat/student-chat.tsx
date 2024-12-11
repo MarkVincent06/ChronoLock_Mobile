@@ -25,16 +25,25 @@ interface Group {
   group_id: number;
   group_name: string;
   avatar?: string;
+  sender?: string;
+  latest_message?: string;
+  latest_message_isSeen?: boolean;
 }
 
 const GroupList = ({
   fetchGroupsApi,
   emptyMessage,
   onGroupPress,
+  showLatestMessage,
+  showGroupDetailsButton,
+  onGroupDetails,
 }: {
   fetchGroupsApi: () => Promise<Group[]>;
   emptyMessage: string;
   onGroupPress: (group: Group) => void;
+  showLatestMessage?: boolean;
+  showGroupDetailsButton?: boolean;
+  onGroupDetails?: (groupId: number, groupName: string, avatar: string) => void;
 }) => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [filteredGroups, setFilteredGroups] = useState<Group[]>([]);
@@ -93,7 +102,31 @@ const GroupList = ({
         <Text numberOfLines={1} ellipsizeMode="tail" style={styles.groupName}>
           {item.group_name}
         </Text>
+        {showLatestMessage && (
+          <Text
+            style={[
+              styles.latestMessage,
+              !item.latest_message_isSeen && styles.unseenMessage,
+            ]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {item.sender && item.latest_message
+              ? `${item.sender}: ${item.latest_message}`
+              : "No messages yet"}
+          </Text>
+        )}
       </View>
+      {showGroupDetailsButton && onGroupDetails && (
+        <TouchableOpacity
+          style={styles.detailsButton}
+          onPress={() =>
+            onGroupDetails(item.group_id, item.group_name, item.avatar || "")
+          }
+        >
+          <Icon name="information-circle-outline" size={24} color="#555" />
+        </TouchableOpacity>
+      )}
     </TouchableOpacity>
   );
 
@@ -153,11 +186,29 @@ const MyChats = () => {
     openChat(group.group_id, group.group_name);
   };
 
+  const handleGroupDetails = (
+    groupId: number,
+    groupName: string,
+    avatar: string
+  ) => {
+    router.push({
+      pathname: "/chat/group-details",
+      params: {
+        group_id: groupId,
+        group_name: groupName,
+        group_avatar: avatar,
+      },
+    });
+  };
+
   return (
     <GroupList
       fetchGroupsApi={fetchMyGroups}
       emptyMessage="No Chats Found"
       onGroupPress={handleGroupPress}
+      onGroupDetails={handleGroupDetails}
+      showLatestMessage={true}
+      showGroupDetailsButton={true}
     />
   );
 };
@@ -349,6 +400,7 @@ const styles = StyleSheet.create({
   groupItem: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: 12,
     paddingHorizontal: 16,
     marginBottom: 12,
@@ -368,6 +420,17 @@ const styles = StyleSheet.create({
   groupName: {
     fontSize: 16,
     fontWeight: "bold",
+  },
+  latestMessage: {
+    fontSize: 14,
+    color: "#777",
+  },
+  detailsButton: {
+    padding: 8,
+  },
+  unseenMessage: {
+    fontWeight: "bold",
+    color: "#000",
   },
   emptyMessage: {
     textAlign: "center",
