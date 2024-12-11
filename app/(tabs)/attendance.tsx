@@ -1,142 +1,199 @@
-import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Alert } from "react-native";
-import { Text, TextInput, Button, DataTable } from "react-native-paper";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, ActivityIndicator, Switch, FlatList } from "react-native";
+import { Picker } from "@react-native-picker/picker";
+import API_URL from "../../config/ngrok-api"; // Adjust the path as needed
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Define a type for attendance records
-type AttendanceRecord = {
-  id: number;
+// Define the type for the subject object
+interface Subject {
+  id: string;
+  courseName: string;
+  userID: string;
+}
+
+interface AttendanceRecord {
+  id: string;
   name: string;
-  date: string;
-  status: string;
-};
+  sampleDate: string;
+  status: boolean; // true for present, false for absent
+}
 
-const Attendance = ({ userType }: { userType: "Faculty" | "Student" }) => {
-  const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([
-    { id: 1, name: "John Doe", date: "2024-09-01", status: "Present" },
-    { id: 2, name: "Jane Smith", date: "2024-09-01", status: "Absent" },
-    // Sample data; replace with fetched data from the database
-  ]);
+export default function Attendance() {
+  const [subjects, setSubjects] = useState<Subject[]>([]); // Store fetched subjects
+  const [selectedSubject, setSelectedSubject] = useState<string>(""); // Store selected subject
+  const [filteredSubjects, setFilteredSubjects] = useState<Subject[]>([]); // Store filtered subjects
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]); // Store attendance records
+  const [isLoading, setIsLoading] = useState(true); // Loading state
 
-  const [selectedRecord, setSelectedRecord] = useState<number | null>(null);
-  const [newStatus, setNewStatus] = useState<string>("");
+  // Fetch subjects (or classes) from API
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`${API_URL}/schedules/schedules`); // Adjust API endpoint if necessary
+        if (!response.ok) {
+          throw new Error("Failed to fetch subjects");
+        }
+        const data = await response.json();
+        setSubjects(data.data); // Assuming response contains a "data" array of subjects
 
-  const handleUpdate = (id: number) => {
-    const updatedData = attendanceData.map((record) =>
-      record.id === id ? { ...record, status: newStatus } : record
+        const storedIdNumber = await AsyncStorage.getItem("idNumber");
+        if (storedIdNumber) {
+          // Optionally filter based on the logged-in user's ID or other criteria
+          const filtered = data.data.filter((subject: Subject) => subject.userID === storedIdNumber);
+          setFilteredSubjects(filtered);
+        } else {
+          setFilteredSubjects(data.data); // If no filter needed, use all subjects
+        }
+      } catch (error) {
+        console.error("Error fetching subjects:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSubjects();
+  }, []);
+
+  // Handle attendance toggle (Present/Absent)
+  const handleToggleStatus = (id: string) => {
+    setAttendanceRecords((prevRecords) =>
+      prevRecords.map((record) =>
+        record.id === id ? { ...record, status: !record.status } : record
+      )
     );
-    setAttendanceData(updatedData);
-    setSelectedRecord(null);
-    setNewStatus("");
-    Alert.alert("Success", "Attendance record updated.");
   };
 
-  const renderStudentView = () => {
-    // Assuming the student can only view their own attendance, filter it
-    const studentAttendance = attendanceData.filter(
-      (record) => record.name === "John Doe" // Replace with actual student name logic
-    );
-
-    return (
-      <View style={styles.studentContainer}>
-        <Text style={styles.title}>My Attendance</Text>
-        <DataTable>
-          <DataTable.Header>
-            <DataTable.Title>Date</DataTable.Title>
-            <DataTable.Title>Status</DataTable.Title>
-          </DataTable.Header>
-
-          {studentAttendance.map((record) => (
-            <DataTable.Row key={record.id}>
-              <DataTable.Cell>{record.date}</DataTable.Cell>
-              <DataTable.Cell>{record.status}</DataTable.Cell>
-            </DataTable.Row>
-          ))}
-        </DataTable>
-      </View>
-    );
+  // Sample attendance records (replace with real data from API)
+  const generateSampleAttendance = () => {
+    return [
+      { id: "1", name: "John Doe", sampleDate: "2024-12-11", status: false },
+      { id: "2", name: "Jane Smith", sampleDate: "2024-12-11", status: false },
+      { id: "3", name: "Mark Lee", sampleDate: "2024-12-11", status: false },
+      { id: "4", name: "Emily Brown", sampleDate: "2024-12-11", status: false },
+    ];
   };
 
-  const renderInstructorView = () => (
-    <View>
-      <Text style={styles.title}>Attendance Monitoring</Text>
-      <DataTable>
-        <DataTable.Header>
-          <DataTable.Title>Name</DataTable.Title>
-          <DataTable.Title>Date</DataTable.Title>
-          <DataTable.Title>Status</DataTable.Title>
-          <DataTable.Title>Action</DataTable.Title>
-        </DataTable.Header>
+  useEffect(() => {
+    // Set the sample attendance records when subject is selected
+    if (selectedSubject) {
+      setAttendanceRecords(generateSampleAttendance());
+    }
+  }, [selectedSubject]);
 
-        {attendanceData.map((record) => (
-          <DataTable.Row key={record.id}>
-            <DataTable.Cell>{record.name}</DataTable.Cell>
-            <DataTable.Cell>{record.date}</DataTable.Cell>
-            <DataTable.Cell>{record.status}</DataTable.Cell>
-            <DataTable.Cell>
-              <Button
-                mode="contained"
-                onPress={() => setSelectedRecord(record.id)}
-              >
-                Edit
-              </Button>
-            </DataTable.Cell>
-          </DataTable.Row>
-        ))}
-      </DataTable>
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Attendance</Text>
 
-      {selectedRecord && (
-        <View style={styles.overrideContainer}>
-          <Text>Update Attendance for Record ID: {selectedRecord}</Text>
-          <TextInput
-            label="New Status"
-            value={newStatus}
-            onChangeText={(text) => setNewStatus(text)}
-            style={styles.input}
+      {/* Loading Indicator */}
+      {isLoading ? (
+        <ActivityIndicator size="large" color="#3d85c6" style={styles.loader} />
+      ) : (
+        <>
+          {/* Subject Dropdown */}
+          <Text style={styles.dropdownTitle}>Select Subject</Text>
+          <Picker
+            selectedValue={selectedSubject}
+            style={styles.picker}
+            onValueChange={(itemValue) => setSelectedSubject(itemValue)}
+          >
+            {filteredSubjects.length > 0 ? (
+              filteredSubjects.map((subject) => (
+                <Picker.Item
+                  key={subject.id}
+                  label={subject.courseName}
+                  value={subject.courseName}
+                />
+              ))
+            ) : (
+              <Picker.Item label="No subjects available" value="" />
+            )}
+          </Picker>
+
+          {/* Attendance Table */}
+          <FlatList
+            data={attendanceRecords}
+            keyExtractor={(item) => item.id}
+            ListHeaderComponent={() => (
+              <View style={styles.tableRow}>
+                <Text style={[styles.tableCell, styles.headerCell]}>NAME</Text>
+                <Text style={[styles.tableCell, styles.headerCell]}>DATE</Text>
+                <Text style={[styles.tableCell, styles.headerCell]}>STATUS</Text>
+                <Text style={[styles.tableCell, styles.headerCell]}>ACTION</Text>
+              </View>
+            )}
+            renderItem={({ item }) => (
+              <View style={styles.tableRow}>
+                <Text style={styles.tableCell}>{item.name}</Text>
+                <Text style={styles.tableCell}>{item.sampleDate}</Text>
+                <Text style={styles.tableCell}>{item.status ? "Present" : "Absent"}</Text>
+                <View style={styles.switchContainer}>
+                  <Switch
+                    value={item.status}
+                    onValueChange={() => handleToggleStatus(item.id)}
+                    trackColor={{ true: "#4CAF50", false: "#FF6347" }}
+                    thumbColor={item.status ? "#fff" : "#fff"}
+                  />
+                </View>
+              </View>
+            )}
           />
-          <Button mode="contained" onPress={() => handleUpdate(selectedRecord)}>
-            Save
-          </Button>
-        </View>
+        </>
       )}
     </View>
   );
-
-  return (
-    <ScrollView style={styles.container}>
-      {userType === "Student" ? renderStudentView() : renderInstructorView()}
-    </ScrollView>
-  );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "#ffffff",
   },
   title: {
     fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
+    fontWeight: "700",
+    color: "#333",
     textAlign: "center",
+    marginBottom: 20,
   },
-  studentContainer: {
+  dropdownTitle: {
+    fontSize: 18,
+    marginBottom: 12,
+    color: "#555",
+  },
+  picker: {
+    height: 50,
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    marginBottom: 20,
+    paddingLeft: 12,
+  },
+  tableRow: {
+    flexDirection: "row",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderColor: "#e0e0e0",
+    alignItems: "center",
+  },
+  tableCell: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 16,
     paddingHorizontal: 10,
-    paddingVertical: 15,
-    backgroundColor: "#ffffff",
-    borderRadius: 8,
-    elevation: 2,
   },
-  overrideContainer: {
+  headerCell: {
+    fontWeight: "700",
+    backgroundColor: "#f8f8f8",
+    color: "#777",
+  },
+  switchContainer: {
+    paddingHorizontal: 10,
+    alignItems: "center",
+  },
+  loader: {
     marginTop: 20,
-    padding: 16,
-    backgroundColor: "#ffffff",
-    borderRadius: 8,
-    elevation: 2,
-  },
-  input: {
-    marginBottom: 10,
   },
 });
-
-export default Attendance;
