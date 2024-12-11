@@ -247,10 +247,12 @@ const FacultyGroupChat = () => {
             }
           />
           <View style={{ marginBottom: 10 }}>
-            <Button
-              title="Create Group Chat"
+            <TouchableOpacity
+              style={styles.createButton}
               onPress={() => router.push("/chat/create-group")}
-            />
+            >
+              <Text style={styles.createButtonText}>Create Group Chat</Text>
+            </TouchableOpacity>
           </View>
         </>
       )}
@@ -285,12 +287,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     fontSize: 16,
   },
-  titleText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 10,
-  },
   loader: {
     flex: 1,
     justifyContent: "center",
@@ -320,18 +316,18 @@ const styles = StyleSheet.create({
     marginRight: 1,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 5,
+    elevation: 3,
   },
   groupDetails: {
-    marginLeft: 12,
     flex: 1,
   },
   groupName: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#333",
+    marginBottom: 4,
   },
   latestMessage: {
     fontSize: 14,
@@ -339,43 +335,50 @@ const styles = StyleSheet.create({
   },
   unseenMessage: {
     fontWeight: "bold",
-    color: "#000",
-  },
-  settingsIconContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-    marginLeft: 10,
-  },
-  emptyMessage: {
-    textAlign: "center",
-    marginTop: 20,
-    fontSize: 16,
-    color: "#888",
+    color: "#333",
   },
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 16,
+    padding: 20,
   },
   emptyImage: {
-    width: 300,
+    width: 200,
     height: 200,
     marginBottom: 20,
-    resizeMode: "contain",
   },
   emptyText: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 12,
-    textAlign: "center",
     color: "#333",
   },
   emptySubText: {
     fontSize: 16,
-    color: "#666",
+    color: "#777",
     marginBottom: 20,
+  },
+  createButton: {
+    backgroundColor: "#1A73E8",
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
+    alignItems: "center",
+  },
+  createButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  emptyMessage: {
     textAlign: "center",
+    color: "#777",
+    fontSize: 16,
   },
 });
 
