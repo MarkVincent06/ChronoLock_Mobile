@@ -93,6 +93,7 @@ const Login: React.FC = () => {
           id: userData.id,
           email: userData.email,
           userType: userData.userType,
+          idNumber: userData.idNumber
         });
       } else {
         console.log("Login failed: User not found or invalid credentials.");
