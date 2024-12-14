@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import axios from "axios";
 import { useLocalSearchParams } from "expo-router";
+import { useUserContext } from "../../context/UserContext";
 import API_URL from "@/config/ngrok-api";
 import Icon from "react-native-vector-icons/MaterialIcons";
 
@@ -23,6 +24,8 @@ interface Member {
 }
 
 const GroupDetails = () => {
+  const { user } = useUserContext();
+
   const {
     group_id: groupId,
     group_name: groupName,
@@ -89,43 +92,52 @@ const GroupDetails = () => {
   }, [groupId]);
 
   // Render each member item
-  const renderMember = ({ item }: { item: Member }) => (
-    <View style={styles.memberItem}>
-      <Image
-        source={
-          item.avatar
-            ? {
-                uri: item.avatar.startsWith("http")
-                  ? item.avatar
-                  : `${API_URL}${item.avatar}`,
-              }
-            : require("@/assets/images/default_avatar.png")
-        }
-        style={styles.memberAvatar}
-      />
-      <View style={styles.memberInfo}>
-        <Text style={styles.memberName}>
-          {item.firstName} {item.lastName}
-        </Text>
-        <Text style={styles.memberType}>{item.userType}</Text>
+  const renderMember = ({ item }: { item: Member }) => {
+    const isCurrentUser = user?.idNumber === item.idNumber;
+
+    return (
+      <View style={styles.memberItem}>
+        <Image
+          source={
+            item.avatar
+              ? {
+                  uri: item.avatar.startsWith("http")
+                    ? item.avatar
+                    : `${API_URL}${item.avatar}`,
+                }
+              : require("@/assets/images/default_avatar.png")
+          }
+          style={styles.memberAvatar}
+        />
+        <View style={styles.memberInfo}>
+          <Text style={styles.memberName}>
+            {item.firstName} {item.lastName} {isCurrentUser && "(Me)"}
+          </Text>
+          <Text style={styles.memberType}>{item.userType}</Text>
+        </View>
+        {!isCurrentUser && (
+          <TouchableOpacity
+            style={styles.kickButton}
+            onPress={() =>
+              Alert.alert(
+                "Remove Member",
+                `Are you sure you want to remove ${item.firstName} ${item.lastName}?`,
+                [
+                  { text: "Cancel", style: "cancel" },
+                  {
+                    text: "Yes",
+                    onPress: () => handleRemoveMember(item.idNumber),
+                  },
+                ]
+              )
+            }
+          >
+            <Icon name="remove-circle" size={24} color="#fff" />
+          </TouchableOpacity>
+        )}
       </View>
-      <TouchableOpacity
-        style={styles.kickButton}
-        onPress={() =>
-          Alert.alert(
-            "Remove Member",
-            `Are you sure you want to remove ${item.firstName} ${item.lastName}?`,
-            [
-              { text: "Cancel", style: "cancel" },
-              { text: "Yes", onPress: () => handleRemoveMember(item.idNumber) },
-            ]
-          )
-        }
-      >
-        <Icon name="remove-circle" size={24} color="#fff" />
-      </TouchableOpacity>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -175,12 +187,12 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 10,
+    marginBottom: 25,
   },
   membersTitle: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "bold",
-    marginBottom: 16,
+    marginBottom: 8,
     color: "#333",
   },
   loader: {

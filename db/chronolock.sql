@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 05, 2024 at 01:08 PM
+-- Generation Time: Dec 10, 2024 at 12:30 PM
 -- Server version: 10.4.24-MariaDB
 -- PHP Version: 8.1.6
 
@@ -164,7 +164,7 @@ CREATE TABLE `groups` (
 --
 
 INSERT INTO `groups` (`group_id`, `group_name`, `group_key`, `created_at`, `avatar`) VALUES
-(28, 'Mark\'s First Group', 'mark', '2024-12-01 14:14:01', NULL),
+(28, 'Mark\'s First Group', 'mark', '2024-12-01 14:14:01', '/uploads/1733750964396-450506877.png'),
 (29, 'BSIT 4F - System Administration and Maintenance', 'bsit4f', '2024-12-01 15:02:54', '/uploads/1733065374319-73334341.jpeg'),
 (30, 'Lyme\'s Group', 'lyme', '2024-12-02 13:49:46', '/uploads/1733147386231-713793891.jpeg'),
 (31, 'BSIT 4C - CAPSTONE PROJ 2', 'bsit4c', '2024-12-02 15:04:43', '/uploads/1733151883706-352579648.jpeg');
@@ -192,7 +192,8 @@ INSERT INTO `group_members` (`id`, `idNumber`, `group_id`, `created_at`) VALUES
 (13, 'C21101162', 30, '2024-12-02 13:49:46'),
 (14, 'C21101162', 31, '2024-12-02 15:04:43'),
 (15, 'C21102351', 31, '2024-12-03 03:57:48'),
-(16, 'C21102351', 30, '2024-12-03 03:59:19');
+(16, 'C21102351', 30, '2024-12-03 03:59:19'),
+(17, 'C21101162', 28, '2024-12-09 13:38:32');
 
 -- --------------------------------------------------------
 
@@ -220,7 +221,26 @@ INSERT INTO `messages` (`id`, `group_id`, `user_id`, `text`, `created_at`, `isSe
 (72, 29, 'C21102324', 'Group name changed to \"BSIT 4F - Capstone Project 2\".', '2024-12-02 05:53:32', 1, 1),
 (73, 29, 'C21102324', 'Group name changed to \"BSIT 4F - System Administration and Maintenance\".', '2024-12-02 05:54:22', 1, 1),
 (74, 30, 'C21101162', 'Welcome to Lyme\'s Group! This group is now active. Feel free to start discussions and collaborate with others.', '2024-12-02 13:49:47', 1, 1),
-(75, 31, 'C21101162', 'Welcome to BSIT 4C - CAPSTONE PROJ 2! This group is now active. Feel free to start discussions and collaborate with others.', '2024-12-02 15:04:43', 0, 1);
+(75, 31, 'C21101162', 'Welcome to BSIT 4C - CAPSTONE PROJ 2! This group is now active. Feel free to start discussions and collaborate with others.', '2024-12-02 15:04:43', 1, 1),
+(76, 31, 'C21102351', 'okau', '2024-12-09 08:28:27', 1, 0),
+(77, 31, 'C21102351', 'what', '2024-12-09 08:28:36', 1, 0),
+(78, 31, 'C21102351', 'test', '2024-12-09 08:38:01', 1, 0),
+(79, 31, 'C21102351', 'hi', '2024-12-09 08:42:30', 1, 0),
+(80, 30, 'C21101162', 'o', '2024-12-09 09:25:19', 1, 0),
+(81, 30, 'C21102351', 'hi', '2024-12-09 13:00:05', 1, 0),
+(82, 30, 'C21102351', 'jufubvhinbhiknnnkkii', '2024-12-09 13:24:52', 1, 0),
+(83, 30, 'C21102351', 'eyow', '2024-12-09 13:28:17', 1, 0),
+(84, 30, 'C21102351', 'haha', '2024-12-09 13:28:24', 1, 0),
+(85, 29, 'C21102324', 'test', '2024-12-09 13:28:50', 1, 0),
+(86, 28, 'C21102324', 'eyow', '2024-12-09 13:28:55', 1, 0),
+(87, 28, 'C21102324', 'Group avatar updated.', '2024-12-09 13:29:24', 1, 1),
+(88, 28, 'C21102324', 'haha', '2024-12-09 13:29:34', 1, 0),
+(89, 30, 'C21101162', 'gago ka', '2024-12-09 13:30:45', 1, 0),
+(90, 28, 'C21101162', 'Lyme Lavarias has joined the group Mark\'s First Group. Welcome!', '2024-12-09 13:38:32', 1, 1),
+(91, 28, 'C21101162', 'hello there', '2024-12-09 13:38:40', 1, 0),
+(92, 30, 'C21102351', 'haha', '2024-12-09 14:54:36', 1, 0),
+(93, 30, 'C21102351', 'lol', '2024-12-09 14:56:38', 1, 0),
+(94, 28, 'C21102324', 'ey', '2024-12-10 11:20:03', 1, 0);
 
 -- --------------------------------------------------------
 
@@ -1331,13 +1351,13 @@ ALTER TABLE `groups`
 -- AUTO_INCREMENT for table `group_members`
 --
 ALTER TABLE `group_members`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `messages`
 --
 ALTER TABLE `messages`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=76;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=95;
 
 --
 -- AUTO_INCREMENT for table `migrations`
