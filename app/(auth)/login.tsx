@@ -23,12 +23,8 @@ import {
 import { auth } from "../../config/firebase";
 import { useUserContext } from "../../context/UserContext";
 import API_URL from "../../config/ngrok-api";
-// <<<<<<< master
 import AsyncStorage from "@react-native-async-storage/async-storage";
-=======
 import { useRouter } from "expo-router";
-<!-- >>>>>>> master -->
-
 import eye from "../../assets/icons/eye.png";
 import eyeHide from "../../assets/icons/eye-hide.png";
 
@@ -38,9 +34,10 @@ const Login: React.FC = () => {
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-
+  const [error, setError] = useState<string | null>(null);
   const { setUser } = useUserContext();
   const router = useRouter();
+  const [isNavigated, setIsNavigated] = useState(false); // Track if navigation happened
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -58,6 +55,8 @@ const Login: React.FC = () => {
     }
 
     setLoading(true);
+    setError(null); // Reset error state
+
     try {
       console.log("Attempting login for email:", email);
       const response = await axios.post(
@@ -80,7 +79,7 @@ const Login: React.FC = () => {
           lastName: userData.lastName,
           email: userData.email,
           idNumber: userData.idNumber,
-          userType: userData.userType,
+          userType: userData.userType, // Ensure userType is mapped
           avatar: userData.avatar,
         };
 
@@ -98,10 +97,22 @@ const Login: React.FC = () => {
           id: userData.id,
           email: userData.email,
           userType: userData.userType,
+          idNumber: userData.idNumber,
         });
+
+        // Only navigate if not already navigated
+        if (!isNavigated) {
+          setIsNavigated(true); // Set to true to prevent additional navigation
+          // Navigate based on userType
+          if (userData.userType === "Faculty") {
+            router.push("/home"); // Navigate to Home if Faculty
+          } else if (userData.userType === "Student") {
+            router.push("/(tabsStudent)/HomeStudents"); // Navigate to HomeStudent if Student
+          }
+        }
       } else {
         console.log("Login failed: User not found or invalid credentials.");
-        alert("User not found or invalid credentials.");
+        setError("Invalid email or password.");
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -111,6 +122,7 @@ const Login: React.FC = () => {
         }
       } else {
         console.error("An error occurred during login:", error);
+        setError("An unexpected error occurred. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -143,7 +155,7 @@ const Login: React.FC = () => {
           lastName: userData.lastName,
           email: userData.email,
           idNumber: userData.idNumber,
-          userType: userData.userType,
+          userType: userData.userType, // Ensure userType is mapped
           avatar: userData.avatar,
         };
 
@@ -161,6 +173,17 @@ const Login: React.FC = () => {
           email: userData.email,
           userType: userData.userType,
         });
+
+        // Only navigate if not already navigated
+        if (!isNavigated) {
+          setIsNavigated(true); // Set to true to prevent additional navigation
+          // Navigate based on userType
+          if (userData.userType === "Faculty") {
+            router.push("/home"); // Navigate to Home if Faculty
+          } else if (userData.userType === "Student") {
+            router.push("/(tabsStudent)/HomeStudents"); // Navigate to HomeStudent if Student
+          }
+        }
       } else {
         console.log("Google sign-in failed:", response.data.message);
         alert(response.data.message);
@@ -178,6 +201,8 @@ const Login: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.formContainer}>
           <Text style={styles.title}>Log in to ChronoLock</Text>
+
+          {error && <Text style={styles.errorText}>{error}</Text>}
 
           <TextInput
             style={[styles.input, focusedInput === "email" && styles.inputFocused]}
@@ -223,11 +248,7 @@ const Login: React.FC = () => {
             onPress={handleGoogleSignIn}
           />
 
-          {/* Forgot Password Button */}
-          <TouchableOpacity
-            onPress={() => router.push("/forgot-password")}
-            style={styles.forgotPasswordButton}
-          >
+          <TouchableOpacity onPress={() => router.push("/forgot-password")} style={styles.forgotPasswordButton}>
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
         </View>
@@ -306,25 +327,25 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 48,
     marginTop: 20,
+    borderRadius: 5,
   },
   forgotPasswordButton: {
-    marginTop: 15,
-    alignSelf: "center",
+    marginTop: 20,
+    alignItems: "center",
   },
   forgotPasswordText: {
-    color: "#1A73E8",
     fontSize: 16,
-    fontWeight: "500",
+    color: "#1A73E8",
+  },
+  errorText: {
+    color: "red",
+    marginBottom: 10,
+    fontSize: 16,
   },
   loaderContainer: {
     position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
-    zIndex: 1,
+    top: "40%",
+    left: "50%",
+    transform: [{ translateX: -30 }],
   },
 });
