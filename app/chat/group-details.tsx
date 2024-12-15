@@ -115,7 +115,7 @@ const GroupDetails = () => {
           </Text>
           <Text style={styles.memberType}>{item.userType}</Text>
         </View>
-        {!isCurrentUser && (
+        {!isCurrentUser && user?.userType !== "Student" && (
           <TouchableOpacity
             style={styles.kickButton}
             onPress={() =>

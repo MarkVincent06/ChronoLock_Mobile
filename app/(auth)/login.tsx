@@ -23,11 +23,9 @@ import {
 import { auth } from "../../config/firebase";
 import { useUserContext } from "../../context/UserContext";
 import API_URL from "../../config/ngrok-api";
-// <<<<<<< master
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
-=======
 import { useRouter } from "expo-router";
-<!-- >>>>>>> master -->
 
 import eye from "../../assets/icons/eye.png";
 import eyeHide from "../../assets/icons/eye-hide.png";
@@ -152,7 +150,10 @@ const Login: React.FC = () => {
 
         // Log the data after storing it
         const storedIdNumber = await AsyncStorage.getItem("idNumber");
-        console.log("Stored idNumber in AsyncStorage after Google sign-in:", storedIdNumber);
+        console.log(
+          "Stored idNumber in AsyncStorage after Google sign-in:",
+          storedIdNumber
+        );
 
         setUser(mappedUser);
 
@@ -180,7 +181,10 @@ const Login: React.FC = () => {
           <Text style={styles.title}>Log in to ChronoLock</Text>
 
           <TextInput
-            style={[styles.input, focusedInput === "email" && styles.inputFocused]}
+            style={[
+              styles.input,
+              focusedInput === "email" && styles.inputFocused,
+            ]}
             placeholder="Email"
             placeholderTextColor="#888"
             keyboardType="email-address"
@@ -193,7 +197,10 @@ const Login: React.FC = () => {
 
           <View style={{ position: "relative" }}>
             <TextInput
-              style={[styles.input, focusedInput === "password" && styles.inputFocused]}
+              style={[
+                styles.input,
+                focusedInput === "password" && styles.inputFocused,
+              ]}
               placeholder="Password"
               placeholderTextColor="#888"
               secureTextEntry={!showPassword}
@@ -203,7 +210,10 @@ const Login: React.FC = () => {
               onFocus={() => setFocusedInput("password")}
               onBlur={() => setFocusedInput(null)}
             />
-            <TouchableOpacity style={styles.eyeContainer} onPress={() => setShowPassword((prev) => !prev)}>
+            <TouchableOpacity
+              style={styles.eyeContainer}
+              onPress={() => setShowPassword((prev) => !prev)}
+            >
               <Image
                 source={showPassword ? eyeHide : eye}
                 resizeMode="contain"
