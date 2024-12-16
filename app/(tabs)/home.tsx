@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
 import { Card } from "@rneui/themed";
 import { useUserContext } from "../../context/UserContext";
-import AsyncStorage from "@react-native-async-storage/async-storage"; // Import AsyncStorage
-import API_URL from "../../config/ngrok-api"; // Adjust the path as needed
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import API_URL from "../../config/ngrok-api";
+import * as Notifications from "expo-notifications";
 
 // Define the type for a schedule
 interface Schedule {
@@ -14,57 +15,131 @@ interface Schedule {
   instLastName: string;
   section: string;
   startTime: string;
+  day: string;
   endTime: string;
   program: string;
   year: string;
   userID: string;
+  startDate?: string; // Added startDate for notification scheduling
 }
 
 export default function Home() {
   const { user } = useUserContext();
   const [isLoading, setIsLoading] = useState(true);
-  const [schedules, setSchedules] = useState<Schedule[]>([]); // State for schedules with proper type
-  const [filteredSchedules, setFilteredSchedules] = useState<Schedule[]>([]); // State for filtered schedules with proper type
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [filteredSchedules, setFilteredSchedules] = useState<Schedule[]>([]);
+  const [upcomingSchedules, setUpcomingSchedules] = useState<Schedule[]>([]);
+  const [currentDate, setCurrentDate] = useState<string>(""); // State for current date and time
 
-  // Fetch schedule data
+  // Fetch schedule data and upcoming schedules
   useEffect(() => {
-    const fetchSchedules = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
       try {
-        // Fetch the schedule data from the API
-        const response = await fetch(`${API_URL}/schedules/schedules`);
-
-        // Check if the response is okay
-        if (!response.ok) {
-          throw new Error("Failed to fetch schedules");
-        }
-
-        const data = await response.json();
-        setSchedules(data.data); // Assuming 'data' contains the schedule data
-
-        // Retrieve the idnumber from AsyncStorage
+        // Retrieve the idNumber from AsyncStorage
         const storedIdNumber = await AsyncStorage.getItem("idNumber");
-        console.log("Stored idNumber in AsyncStorage:", storedIdNumber); // Log the stored idNumber
-
-        // Filter schedules based on the stored idnumber
-        if (storedIdNumber) {
-          const filtered = data.data.filter(
-            (schedule: Schedule) => schedule.userID === storedIdNumber // Type-safe filtering
-          );
-          setFilteredSchedules(filtered); // Update the filteredSchedules state
-          
-          // Log the filtered schedules
-          console.log("Filtered Schedules:", filtered);
+        if (!storedIdNumber) {
+          throw new Error("User ID number not found in storage.");
         }
+
+        // Fetch all schedules
+        const schedulesResponse = await fetch(`${API_URL}/schedules/schedules`);
+        if (!schedulesResponse.ok) throw new Error("Failed to fetch schedules.");
+
+        const schedulesData = await schedulesResponse.json();
+        setSchedules(schedulesData.data);
+
+        // Filter schedules for the current user
+        const filtered = schedulesData.data.filter(
+          (schedule: Schedule) => schedule.userID === storedIdNumber
+        );
+        setFilteredSchedules(filtered);
+
+        // Fetch upcoming schedules from the API
+        const upcomingResponse = await fetch(`${API_URL}/schedules/upcoming-schedules/${storedIdNumber}`);
+        if (!upcomingResponse.ok) throw new Error("Failed to fetch upcoming schedules.");
+
+        const upcomingData = await upcomingResponse.json();
+        if (upcomingData.success) {
+          setUpcomingSchedules(upcomingData.upcomingSchedules);
+          // Schedule notifications for upcoming schedules
+          scheduleNotifications(upcomingData.upcomingSchedules);
+        } else {
+          console.warn("No upcoming schedules found.");
+        }
+
+        // Fetch current time
+        await fetchCurrentTime();
       } catch (error) {
-        console.error("Error fetching schedules:", error);
+        console.error("Error fetching data:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchSchedules();
+    const fetchCurrentTime = async () => {
+      try {
+        // Fetch the current time from your API endpoint
+        const response = await fetch(`${API_URL}/schedules/currentTime`);
+        if (!response.ok) throw new Error("Failed to fetch current time.");
+
+        const data = await response.json();
+        if (data.success) {
+          setCurrentDate(data.data.currentTime); // Set fetched time
+        }
+      } catch (error) {
+        console.error("Error fetching current time:", error);
+      }
+    };
+
+    fetchData();
+
+    // Update current time every minute
+    const interval = setInterval(fetchCurrentTime, 1000); // 60000 ms = 1 minute
+
+    // Cleanup interval on unmount
+    return () => clearInterval(interval);
   }, []);
+
+  // Schedule notifications
+  const scheduleNotifications = async (upcomingSchedules: Schedule[]) => {
+    try {
+      // Request notification permissions
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== 'granted') {
+        console.warn('Notification permissions not granted.');
+        return;
+      }
+
+      for (const schedule of upcomingSchedules) {
+        if (!schedule.startDate || !schedule.startTime) {
+          console.warn(`Schedule ID ${schedule.scheduleID} is missing startDate or startTime.`);
+          continue;
+        }
+
+        // Combine startDate and startTime to create a Date object
+        const startDateTime = new Date(`${schedule.startDate.split('T')[0]}T${schedule.startTime}`);
+
+        // Set notification time 10 minutes before class start
+        const notificationTime = new Date(startDateTime.getTime() - 10 * 60 * 1000);
+
+        // Ensure notification time is in the future
+        if (notificationTime > new Date()) {
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: `Upcoming Class: ${schedule.courseName}`,
+              body: `Your class "${schedule.courseName}" starts at ${schedule.startTime}.`,
+            },
+            trigger: notificationTime,
+          });
+        } else {
+          // console.warn(`Notification time for schedule ID ${schedule.scheduleID} is in the past.`);
+        }
+      }
+    } catch (error) {
+      console.error("Error scheduling notifications:", error);
+    }
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -74,6 +149,10 @@ export default function Home() {
           Welcome, {user?.firstName}!
         </Card.Title>
         <Text style={styles.userTypeText}>{user?.userType}</Text>
+        {/* Display fetched current time */}
+        <Text style={styles.dateText}>
+          {currentDate ? `Current Time: ${currentDate}` : "Loading current time..."}
+        </Text>
       </Card>
 
       {/* Loading Indicator */}
@@ -82,28 +161,48 @@ export default function Home() {
       ) : (
         <>
           {/* My Schedule Section */}
-          <Text style={styles.myScheduleText}>My Schedule</Text>
+          <Card containerStyle={styles.scheduleCard}>
+            <Text style={styles.myScheduleText}>My Schedule</Text>
+            {filteredSchedules.length > 0 ? (
+              filteredSchedules.map((schedule) => (
+                <View key={schedule.scheduleID} style={styles.card}>
+                  <Text style={styles.cardTitle}>{schedule.courseName}</Text>
+                  <Text style={styles.cardSubtitle}>Code: {schedule.courseCode}</Text>
+                  <Text style={styles.cardDetails}>
+                    Instructor: {schedule.instFirstName} {schedule.instLastName}
+                  </Text>
+                  <Text style={styles.cardDetails}>Day: {schedule.day}</Text>
+                  <Text style={styles.cardDetails}>
+                    Section: {schedule.section} | Time: {schedule.startTime} - {schedule.endTime}
+                  </Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.noScheduleText}>No schedules found for this user.</Text>
+            )}
+          </Card>
 
-          {/* Display filtered schedule data */}
-          {filteredSchedules.length > 0 ? (
-            filteredSchedules.map((schedule) => (
-              <Card key={schedule.scheduleID} containerStyle={styles.card}>
-                <Text style={styles.cardTitle}>{schedule.courseName}</Text>
-                <Text style={styles.cardSubtitle}>Code: {schedule.courseCode}</Text>
-                <Text style={styles.cardDetails}>
-                  Instructor: {schedule.instFirstName} {schedule.instLastName}
-                </Text>
-                <Text style={styles.cardDetails}>
-                  Section: {schedule.section} | Time: {schedule.startTime} - {schedule.endTime}
-                </Text>
-                <Text style={styles.cardDetails}>
-                  Program: {schedule.program} | Year: {schedule.year}
-                </Text>
-              </Card>
-            ))
-          ) : (
-            <Text style={styles.noScheduleText}>No schedules found for this user.</Text>
-          )}
+          {/* Upcoming Schedule Section */}
+          <Card containerStyle={styles.scheduleCard}>
+            <Text style={styles.myScheduleText}>Upcoming Laboratory Schedule</Text>
+            {upcomingSchedules.length > 0 ? (
+              upcomingSchedules.map((schedule) => (
+                <View key={schedule.scheduleID} style={styles.card}>
+                  <Text style={styles.cardTitle}>{schedule.courseName}</Text>
+                  <Text style={styles.cardSubtitle}>Code: {schedule.courseCode}</Text>
+                  <Text style={styles.cardDetails}>
+                    Instructor: {schedule.instFirstName} {schedule.instLastName}
+                  </Text>
+                  <Text style={styles.cardDetails}>Day: {schedule.day}</Text>
+                  <Text style={styles.cardDetails}>
+                    Section: {schedule.section} | Time: {schedule.startTime} - {schedule.endTime}
+                  </Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.noScheduleText}>No upcoming schedules for the next day.</Text>
+            )}
+          </Card>
         </>
       )}
     </ScrollView>
@@ -113,16 +212,16 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    padding: 20,
-    backgroundColor: "#f4f7fc",  // Soft background color
+    padding: 15,
+    backgroundColor: "#f4f7fc",
     paddingBottom: 100,
   },
   welcomeCard: {
     borderRadius: 15,
     padding: 20,
-    marginBottom: 25,
+    marginBottom: 2,
     backgroundColor: "#3d85c6",
-    shadowColor: "#000",  // Soft shadow
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
@@ -143,23 +242,20 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     fontWeight: "600",
   },
+  dateText: {
+    fontSize: 14,
+    color: "#fff",
+    textAlign: "center",
+  },
   loader: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     marginTop: 50,
   },
-  myScheduleText: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: -5,
-    textAlign: "center",
-    textTransform: "uppercase",
-  },
-  card: {
+  scheduleCard: {
     borderRadius: 15,
-    marginBottom: 20,
+    marginBottom: 25,
     padding: 20,
     backgroundColor: "#fff",
     shadowColor: "#000",
@@ -168,25 +264,36 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  cardTitle: {
+  myScheduleText: {
     fontSize: 20,
-    fontWeight: "bold",
+    fontWeight: "600",
     color: "#333",
+    marginBottom: 15,
+    textAlign: "center",
+    textTransform: "uppercase",
+  },
+  card: {
+    borderRadius: 15,
+    marginBottom: 15,
+    padding: 15,
+    backgroundColor: "#f9f9f9",
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#3d85c6",
   },
   cardSubtitle: {
     fontSize: 16,
-    color: "#777",
-    marginVertical: 5,
+    color: "#333",
   },
   cardDetails: {
     fontSize: 14,
     color: "#555",
-    marginVertical: 3,
   },
   noScheduleText: {
-    fontSize: 16,
-    color: "#555",
     textAlign: "center",
-    marginTop: 20,
+    color: "#888",
+    fontSize: 16,
   },
 });
