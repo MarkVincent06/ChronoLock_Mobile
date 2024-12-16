@@ -1,441 +1,198 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  ActivityIndicator,
-  Modal,
-  Button,
-} from "react-native";
-import { Picker } from "@react-native-picker/picker";
-import { TouchableOpacity } from "react-native";
-import API_URL from "../../config/ngrok-api"; // Adjust the path as needed
+import { View, Text, FlatList, StyleSheet, Switch, Alert, ActivityIndicator } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import API_URL from "@/config/ngrok-api";
 
-// Update seat generation to use seatId as the unique identifier
-const seat = (rows, columns) => {
-  const seats = [];
-  for (let row = 0; row < rows; row++) {
-    for (let col = 0; col < columns; col++) {
-      const seatId = `seat-${row}-${col}`; // Unique seat ID
-      seats.push({
-        id: seatId,
-        row,
-        col,
-        status: "available",
-        assignedTo: null,
-      });
-    }
-  }
-  return seats;
-};
-
-export default function SeatPlan() {
-  const [seats, setSeats] = useState(seat(5, 8));
-  const [selectedClass, setSelectedClass] = useState("");
-  const [classes, setClasses] = useState([]);
-  const [filteredClasses, setFilteredClasses] = useState([]);
+export default function Laboratory() {
+  const [peripherals, setPeripherals] = useState([
+    { id: "1", name: "Monitor", status: false },
+    { id: "2", name: "Keyboard", status: false },
+    { id: "3", name: "Mouse", status: false },
+    { id: "4", name: "CPU", status: false },
+    { id: "5", name: "Speakers", status: false },
+    { id: "6", name: "Printer", status: false },
+  ]);
   const [isLoading, setIsLoading] = useState(true);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [activeSeat, setActiveSeat] = useState(null);
-  const [students, setStudents] = useState([]);
-  const [selectedStudent, setSelectedStudent] = useState("");
+  const [showScreen, setShowScreen] = useState(false);
+  const [attendanceMessage, setAttendanceMessage] = useState("");
+
+  const getIdNumberFromStorage = async () => {
+    try {
+      const idNumber = await AsyncStorage.getItem("idNumber");
+      if (idNumber !== null) {
+        return idNumber;
+      } else {
+        throw new Error("idNumber not found in AsyncStorage");
+      }
+    } catch (error) {
+      console.error("Error retrieving idNumber from AsyncStorage:", error);
+    }
+  };
+
+  const checkAttendance = async () => {
+    try {
+      const idNumber = await getIdNumberFromStorage();
+      if (idNumber) {
+        const response = await fetch(`${API_URL}/users/checkAttendance/${idNumber}`);
+        const data = await response.json();
+        if (data.displayScreen) {
+          setShowScreen(true);
+        } else {
+          setAttendanceMessage("You have no schedule right now.");
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching attendance:", error);
+      setAttendanceMessage("Error fetching attendance data.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchSchedules = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(`${API_URL}/schedules/schedules`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch schedules");
-        }
-        const data = await response.json();
-        if (Array.isArray(data.data)) {
-          setClasses(data.data);
-          const storedIdNumber = await AsyncStorage.getItem("idNumber");
-          if (storedIdNumber) {
-            const filtered = data.data.filter(
-              (classItem) => classItem.userID === storedIdNumber
-            );
-            setFilteredClasses(filtered);
-            if (filtered.length > 0) {
-              const firstClass = filtered[0];
-              setSelectedClass(firstClass.courseName);
-              const scheduleID = firstClass.scheduleID;
-              await AsyncStorage.setItem("scheduleID", scheduleID.toString());
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching schedules:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSchedules();
+    const interval = setInterval(() => {
+      checkAttendance();
+    }, 1000);
+    return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const scheduleID = await AsyncStorage.getItem("scheduleID");
-        if (!scheduleID) {
-          console.warn("No scheduleID available to fetch students.");
-          return;
-        }
-
-        const response = await fetch(`${API_URL}/users/students/${scheduleID}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch students");
-        }
-        const data = await response.json();
-        if (Array.isArray(data.students)) {
-          const formattedStudents = data.students.map((student) => ({
-            id: student.id,
-            name: `${student.firstName} ${student.lastName}`,
-            email: student.email,
-            idNumber: student.idNumber,
-          }));
-          setStudents(formattedStudents);
-        }
-      } catch (error) {
-        console.error("Error fetching students:", error);
-      }
-    };
-
-    fetchStudents(); // Initial fetch for students
-
-    const intervalId = setInterval(() => {
-      fetchStudents(); // Fetch students every second
-    }, 1000);
-
-    return () => clearInterval(intervalId); // Cleanup the interval on unmount
-  }, [selectedClass]); // Re-fetch students when selectedClass changes
-
-  const handleSeatPress = (seatId) => {
-    const clickedSeat = seats.find((seat) => seat.id === seatId);
-    setActiveSeat(clickedSeat);
-    setModalVisible(true);
+  const toggleStatus = (id) => {
+    setPeripherals((prevPeripherals) =>
+      prevPeripherals.map((peripheral) =>
+        peripheral.id === id
+          ? { ...peripheral, status: !peripheral.status }
+          : peripheral
+      )
+    );
   };
 
-  const handleModalClose = () => {
-    setModalVisible(false);
-    setActiveSeat(null);
-  };
-
-  useEffect(() => {
-    const fetchOccupiedSeats = async () => {
-      try {
-        const scheduleID = await AsyncStorage.getItem("scheduleID");
-        if (!scheduleID) {
-          console.warn("No scheduleID available to fetch seats.");
-          return;
-        }
-
-        const selectedClassObj = filteredClasses.find(
-          (classItem) => classItem.courseName === selectedClass
-        );
-        if (!selectedClassObj) {
-          console.warn("Selected class not found.");
-          return;
-        }
-
-        const newNumber = selectedClassObj.classList;
-        const response = await fetch(
-          `${API_URL}/schedules/class/${newNumber}/seatNumbers`
-        );
-        if (!response.ok) {
-          throw new Error("Failed to fetch occupied seats");
-        }
-        const data = await response.json();
-        if (data.success && Array.isArray(data.data)) {
-          const occupiedSeats = data.data.map((seat) => seat.seatNumber);
-
-          const updatedSeats = seats.map((seat) => {
-            if (occupiedSeats.includes(seat.id)) {
-              return { ...seat, status: "occupied" };
-            }
-            return seat;
-          });
-
-          setSeats(updatedSeats);
-        }
-      } catch (error) {
-        console.error("Error fetching occupied seats:", error);
-      }
-    };
-
-    if (selectedClass) {
-      fetchOccupiedSeats();
-    }
-  }, [selectedClass, filteredClasses]);
-
-  const handleStudentAssign = async () => {
-    if (activeSeat && selectedStudent) {
-      try {
-        const selectedStudentObj = students.find(
-          (student) => student.id === selectedStudent
-        );
-        if (!selectedStudentObj) {
-          console.error("Selected student not found.");
-          return;
-        }
-
-        const seatNumber = activeSeat.id; // Save seatId for assignment
-        const jsonRequest = {
-          userId: selectedStudentObj.idNumber,
-          seatNumber: seatNumber,
-        };
-
-        const response = await fetch(`${API_URL}/users/updateSeatNumber`, {
+  const handleSubmit = async () => {
+    const allChecked = peripherals.every((item) => item.status);
+    const isNeedAttention = !allChecked;
+    try {
+      const idNumber = await getIdNumberFromStorage();
+      if (idNumber) {
+        const response = await fetch(`${API_URL}/users/updateAttentionStatus/${idNumber}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(jsonRequest),
+          body: JSON.stringify({ isNeedAttention }),
         });
 
         if (!response.ok) {
-          throw new Error("Failed to assign seat");
+          throw new Error("Failed to update attention status");
         }
 
-        // Update the seat locally
-        const updatedSeats = seats.map((seat) =>
-          seat.id === activeSeat.id
-            ? { ...seat, assignedTo: selectedStudent, status: "occupied" }
-            : seat
+        Alert.alert(
+          isNeedAttention ? "Alert" : "Success",
+          isNeedAttention
+            ? "Some peripherals need attention. Status has been reported."
+            : "All peripherals are in working condition!"
         );
-        setSeats(updatedSeats);
-      } catch (error) {
-        console.error("Error assigning student:", error);
-      } finally {
-        handleModalClose();
+      } else {
+        Alert.alert("Error", "Unable to retrieve your ID number.");
       }
+    } catch (error) {
+      console.error("Error updating attention status:", error);
+      Alert.alert("Error", "Failed to update attention status.");
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Laboratory Seat Plan</Text>
       {isLoading ? (
-        <ActivityIndicator size="large" color="#3d85c6" style={styles.loader} />
-      ) : (
+        <View style={styles.loader}>
+          <ActivityIndicator size="large" color="#007bff" />
+          <Text style={styles.loaderText}>Loading...</Text>
+        </View>
+      ) : showScreen ? (
         <>
+          <Text style={styles.header}>Computer Peripherals Checklist</Text>
           <FlatList
-            data={seats}
-            numColumns={8}
+            data={peripherals}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[
-                  styles.seat,
-                  item.status === "available" && styles.availableSeat,
-                  item.status === "occupied" && styles.occupiedSeat,
-                ]}
-                disabled={item.status === "occupied"}
-                onPress={() => handleSeatPress(item.id)}
-              >
-                <Text style={styles.seatText}>{item.id}</Text>
-              </TouchableOpacity>
-            )}
-            contentContainerStyle={styles.grid}
-          />
-
-          <Text style={styles.dropdownTitle}>Select Class</Text>
-          <Picker
-            selectedValue={selectedClass}
-            style={styles.picker}
-            onValueChange={async (itemValue) => {
-              setSelectedClass(itemValue);
-              const selectedClassObj = filteredClasses.find(
-                (classItem) => classItem.courseName === itemValue
-              );
-              if (selectedClassObj) {
-                const newScheduleID = selectedClassObj.scheduleID;
-                const newNumber = selectedClassObj.classList;
-                await AsyncStorage.setItem(
-                  "scheduleID",
-                  newScheduleID.toString()
-                );
-              }
-            }}
-          >
-            {filteredClasses.map((classItem) => (
-              <Picker.Item
-                key={classItem.scheduleID}
-                label={classItem.courseName}
-                value={classItem.courseName}
-              />
-            ))}
-          </Picker>
-
-          <Modal
-            animationType="slide"
-            transparent={true}
-            visible={modalVisible}
-            onRequestClose={handleModalClose}
-          >
-            <View style={styles.modalContainer}>
-              <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>Assign Student</Text>
-                {activeSeat && (
-                  <View style={styles.modalDetails}>
-                    <Text style={styles.modalText}>Seat ID: {activeSeat.id}</Text>
-                    <Text style={styles.modalText}>
-                      Row: {activeSeat.row + 1}
-                    </Text>
-                    <Text style={styles.modalText}>
-                      Column: {String.fromCharCode(65 + activeSeat.col)}
-                    </Text>
-                  </View>
-                )}
-                <Picker
-                  selectedValue={selectedStudent}
-                  style={styles.modalPicker}
-                  onValueChange={(itemValue) => {
-                    setSelectedStudent(itemValue);
-                  }}
-                >
-                  <Picker.Item label="None" value="" />
-                  {students.map((student) => (
-                    <Picker.Item
-                      key={student.id}
-                      label={`${student.name} (${student.email})`}
-                      value={student.id}
-                    />
-                  ))}
-                </Picker>
-
-                <View style={styles.modalButtonContainer}>
-                  <TouchableOpacity
-                    style={[styles.modalButton, styles.assignButton]}
-                    onPress={handleStudentAssign}
-                  >
-                    <Text style={styles.buttonText}>Assign</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.modalButton, styles.closeButton]}
-                    onPress={handleModalClose}
-                  >
-                    <Text style={styles.buttonText}>Close</Text>
-                  </TouchableOpacity>
-                </View>
+              <View style={styles.item}>
+                <Text style={styles.itemText}>{item.name}</Text>
+                <Switch
+                  value={item.status}
+                  onValueChange={() => toggleStatus(item.id)}
+                  trackColor={{ false: "#767577", true: "#81b0ff" }}
+                  thumbColor={item.status ? "#007bff" : "#f4f3f4"}
+                />
               </View>
-            </View>
-          </Modal>
+            )}
+          />
+          <View style={styles.submitButtonContainer}>
+            <Text style={styles.submitButton} onPress={handleSubmit}>
+              Submit Checklist
+            </Text>
+          </View>
         </>
+      ) : (
+        <Text style={styles.noticeMessage}>{attendanceMessage}</Text>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalContent: {
-    width: "90%",
-    padding: 20,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 8,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  modalDetails: {
-    marginBottom: 20,
-  },
-  modalText: {
-    fontSize: 16,
-    marginVertical: 5,
-  },
-  modalPicker: {
-    height: 50,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    marginBottom: 20,
-  },
-  modalButtonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
-  },
-  modalButton: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    marginHorizontal: 5,
-  },
-  assignButton: {
-    backgroundColor: "#28a745",
-  },
-  closeButton: {
-    backgroundColor: "#dc3545",
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: "#f8f9fa",
+    padding: 20,
+    backgroundColor: "#f5f5f5",
   },
-  title: {
-    fontSize: 20,
+  header: {
+    fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 10,
+    marginBottom: 20,
     textAlign: "center",
+    color: "#333",
   },
-  grid: {
+  item: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 15,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    marginBottom: 10,
+    elevation: 2,
+  },
+  itemText: {
+    fontSize: 18,
+    color: "#333",
+  },
+  submitButtonContainer: {
+    marginTop: 20,
     alignItems: "center",
   },
-  seat: {
-    width: 40,
-    height: 40,
-    margin: 5,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: "#ccc",
+  submitButton: {
+    fontSize: 18,
+    color: "#fff",
+    backgroundColor: "#007bff",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    textAlign: "center",
+    overflow: "hidden",
+    elevation: 3,
   },
-  availableSeat: {
-    backgroundColor: "#d4edda",
-  },
-  occupiedSeat: {
-    backgroundColor: "#f8d7da",
-  },
-  seatText: {
-    fontSize: 14,
-    fontWeight: "bold",
+  noticeMessage: {
+    fontSize: 18,
+    color: "#ff6347",
+    textAlign: "center",
+    marginTop: 20,
   },
   loader: {
-    marginTop: 20,
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  dropdownTitle: {
+  loaderText: {
     fontSize: 16,
-    fontWeight: "bold",
-    marginTop: 20,
-  },
-  picker: {
-    height: 50,
-    marginVertical: 10,
-    borderWidth: 1,
+    marginTop: 10,
+    color: "#555",
   },
 });
