@@ -12,8 +12,8 @@ const Access = () => {
         <Card.Divider />
         <View style={styles.sectionContent}>
           <Text style={styles.descriptionText}>
-            Remotely lock and unlock the laboratory door using Bluetooth
-            technology. Useful for users without RFID cards or when RFID readers
+            Remotely unlock the ERP laboratory door using internet connection.
+            Useful for users without RFID cards or when RFID readers
             malfunction.
           </Text>
           <Link href="/access/control" style={styles.button}>

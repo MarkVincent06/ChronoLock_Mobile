@@ -16,7 +16,6 @@ type UserContextType = {
   setUser: React.Dispatch<React.SetStateAction<User>>;
 };
 
-// Create the UserContext
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserContextProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -24,13 +23,12 @@ export const UserContextProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [user, setUser] = useState<User>(null);
 
-  // Retrieve user data from AsyncStorage when the app loads
   useEffect(() => {
     const fetchUserFromStorage = async () => {
       try {
         const userData = await AsyncStorage.getItem("user");
         if (userData) {
-          setUser(JSON.parse(userData)); // Set the user state with data from AsyncStorage
+          setUser(JSON.parse(userData));
         }
       } catch (error) {
         console.error("Failed to load user data from AsyncStorage", error);
@@ -40,17 +38,16 @@ export const UserContextProvider: React.FC<{ children: React.ReactNode }> = ({
     fetchUserFromStorage();
   }, []);
 
-  // Save user data to AsyncStorage when it changes
   useEffect(() => {
     const saveUserToStorage = async () => {
       if (user) {
         try {
-          await AsyncStorage.setItem("user", JSON.stringify(user)); // Save the user data
+          await AsyncStorage.setItem("user", JSON.stringify(user));
         } catch (error) {
           console.error("Failed to save user data to AsyncStorage", error);
         }
       } else {
-        await AsyncStorage.removeItem("user"); // Remove the user data if logged out
+        await AsyncStorage.removeItem("user");
       }
     };
 
@@ -64,7 +61,6 @@ export const UserContextProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-// Custom hook to use the user context
 export const useUserContext = () => {
   const context = useContext(UserContext);
   if (!context) {

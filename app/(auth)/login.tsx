@@ -18,16 +18,13 @@ import axios from "axios";
 import {
   GoogleAuthProvider,
   signInWithCredential,
-  signInWithEmailAndPassword,
   signInWithCustomToken,
-  getAuth,
 } from "firebase/auth";
 import { auth } from "../../config/firebase";
-import { FirebaseError } from "firebase/app";
 import { useUserContext } from "../../context/UserContext";
 import API_URL from "../../config/ngrok-api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-
 import eye from "../../assets/icons/eye.png";
 import eyeHide from "../../assets/icons/eye-hide.png";
 
@@ -37,12 +34,14 @@ const Login: React.FC = () => {
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-
+  const [error, setError] = useState<string | null>(null);
   const { setUser } = useUserContext();
   const router = useRouter();
+  const [isNavigated, setIsNavigated] = useState(false); // Track if navigation happened
 
   const handleLogin = async () => {
     if (!email || !password) {
+      console.log("Login attempt with missing email or password.");
       alert("Please enter both email and password.");
       return;
     }
@@ -50,13 +49,16 @@ const Login: React.FC = () => {
     const isValidEmail = (email: string) =>
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     if (!isValidEmail(email)) {
+      console.log("Invalid email address provided:", email);
       alert("Please enter a valid email address.");
       return;
     }
 
     setLoading(true);
+    setError(null); // Reset error state
+
     try {
-      // Send the email to the backend to fetch additional user data
+      console.log("Attempting login for email:", email);
       const response = await axios.post(
         `${API_URL}/auth/login`,
         { email, password },
@@ -71,59 +73,56 @@ const Login: React.FC = () => {
 
         const userData = response.data.user;
 
-        // Map the response data to the User type
         const mappedUser = {
           id: userData.id,
           firstName: userData.firstName,
           lastName: userData.lastName,
           email: userData.email,
           idNumber: userData.idNumber,
-          userType: userData.userType,
+          userType: userData.userType, // Ensure userType is mapped
           avatar: userData.avatar,
         };
 
-        // Set the user in the context
+        // Store the user's idNumber in AsyncStorage
+        await AsyncStorage.setItem("idNumber", userData.idNumber);
+
+        // Log the data after storing it
+        const storedIdNumber = await AsyncStorage.getItem("idNumber");
+        console.log("Stored idNumber in AsyncStorage:", storedIdNumber);
+
         setUser(mappedUser);
+
+        // Log user login details
+        console.log("User logged in successfully:", {
+          id: userData.id,
+          email: userData.email,
+          userType: userData.userType,
+          idNumber: userData.idNumber,
+        });
+
+        // Only navigate if not already navigated
+        if (!isNavigated) {
+          setIsNavigated(true); // Set to true to prevent additional navigation
+          // Navigate based on userType
+          if (userData.userType === "Faculty") {
+            router.push("/home"); // Navigate to Home if Faculty
+          } else if (userData.userType === "Student") {
+            router.push("/(tabsStudent)/HomeStudents"); // Navigate to HomeStudent if Student
+          }
+        }
       } else {
-        alert("User not found or invalid credentials.");
+        console.log("Login failed: User not found or invalid credentials.");
+        setError("Invalid email or password.");
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
+        console.error("Axios error during login:", error.message);
         if (error.response) {
-          const { status, data } = error.response;
-
-          switch (status) {
-            case 401:
-              alert(
-                data.message || "Incorrect email or password. Please try again."
-              );
-              break;
-            case 404:
-              alert(data.message || "User not found. Please register first.");
-              break;
-            default:
-              alert(data.message || "An error occurred. Please try again.");
-              break;
-          }
-        } else {
-          alert(
-            "A network error occurred. Please check your connection and try again."
-          );
-        }
-      } else if (error instanceof FirebaseError) {
-        switch (error.code) {
-          case "auth/wrong-password":
-            alert("Incorrect password. Please try again.");
-            break;
-          case "auth/user-not-found":
-            alert("User not found. Please register first.");
-            break;
-          default:
-            alert("An error occurred. Please try again.");
-            break;
+          console.log("Error response:", error.response.data);
         }
       } else {
-        alert("An unknown error occurred.");
+        console.error("An error occurred during login:", error);
+        setError("An unexpected error occurred. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -133,6 +132,7 @@ const Login: React.FC = () => {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
+      console.log("Initiating Google sign-in...");
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
       const { idToken, user: googleUser } = userInfo;
@@ -155,20 +155,45 @@ const Login: React.FC = () => {
           lastName: userData.lastName,
           email: userData.email,
           idNumber: userData.idNumber,
-          userType: userData.userType,
+          userType: userData.userType, // Ensure userType is mapped
           avatar: userData.avatar,
         };
 
+        // Store the user's idNumber in AsyncStorage
+        await AsyncStorage.setItem("idNumber", userData.idNumber);
+
+        // Log the data after storing it
+        const storedIdNumber = await AsyncStorage.getItem("idNumber");
+        console.log(
+          "Stored idNumber in AsyncStorage after Google sign-in:",
+          storedIdNumber
+        );
+
         setUser(mappedUser);
 
-        console.log("Google sign-in successful and context updated!");
+        console.log("Google sign-in successful:", {
+          id: userData.id,
+          email: userData.email,
+          userType: userData.userType,
+        });
+
+        // Only navigate if not already navigated
+        if (!isNavigated) {
+          setIsNavigated(true); // Set to true to prevent additional navigation
+          // Navigate based on userType
+          if (userData.userType === "Faculty") {
+            router.push("/home"); // Navigate to Home if Faculty
+          } else if (userData.userType === "Student") {
+            router.push("/(tabsStudent)/HomeStudents"); // Navigate to HomeStudent if Student
+          }
+        }
       } else {
+        console.log("Google sign-in failed:", response.data.message);
         alert(response.data.message);
         await GoogleSignin.signOut();
       }
     } catch (error) {
       console.error("Google Sign-In Error:", error);
-      alert("An error occurred during Google Sign-In.");
     } finally {
       setLoading(false);
     }
@@ -179,6 +204,8 @@ const Login: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.formContainer}>
           <Text style={styles.title}>Log in to ChronoLock</Text>
+
+          {error && <Text style={styles.errorText}>{error}</Text>}
 
           <TextInput
             style={[
@@ -233,7 +260,6 @@ const Login: React.FC = () => {
             onPress={handleGoogleSignIn}
           />
 
-          {/* Forgot Password Button */}
           <TouchableOpacity
             onPress={() => router.push("/forgot-password")}
             style={styles.forgotPasswordButton}
@@ -316,25 +342,25 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 48,
     marginTop: 20,
+    borderRadius: 5,
   },
   forgotPasswordButton: {
-    marginTop: 15,
-    alignSelf: "center",
+    marginTop: 20,
+    alignItems: "center",
   },
   forgotPasswordText: {
-    color: "#1A73E8",
     fontSize: 16,
-    fontWeight: "500",
+    color: "#1A73E8",
+  },
+  errorText: {
+    color: "red",
+    marginBottom: 10,
+    fontSize: 16,
   },
   loaderContainer: {
     position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
-    zIndex: 1,
+    top: "40%",
+    left: "50%",
+    transform: [{ translateX: -30 }],
   },
 });

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 10, 2024 at 12:30 PM
+-- Generation Time: Dec 12, 2024 at 04:36 AM
 -- Server version: 10.4.24-MariaDB
 -- PHP Version: 8.1.6
 
@@ -194,6 +194,72 @@ INSERT INTO `group_members` (`id`, `idNumber`, `group_id`, `created_at`) VALUES
 (15, 'C21102351', 31, '2024-12-03 03:57:48'),
 (16, 'C21102351', 30, '2024-12-03 03:59:19'),
 (17, 'C21101162', 28, '2024-12-09 13:38:32');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `labs`
+--
+
+CREATE TABLE `labs` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `labName` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `location` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `capacity` int(11) DEFAULT NULL,
+  `status` enum('Available','Under Maintenance','Closed') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Available',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `labs`
+--
+
+INSERT INTO `labs` (`id`, `labName`, `location`, `description`, `capacity`, `status`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'ERP Laboratory', 'Building A, Room 101', NULL, 30, 'Available', '2024-01-01 00:00:00', '2024-01-01 00:00:00', NULL),
+(2, 'Computer Lab 1', 'Building B, Room 201', NULL, 40, 'Available', '2024-01-01 00:00:00', '2024-01-01 00:00:00', NULL),
+(3, 'IoT Lab', 'Building C, Room 302', NULL, 25, 'Under Maintenance', '2024-01-01 00:00:00', '2024-01-01 00:00:00', NULL),
+(4, 'AI Research Lab', 'Building D, Room 403', NULL, 20, 'Available', '2024-01-01 00:00:00', '2024-01-01 00:00:00', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `lab_occupancy_logs`
+--
+
+CREATE TABLE `lab_occupancy_logs` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `lab_id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `occupancy_date` date NOT NULL,
+  `start_time` time NOT NULL,
+  `end_time` time DEFAULT NULL,
+  `remarks` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `lab_occupancy_logs`
+--
+
+INSERT INTO `lab_occupancy_logs` (`id`, `lab_id`, `user_id`, `occupancy_date`, `start_time`, `end_time`, `remarks`, `created_at`, `updated_at`) VALUES
+(1, 1, 10, '2024-12-10', '08:00:00', '10:00:00', NULL, '2024-12-10 00:00:00', '2024-12-10 02:00:00'),
+(2, 2, 16, '2024-12-10', '09:00:00', NULL, NULL, '2024-12-10 01:00:00', NULL),
+(3, 1, 18, '2024-12-10', '10:30:00', '11:30:00', NULL, '2024-12-10 02:30:00', '2024-12-10 03:30:00'),
+(4, 3, 19, '2024-12-10', '13:00:00', NULL, NULL, '2024-12-10 05:00:00', NULL),
+(5, 3, 62, '2024-12-11', '08:00:00', '10:00:00', 'Lab session for data structures', '2024-12-11 00:00:00', '2024-12-11 02:00:00'),
+(6, 1, 63, '2024-12-11', '09:30:00', '11:00:00', 'Physics lab experiment', '2024-12-11 01:30:00', '2024-12-11 03:00:00'),
+(7, 1, 64, '2024-12-11', '10:00:00', '12:00:00', 'Project work for computer science class', '2024-12-11 02:00:00', '2024-12-11 04:00:00'),
+(8, 1, 65, '2024-12-11', '11:00:00', '13:00:00', 'Study session for final exams', '2024-12-11 03:00:00', '2024-12-11 05:00:00'),
+(9, 4, 66, '2024-12-11', '12:00:00', '14:00:00', 'Group project for engineering course', '2024-12-11 04:00:00', '2024-12-11 06:00:00'),
+(10, 3, 68, '2024-12-11', '13:30:00', '15:00:00', 'Software development class work', '2024-12-11 05:30:00', '2024-12-11 07:00:00'),
+(11, 2, 69, '2024-12-11', '14:00:00', '16:00:00', 'Research project work', '2024-12-11 06:00:00', '2024-12-11 08:00:00'),
+(12, 1, 70, '2024-12-11', '15:00:00', '17:00:00', 'Testing lab environment for app development', '2024-12-11 07:00:00', '2024-12-11 09:00:00'),
+(13, 1, 71, '2024-12-11', '16:00:00', '18:00:00', 'Debate preparation session', '2024-12-11 08:00:00', '2024-12-11 10:00:00'),
+(14, 4, 72, '2024-12-11', '17:30:00', '19:00:00', 'Final review for assignment submission', '2024-12-11 09:30:00', '2024-12-11 11:00:00');
 
 -- --------------------------------------------------------
 
@@ -615,7 +681,7 @@ INSERT INTO `users` (`id`, `accountName`, `firstName`, `lastName`, `email`, `idN
 (94, NULL, 'rendel', 'berdol', 'reberdol@my.cspc.edu.ph', '2411476', 'Student', '$2y$12$mxse1PkWMHFo.qIWBH61S.DAGXTpveetEAkdqrNWH9nphEI8T2TxC', NULL, NULL, '942276641325', 'hxWNxwfJrhZHAroQ1DI0gQJsIAZOGKGDdDT94KygOguFN1g9CefTeqIwbL9u', '2024-09-27 02:10:23', '2024-09-27 02:11:39', NULL, NULL),
 (95, NULL, 'adrian', 'aliparo', 'adaliparo@my.cspc.edu.ph', '2411310', 'Student', '$2y$12$EF0qmOVVfli8YWZGmLRtJOECEgd2Nve1ZGUeB4qIaFE.Pk.EJJYiG', NULL, NULL, '872237138494', 'Ck3uUUTHLwXsFTLHH10n2TlXdxGIqUAwDi5iu2svDldVfNuuMUM6rJpueX63', '2024-09-27 02:11:51', '2024-09-27 02:12:31', NULL, NULL),
 (96, NULL, 'jerry', 'balaguer', 'jebalaguer@my.cspc.edu.ph', '2411312', 'Student', '$2y$12$8ER9TNSpPAzEyLmnaSwQEuCs3gXaB8XaRTCqErrT1XgJEy9lJpt52', NULL, NULL, '131718404069', 'oIswkGUnZc7PC5MMKkccxcMilTwZ3GIy6dsqlL0oYbjswNBUSxvWCayrXJc3', '2024-09-27 02:13:14', '2024-09-27 02:14:32', NULL, NULL),
-(100, NULL, 'Mark Vincent', 'Cleofe', 'macleofe@my.cspc.edu.ph', 'C21102324', 'Faculty', 'markvincent', '/uploads/1733322439416-91419862.jpeg', NULL, NULL, NULL, NULL, '2024-12-04 14:27:19', NULL, NULL),
+(100, NULL, 'Mark Vincent', 'Cleofe', 'macleofe@my.cspc.edu.ph', 'C21102324', 'Faculty', 'mark', '/uploads/1733856999526-306220015.jpeg', NULL, NULL, NULL, NULL, '2024-12-10 18:56:39', NULL, NULL),
 (101, NULL, 'Lyme', 'Lavarias', 'lylavarias@my.cspc.edu.ph', 'C21101162', 'Student', 'lymelavarias', '/uploads/1733197067852-469885969.jpeg', NULL, NULL, NULL, NULL, '2024-12-03 03:37:48', NULL, NULL),
 (102, NULL, 'John Llenard', 'Nagal', 'jonagal@my.cspc.edu.ph', 'C21102351', 'Student', 'john', '/uploads/1733323424015-9154169.jpeg', NULL, NULL, NULL, NULL, '2024-12-04 14:43:44', NULL, NULL);
 
@@ -1252,6 +1318,20 @@ ALTER TABLE `group_members`
   ADD KEY `group_id` (`group_id`);
 
 --
+-- Indexes for table `labs`
+--
+ALTER TABLE `labs`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `lab_occupancy_logs`
+--
+ALTER TABLE `lab_occupancy_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_lab_id` (`lab_id`),
+  ADD KEY `fk_user_id` (`user_id`);
+
+--
 -- Indexes for table `messages`
 --
 ALTER TABLE `messages`
@@ -1354,6 +1434,18 @@ ALTER TABLE `group_members`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
+-- AUTO_INCREMENT for table `labs`
+--
+ALTER TABLE `labs`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `lab_occupancy_logs`
+--
+ALTER TABLE `lab_occupancy_logs`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+
+--
 -- AUTO_INCREMENT for table `messages`
 --
 ALTER TABLE `messages`
@@ -1424,6 +1516,13 @@ ALTER TABLE `class_lists`
 ALTER TABLE `group_members`
   ADD CONSTRAINT `group_members_ibfk_1` FOREIGN KEY (`idNumber`) REFERENCES `users` (`idNumber`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `group_members_ibfk_2` FOREIGN KEY (`group_id`) REFERENCES `groups` (`group_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `lab_occupancy_logs`
+--
+ALTER TABLE `lab_occupancy_logs`
+  ADD CONSTRAINT `fk_lab_id` FOREIGN KEY (`lab_id`) REFERENCES `labs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `messages`
