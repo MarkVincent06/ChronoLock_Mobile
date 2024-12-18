@@ -4,7 +4,7 @@ export default {
   expo: {
     name: "ChronoLock",
     slug: "chronolock",
-    version: "1.0.0",
+    version: "1.1.10",
     orientation: "portrait",
     icon: "./assets/images/chronolock-logo2.png",
     scheme: "myapp",

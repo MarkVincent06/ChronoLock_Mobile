@@ -9,47 +9,92 @@ import {
 } from "react-native";
 import axios from "axios";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { useUserContext } from "@/context/UserContext";
+import API_URL from "@/config/ngrok-api";
 
 const AccessControl = () => {
+  const { user } = useUserContext();
   const [connectionStatus, setConnectionStatus] = useState("Idle");
   const [isLoading, setIsLoading] = useState(false);
+  const [privilegeStatus, setPrivilegeStatus] = useState("");
+  const [buttonColor, setButtonColor] = useState("#6c757d"); // Default grey
   const animatedValue = useRef(new Animated.Value(0)).current;
 
   const RASPBERRY_PI_URL = "http://192.168.1.38:5000";
+  const USER_ID_NUMBER = user?.idNumber;
 
-  const sendCommand = async (command: number) => {
-    setIsLoading(true);
-    setConnectionStatus("Sending command...");
-
+  // Fetch the privilege status from the backend
+  const fetchPrivilegeStatus = async () => {
     try {
-      const response = await axios.post(`${RASPBERRY_PI_URL}/control`, {
-        command, // 1 for unlock
-      });
+      const response = await axios.get(
+        `${API_URL}/remote-access/fetchAccessAccountByIdNumber/${USER_ID_NUMBER}`
+      );
 
-      if (response.status === 200) {
-        Alert.alert("Success", "Door unlocked successfully!");
-        setConnectionStatus("Door unlocked successfully!");
+      const data = response.data.data[0];
+      if (data) {
+        setPrivilegeStatus(data.privilege_status);
+        updateButtonAppearance(data.privilege_status);
       } else {
-        throw new Error("Unexpected response from server");
+        setPrivilegeStatus("Unknown");
+        setButtonColor("#6c757d");
       }
     } catch (error) {
-      console.error("Error sending command:", error);
-
-      let errorMessage = "An unknown error occurred.";
-      if (axios.isAxiosError(error)) {
-        errorMessage =
-          error.response?.data?.error || error.message || errorMessage;
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-
-      Alert.alert("Failed to send command", errorMessage);
-      setConnectionStatus("Failed to send command.");
-    } finally {
-      setIsLoading(false);
+      console.error("Error fetching privilege status:", error);
+      Alert.alert("Error", "Failed to fetch privilege status.");
     }
   };
 
+  // Update button appearance based on privilege status
+  const updateButtonAppearance = (status: string) => {
+    if (status === "Granted") {
+      setButtonColor("#28a745"); // Green
+    } else if (status === "Revoked") {
+      setButtonColor("#dc3545"); // Danger (Red)
+    } else if (status === "Pending") {
+      setButtonColor("#ffc107"); // Yellow
+    } else {
+      setButtonColor("#6c757d"); // Default grey
+    }
+  };
+
+  // Send command to unlock the door
+  const sendCommand = async (command: number) => {
+    if (privilegeStatus === "Granted") {
+      setIsLoading(true);
+      setConnectionStatus("Sending command...");
+
+      try {
+        const response = await axios.post(`${RASPBERRY_PI_URL}/control`, {
+          command, // 1 for unlock
+        });
+
+        if (response.status === 200) {
+          Alert.alert("Success", "Door unlocked successfully!");
+          setConnectionStatus("Door unlocked successfully!");
+        } else {
+          throw new Error("Unexpected response from server");
+        }
+      } catch (error) {
+        console.error("Error sending command:", error);
+        Alert.alert("Failed to send command", "An error occurred.");
+        setConnectionStatus("Failed to send command.");
+      } finally {
+        setIsLoading(false);
+      }
+    } else if (privilegeStatus === "Revoked") {
+      Alert.alert(
+        "Access Denied",
+        "Your privilege status has been revoked. Please contact the administrator."
+      );
+    } else if (privilegeStatus === "Pending") {
+      Alert.alert(
+        "Access Pending",
+        "Your access is pending approval. Please contact the administrator."
+      );
+    }
+  };
+
+  // Animate button border
   useEffect(() => {
     if (isLoading) {
       Animated.loop(
@@ -70,24 +115,27 @@ const AccessControl = () => {
     outputRange: ["#28a745", "#1e90ff"],
   });
 
+  // Fetch privilege status on component mount
+  useEffect(() => {
+    fetchPrivilegeStatus();
+  }, []);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Access Control</Text>
       <Text style={styles.description}>
-        Remotely unlock the ERP laboratory door by clicking the big unlock
-        button.
+        Remotely unlock the ERP laboratory door by clicking the unlock button.
       </Text>
 
       <Animated.View
         style={[
           styles.unlockButton,
-          { borderColor: isLoading ? borderColorAnimation : "#28a745" },
+          { borderColor: isLoading ? borderColorAnimation : buttonColor },
         ]}
       >
         <TouchableOpacity
           onPress={() => sendCommand(1)}
-          disabled={isLoading}
-          style={styles.innerButton}
+          style={[styles.innerButton, { backgroundColor: buttonColor }]}
         >
           <Icon name="lock-open" size={50} color="#fff" />
         </TouchableOpacity>
@@ -136,7 +184,6 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: 70,
-    backgroundColor: "#28a745",
     justifyContent: "center",
     alignItems: "center",
   },

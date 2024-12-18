@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native";
 import { Card } from "@rneui/themed";
 import { useUserContext } from "../../context/UserContext";
-import AsyncStorage from "@react-native-async-storage/async-storage"; // Import AsyncStorage
-import API_URL from "../../config/ngrok-api"; // Adjust the path as needed
+import API_URL from "../../config/ngrok-api";
 
 // Define the type for a schedule
 interface Schedule {
@@ -23,8 +28,8 @@ interface Schedule {
 export default function HomeStduents() {
   const { user } = useUserContext();
   const [isLoading, setIsLoading] = useState(true);
-  const [schedules, setSchedules] = useState<Schedule[]>([]); // State for schedules with proper type
-  const [filteredSchedules, setFilteredSchedules] = useState<Schedule[]>([]); // State for filtered schedules with proper type
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [filteredSchedules, setFilteredSchedules] = useState<Schedule[]>([]);
   const [currentDate, setCurrentDate] = useState<string>("");
 
   // Fetch schedule data
@@ -43,17 +48,15 @@ export default function HomeStduents() {
         const data = await response.json();
         setSchedules(data.data); // Assuming 'data' contains the schedule data
 
-        // Retrieve the idnumber from AsyncStorage
-        const storedIdNumber = await AsyncStorage.getItem("idNumber");
-        console.log("Stored idNumber in AsyncStorage:", storedIdNumber); // Log the stored idNumber
+        const idNumber = user?.idNumber;
 
         // Filter schedules based on the stored idnumber
-        if (storedIdNumber) {
+        if (idNumber) {
           const filtered = data.data.filter(
-            (schedule: Schedule) => schedule.userID === storedIdNumber // Type-safe filtering
+            (schedule: Schedule) => schedule.userID === idNumber // Type-safe filtering
           );
           setFilteredSchedules(filtered); // Update the filteredSchedules state
-          
+
           // Log the filtered schedules
           console.log("Filtered Schedules:", filtered);
         }
@@ -105,12 +108,15 @@ export default function HomeStduents() {
               filteredSchedules.map((schedule) => (
                 <View key={schedule.scheduleID} style={styles.card}>
                   <Text style={styles.cardTitle}>{schedule.courseName}</Text>
-                  <Text style={styles.cardSubtitle}>Code: {schedule.courseCode}</Text>
+                  <Text style={styles.cardSubtitle}>
+                    Code: {schedule.courseCode}
+                  </Text>
                   <Text style={styles.cardDetails}>
                     Instructor: {schedule.instFirstName} {schedule.instLastName}
                   </Text>
                   <Text style={styles.cardDetails}>
-                    Section: {schedule.section} | Time: {schedule.startTime} - {schedule.endTime}
+                    Section: {schedule.section} | Time: {schedule.startTime} -{" "}
+                    {schedule.endTime}
                   </Text>
                   <Text style={styles.cardDetails}>
                     Program: {schedule.program} | Year: {schedule.year}
@@ -118,7 +124,9 @@ export default function HomeStduents() {
                 </View>
               ))
             ) : (
-              <Text style={styles.noScheduleText}>No schedules found for this user.</Text>
+              <Text style={styles.noScheduleText}>
+                No schedules found for this user.
+              </Text>
             )}
           </Card>
         </>
@@ -164,7 +172,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#fff",
     textAlign: "center",
-    
   },
   loader: {
     flex: 1,

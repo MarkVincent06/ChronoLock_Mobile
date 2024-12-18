@@ -7,10 +7,9 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Card } from "@rneui/themed";
-import { useUserContext } from "../../context/UserContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import API_URL from "../../config/ngrok-api";
 import PushNotification from "react-native-push-notification";
+import { useUserContext } from "../../context/UserContext";
 
 // Define the type for a schedule
 interface Schedule {
@@ -38,6 +37,7 @@ interface Log {
 }
 
 export default function Home() {
+  const { user } = useUserContext();
   const [isLoading, setIsLoading] = useState(true);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [filteredSchedules, setFilteredSchedules] = useState<Schedule[]>([]);
@@ -113,20 +113,18 @@ export default function Home() {
         const data = await response.json();
         setSchedules(data.data); // Keep all schedules if needed elsewhere.
 
-        // Retrieve the idNumber from AsyncStorage
-        const storedIdNumber = await AsyncStorage.getItem("idNumber");
-        console.log("Stored idNumber in AsyncStorage:", storedIdNumber);
+        const idNumber = user?.idNumber;
 
-        if (storedIdNumber) {
+        if (idNumber) {
           // Filter schedules to match the user ID
           const filtered = data.data.filter(
-            (schedule: Schedule) => schedule.userID === storedIdNumber
+            (schedule: Schedule) => schedule.userID === idNumber
           );
           setFilteredSchedules(filtered);
 
           // Check for upcoming schedules
           const upcomingResponse = await fetch(
-            `${API_URL}/schedules/upcoming-schedules/${storedIdNumber}`
+            `${API_URL}/schedules/upcoming-schedules/${idNumber}`
           );
           const upcomingData = await upcomingResponse.json();
 

@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, FlatList } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  FlatList,
+} from "react-native";
+import { useUserContext } from "../../context/UserContext";
 import API_URL from "../../config/ngrok-api"; // Adjust the path as needed
 
 // Define the type for the attendance record object
@@ -15,7 +21,10 @@ interface AttendanceRecord {
 }
 
 export default function Attendance() {
-  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]); // Store attendance records
+  const { user } = useUserContext();
+  const [attendanceRecords, setAttendanceRecords] = useState<
+    AttendanceRecord[]
+  >([]); // Store attendance records
   const [isLoading, setIsLoading] = useState(true); // Loading state
 
   // Fetch attendance data from API
@@ -23,10 +32,12 @@ export default function Attendance() {
     const fetchAttendanceRecords = async () => {
       setIsLoading(true);
       try {
-        const idNumber = await AsyncStorage.getItem("idNumber");
+        const idNumber = await user?.idNumber;
         if (!idNumber) throw new Error("idNumber not found in AsyncStorage");
 
-        const response = await fetch(`${API_URL}/users/attendanceByIdNumber/${idNumber}`);
+        const response = await fetch(
+          `${API_URL}/users/attendanceByIdNumber/${idNumber}`
+        );
         if (!response.ok) {
           throw new Error("Failed to fetch attendance records");
         }
@@ -59,7 +70,9 @@ export default function Attendance() {
               <Text style={[styles.tableCell, styles.headerCell]}>DATE</Text>
               <Text style={[styles.tableCell, styles.headerCell]}>TIME</Text>
               <Text style={[styles.tableCell, styles.headerCell]}>REMARK</Text>
-              <Text style={[styles.tableCell, styles.headerCell]}>ATTENTION</Text>
+              <Text style={[styles.tableCell, styles.headerCell]}>
+                ATTENTION
+              </Text>
             </View>
           )}
           renderItem={({ item }) => (
@@ -76,7 +89,9 @@ export default function Attendance() {
           )}
         />
       ) : (
-        <Text style={styles.noRecordsMessage}>No attendance records found.</Text>
+        <Text style={styles.noRecordsMessage}>
+          No attendance records found.
+        </Text>
       )}
     </View>
   );

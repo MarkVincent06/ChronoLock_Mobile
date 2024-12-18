@@ -10,8 +10,9 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { TouchableOpacity } from "react-native";
-import API_URL from "../../config/ngrok-api"; // Adjust the path as needed
+import API_URL from "../../config/ngrok-api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useUserContext } from "../../context/UserContext";
 
 // Update seat generation to use seatId as the unique identifier
 const seat = (rows, columns) => {
@@ -32,6 +33,7 @@ const seat = (rows, columns) => {
 };
 
 export default function SeatPlan() {
+  const { user } = useUserContext();
   const [seats, setSeats] = useState(seat(5, 8));
   const [selectedClass, setSelectedClass] = useState("");
   const [classes, setClasses] = useState([]);
@@ -53,10 +55,10 @@ export default function SeatPlan() {
         const data = await response.json();
         if (Array.isArray(data.data)) {
           setClasses(data.data);
-          const storedIdNumber = await AsyncStorage.getItem("idNumber");
-          if (storedIdNumber) {
+          const idNumber = user?.idNumber;
+          if (idNumber) {
             const filtered = data.data.filter(
-              (classItem) => classItem.userID === storedIdNumber
+              (classItem) => classItem.userID === idNumber
             );
             setFilteredClasses(filtered);
             if (filtered.length > 0) {
@@ -282,7 +284,9 @@ export default function SeatPlan() {
                 <Text style={styles.modalTitle}>Assign Student</Text>
                 {activeSeat && (
                   <View style={styles.modalDetails}>
-                    <Text style={styles.modalText}>Seat ID: {activeSeat.id}</Text>
+                    <Text style={styles.modalText}>
+                      Seat ID: {activeSeat.id}
+                    </Text>
                     <Text style={styles.modalText}>
                       Row: {activeSeat.row + 1}
                     </Text>

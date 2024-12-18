@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { 
-  View, 
-  Text, 
-  FlatList, 
-  StyleSheet, 
-  Switch, 
-  Alert, 
-  ActivityIndicator, 
-  Platform 
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  Switch,
+  Alert,
+  ActivityIndicator,
+  Platform,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import PushNotification from "react-native-push-notification";
 import API_URL from "@/config/ngrok-api";
 import { TouchableOpacity } from "react-native";
+import { useUserContext } from "../../context/UserContext";
 
 interface Peripheral {
   id: string;
@@ -30,6 +30,7 @@ export default function Laboratory(): JSX.Element {
     { id: "6", name: "Printer", status: false },
   ]);
 
+  const { user } = useUserContext();
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [showScreen, setShowScreen] = useState<boolean>(false);
   const [attendanceMessage, setAttendanceMessage] = useState<string>("");
@@ -59,7 +60,6 @@ export default function Laboratory(): JSX.Element {
         }
       }
     );
-    
   }, []);
 
   // Helper function to trigger a notification
@@ -74,7 +74,7 @@ export default function Laboratory(): JSX.Element {
   // 2. Attendance Check
   const getIdNumberFromStorage = async (): Promise<string | null> => {
     try {
-      const idNumber = await AsyncStorage.getItem("idNumber");
+      const idNumber = user?.idNumber;
       return idNumber || null;
     } catch (error) {
       console.error("Error retrieving idNumber from AsyncStorage:", error);
@@ -86,7 +86,9 @@ export default function Laboratory(): JSX.Element {
     try {
       const idNumber = await getIdNumberFromStorage();
       if (idNumber) {
-        const response = await fetch(`${API_URL}/users/checkAttendance/${idNumber}`);
+        const response = await fetch(
+          `${API_URL}/users/checkAttendance/${idNumber}`
+        );
         const data = await response.json();
         if (data.displayScreen) {
           setShowScreen(true);
@@ -115,7 +117,9 @@ export default function Laboratory(): JSX.Element {
   const toggleStatus = (id: string): void => {
     setPeripherals((prevPeripherals) =>
       prevPeripherals.map((peripheral) =>
-        peripheral.id === id ? { ...peripheral, status: !peripheral.status } : peripheral
+        peripheral.id === id
+          ? { ...peripheral, status: !peripheral.status }
+          : peripheral
       )
     );
   };
@@ -127,20 +131,29 @@ export default function Laboratory(): JSX.Element {
     try {
       const idNumber = await getIdNumberFromStorage();
       if (idNumber) {
-        const response = await fetch(`${API_URL}/users/updateAttentionStatus/${idNumber}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ isNeedAttention }),
-        });
+        const response = await fetch(
+          `${API_URL}/users/updateAttentionStatus/${idNumber}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ isNeedAttention }),
+          }
+        );
 
         if (!response.ok) {
           throw new Error("Failed to update attention status");
         }
 
         if (isNeedAttention) {
-          triggerNotification("Alert", "Some peripherals need attention. Status reported.");
+          triggerNotification(
+            "Alert",
+            "Some peripherals need attention. Status reported."
+          );
         } else {
-          triggerNotification("Success", "All peripherals are in working condition!");
+          triggerNotification(
+            "Success",
+            "All peripherals are in working condition!"
+          );
         }
 
         Alert.alert(
@@ -161,55 +174,88 @@ export default function Laboratory(): JSX.Element {
   // Render UI
   return (
     <View style={styles.container}>
-    {isLoading ? (
-      <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#007bff" />
-        <Text style={styles.loaderText}>Loading...</Text>
-      </View>
-    ) : showScreen ? (
-      <>
-        <Text style={styles.header}>Computer Peripherals Checklist</Text>
-        <FlatList
-          data={peripherals}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.item}>
-              <Text style={styles.itemText}>{item.name}</Text>
-              <Switch
-                value={item.status}
-                onValueChange={() => toggleStatus(item.id)}
-                trackColor={{ false: "#767577", true: "#81b0ff" }}
-                thumbColor={item.status ? "#007bff" : "#f4f3f4"}
-              />
-            </View>
-          )}
-        />
-        <View style={styles.submitButtonContainer}>
-          <Text style={styles.submitButton} onPress={handleSubmit}>
-            Submit Checklist
-          </Text>
+      {isLoading ? (
+        <View style={styles.loader}>
+          <ActivityIndicator size="large" color="#007bff" />
+          <Text style={styles.loaderText}>Loading...</Text>
         </View>
+      ) : showScreen ? (
+        <>
+          <Text style={styles.header}>Computer Peripherals Checklist</Text>
+          <FlatList
+            data={peripherals}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <View style={styles.item}>
+                <Text style={styles.itemText}>{item.name}</Text>
+                <Switch
+                  value={item.status}
+                  onValueChange={() => toggleStatus(item.id)}
+                  trackColor={{ false: "#767577", true: "#81b0ff" }}
+                  thumbColor={item.status ? "#007bff" : "#f4f3f4"}
+                />
+              </View>
+            )}
+          />
+          <View style={styles.submitButtonContainer}>
+            <Text style={styles.submitButton} onPress={handleSubmit}>
+              Submit Checklist
+            </Text>
+          </View>
 
-        {/* Test Notification Button */}
-        <TouchableOpacity style={styles.testButton} onPress={testNotification}>
-          <Text style={styles.testButtonText}>Test Notification</Text>
-        </TouchableOpacity>
-      </>
-    ) : (
-      <Text style={styles.noticeMessage}>{attendanceMessage}</Text>
-    )}
-  </View>
+          {/* Test Notification Button */}
+          <TouchableOpacity
+            style={styles.testButton}
+            onPress={testNotification}
+          >
+            <Text style={styles.testButtonText}>Test Notification</Text>
+          </TouchableOpacity>
+        </>
+      ) : (
+        <Text style={styles.noticeMessage}>{attendanceMessage}</Text>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: "#f5f5f5" },
-  header: { fontSize: 24, fontWeight: "bold", marginBottom: 20, textAlign: "center", color: "#333" },
-  item: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 15, backgroundColor: "#fff", borderRadius: 8, marginBottom: 10, elevation: 2 },
+  header: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+    color: "#333",
+  },
+  item: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 15,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    marginBottom: 10,
+    elevation: 2,
+  },
   itemText: { fontSize: 18, color: "#333" },
   submitButtonContainer: { marginTop: 20, alignItems: "center" },
-  submitButton: { fontSize: 18, color: "#fff", backgroundColor: "#007bff", paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8, textAlign: "center", overflow: "hidden", elevation: 3 },
-  noticeMessage: { fontSize: 18, color: "#ff6347", textAlign: "center", marginTop: 20 },
+  submitButton: {
+    fontSize: 18,
+    color: "#fff",
+    backgroundColor: "#007bff",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    textAlign: "center",
+    overflow: "hidden",
+    elevation: 3,
+  },
+  noticeMessage: {
+    fontSize: 18,
+    color: "#ff6347",
+    textAlign: "center",
+    marginTop: 20,
+  },
   loader: { flex: 1, justifyContent: "center", alignItems: "center" },
   loaderText: { fontSize: 16, marginTop: 10, color: "#555" },
 });

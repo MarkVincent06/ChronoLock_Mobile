@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import API_URL from "../../config/ngrok-api";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useUserContext } from "../../context/UserContext";
 
 interface Subject {
   classID: string;
@@ -27,6 +27,8 @@ interface AttendanceRecord {
 }
 
 const AttendanceScreen = () => {
+  const { user } = useUserContext();
+
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<string>(""); // Will store classID
   const [filteredSubjects, setFilteredSubjects] = useState<Subject[]>([]);
@@ -47,10 +49,10 @@ const AttendanceScreen = () => {
 
         if (data && data.data) {
           setSubjects(data.data);
-          const storedIdNumber = await AsyncStorage.getItem("idNumber");
-          if (storedIdNumber) {
+          const idNumber = user?.idNumber;
+          if (idNumber) {
             const filtered = data.data.filter(
-              (subject: Subject) => subject.userID === storedIdNumber
+              (subject: Subject) => subject.userID === idNumber
             );
             setFilteredSubjects(filtered);
           } else {
