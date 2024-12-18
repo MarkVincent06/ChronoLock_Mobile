@@ -74,7 +74,7 @@ const AccessControl = () => {
     <View style={styles.container}>
       <Text style={styles.title}>Access Control</Text>
       <Text style={styles.description}>
-        Remotely unlock the ERP laboratory door by clicking the big green
+        Remotely unlock the ERP laboratory door by clicking the big unlock
         button.
       </Text>
 

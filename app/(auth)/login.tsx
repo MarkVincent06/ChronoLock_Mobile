@@ -79,26 +79,11 @@ const Login: React.FC = () => {
           lastName: userData.lastName,
           email: userData.email,
           idNumber: userData.idNumber,
-          userType: userData.userType, // Ensure userType is mapped
+          userType: userData.userType,
           avatar: userData.avatar,
         };
 
-        // Store the user's idNumber in AsyncStorage
-        await AsyncStorage.setItem("idNumber", userData.idNumber);
-
-        // Log the data after storing it
-        const storedIdNumber = await AsyncStorage.getItem("idNumber");
-        console.log("Stored idNumber in AsyncStorage:", storedIdNumber);
-
         setUser(mappedUser);
-
-        // Log user login details
-        console.log("User logged in successfully:", {
-          id: userData.id,
-          email: userData.email,
-          userType: userData.userType,
-          idNumber: userData.idNumber,
-        });
 
         // Only navigate if not already navigated
         if (!isNavigated) {
@@ -107,18 +92,21 @@ const Login: React.FC = () => {
           if (userData.userType === "Faculty") {
             router.push("/home"); // Navigate to Home if Faculty
           } else if (userData.userType === "Student") {
-            router.push("/(tabsStudent)/HomeStudents"); // Navigate to HomeStudent if Student
+            router.push("/(student)/HomeStudents"); // Navigate to HomeStudent if Student
           }
         }
       } else {
-        console.log("Login failed: User not found or invalid credentials.");
-        setError("Invalid email or password.");
+        console.log("Login failed:", response.data.message);
+        setError(response.data.message || "Invalid email or password.");
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error("Axios error during login:", error.message);
         if (error.response) {
           console.log("Error response:", error.response.data);
+          setError(
+            error.response.data.message || "Request failed. Please try again."
+          );
         }
       } else {
         console.error("An error occurred during login:", error);
@@ -155,19 +143,9 @@ const Login: React.FC = () => {
           lastName: userData.lastName,
           email: userData.email,
           idNumber: userData.idNumber,
-          userType: userData.userType, // Ensure userType is mapped
+          userType: userData.userType,
           avatar: userData.avatar,
         };
-
-        // Store the user's idNumber in AsyncStorage
-        await AsyncStorage.setItem("idNumber", userData.idNumber);
-
-        // Log the data after storing it
-        const storedIdNumber = await AsyncStorage.getItem("idNumber");
-        console.log(
-          "Stored idNumber in AsyncStorage after Google sign-in:",
-          storedIdNumber
-        );
 
         setUser(mappedUser);
 
@@ -184,7 +162,7 @@ const Login: React.FC = () => {
           if (userData.userType === "Faculty") {
             router.push("/home"); // Navigate to Home if Faculty
           } else if (userData.userType === "Student") {
-            router.push("/(tabsStudent)/HomeStudents"); // Navigate to HomeStudent if Student
+            router.push("/(student)/HomeStudents"); // Navigate to HomeStudent if Student
           }
         }
       } else {

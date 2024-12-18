@@ -1,5 +1,5 @@
 // <<<<<<< master
-const API_URL = "https://bcbe-139-135-241-179.ngrok-free.app";
+const API_URL = "https://9b74-139-135-241-119.ngrok-free.app";
 // =======
 //   const API_URL = "http://10.0.2.2:3000"; // UNCOMMENT THIS IF USING EMULATOR AND COMMENT BELOW THE URL
 // const API_URL =

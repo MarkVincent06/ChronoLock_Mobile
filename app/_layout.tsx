@@ -1,14 +1,10 @@
 import { useFonts } from "expo-font";
-import { Stack, useRouter } from "expo-router";
+import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { StatusBar } from "expo-status-bar";
-import { auth } from "../config/firebase";
-import { onAuthStateChanged } from "firebase/auth";
-import { UserContextProvider } from "../context/UserContext";
-import "expo-dev-client";
+import { useEffect } from "react";
+import { UserContextProvider } from "@/context/UserContext";
 import { MenuProvider } from "react-native-popup-menu";
+import { StatusBar } from "expo-status-bar";
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -18,54 +14,15 @@ export default function RootLayout() {
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
 
-  const [hasSeenOnboarding, setHasSeenOnboarding] = useState<boolean | null>(
-    null
-  );
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const router = useRouter();
-
-  // Check onboarding status
+  // Ensure fonts are loaded before proceeding with the navigation
   useEffect(() => {
-    const checkOnboarding = async () => {
-      const value = await AsyncStorage.getItem("hasSeenOnboarding");
-      setHasSeenOnboarding(!!value);
-    };
+    if (fontsLoaded) {
+      SplashScreen.hideAsync(); // Hide splash screen once fonts are loaded
+    }
+  }, [fontsLoaded]);
 
-    checkOnboarding();
-  }, []);
-
-  // Track authentication state
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsAuthenticated(!!user);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  // Hide splash screen and navigate based on app state
-  useEffect(() => {
-    const navigate = async () => {
-      if (
-        fontsLoaded &&
-        hasSeenOnboarding !== null &&
-        isAuthenticated !== null
-      ) {
-        await SplashScreen.hideAsync();
-
-        if (isAuthenticated) {
-          router.replace("/(tabs)/home");
-        } else if (!isAuthenticated && hasSeenOnboarding) {
-          router.replace("/(auth)/login");
-        }
-      }
-    };
-
-    navigate();
-  }, [fontsLoaded, hasSeenOnboarding, isAuthenticated]);
-
-  if (!fontsLoaded || hasSeenOnboarding === null || isAuthenticated === null) {
-    return null;
+  if (!fontsLoaded) {
+    return null; // Return nothing until fonts are loaded
   }
 
   return (
@@ -74,14 +31,15 @@ export default function RootLayout() {
         <Stack>
           <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabsStudent)" options={{ headerShown: false }} />
+          <Stack.Screen name="(admin)" options={{ headerShown: false }} />
+          <Stack.Screen name="(faculty)" options={{ headerShown: false }} />
+          <Stack.Screen name="(student)" options={{ headerShown: false }} />
           <Stack.Screen name="account" options={{ headerShown: false }} />
           <Stack.Screen name="chat" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" />
         </Stack>
-        <StatusBar backgroundColor="#161622" style="light" />
       </MenuProvider>
+      <StatusBar backgroundColor="#161622" style="light" />
     </UserContextProvider>
   );
 }

@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native";
 import { Card } from "@rneui/themed";
 import { useUserContext } from "../../context/UserContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import API_URL from "../../config/ngrok-api";
 import * as Notifications from "expo-notifications";
+import { useRouter } from "expo-router";
 
 // Define the type for a schedule
 interface Schedule {
@@ -23,6 +30,7 @@ interface Schedule {
 
 export default function Home() {
   const { user } = useUserContext();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [filteredSchedules, setFilteredSchedules] = useState<Schedule[]>([]);
@@ -96,7 +104,9 @@ export default function Home() {
   return (
     <ScrollView style={styles.container}>
       <Card containerStyle={styles.welcomeCard}>
-        <Card.Title style={styles.welcomeText}>Welcome, {user?.firstName}!</Card.Title>
+        <Card.Title style={styles.welcomeText}>
+          Welcome, {user?.firstName}!
+        </Card.Title>
         <Text style={styles.userTypeText}>{user?.userType}</Text>
         <Text style={styles.dateText}>{currentDate}</Text>
       </Card>
@@ -112,12 +122,15 @@ export default function Home() {
               filteredSchedules.map((schedule) => (
                 <View key={schedule.scheduleID} style={styles.card}>
                   <Text style={styles.cardTitle}>{schedule.courseName}</Text>
-                  <Text style={styles.cardSubtitle}>Code: {schedule.courseCode}</Text>
+                  <Text style={styles.cardSubtitle}>
+                    Code: {schedule.courseCode}
+                  </Text>
                   <Text style={styles.cardDetails}>
                     Instructor: {schedule.instFirstName} {schedule.instLastName}
                   </Text>
                   <Text style={styles.cardDetails}>
-                    Section: {schedule.section} | Time: {schedule.startTime} - {schedule.endTime}
+                    Section: {schedule.section} | Time: {schedule.startTime} -{" "}
+                    {schedule.endTime}
                   </Text>
                   <Text style={styles.cardDetails}>
                     Program: {schedule.program} | Year: {schedule.year}
@@ -125,7 +138,9 @@ export default function Home() {
                 </View>
               ))
             ) : (
-              <Text style={styles.noScheduleText}>No schedules found for this user.</Text>
+              <Text style={styles.noScheduleText}>
+                No schedules found for this user.
+              </Text>
             )}
           </Card>
         </>

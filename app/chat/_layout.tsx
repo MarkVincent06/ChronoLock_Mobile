@@ -31,7 +31,7 @@ const ChatLayout = () => {
           headerLeft: () => (
             <TouchableOpacity
               style={styles.backButton}
-              onPress={() => router.push("/(tabs)/home")}
+              onPress={() => router.back()}
             >
               <Icon name="arrow-back" size={24} color="#000" />
             </TouchableOpacity>
