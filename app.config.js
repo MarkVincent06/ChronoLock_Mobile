@@ -47,6 +47,13 @@ export default {
             "The app accesses your photos to let you share them with your friends.",
         },
       ],
+      [
+        "expo-location",
+        {
+          locationAlwaysAndWhenInUsePermission:
+            "Allow ChronoLock to use your location.",
+        },
+      ],
     ],
     experiments: {
       typedRoutes: true,

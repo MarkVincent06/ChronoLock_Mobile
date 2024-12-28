@@ -15,6 +15,8 @@ import { Icon } from "react-native-elements";
 import * as ImagePicker from "expo-image-picker";
 import axios from "axios";
 import { useRouter } from "expo-router";
+import * as Location from "expo-location";
+import { BACKGROUND_LOCATION_TASK } from "@/app/tasks/backgroundLocationTask";
 import API_URL from "../../config/ngrok-api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
@@ -97,6 +99,7 @@ const AccountSettings = () => {
         lastName: formData.lastName,
         email: formData.email,
         avatar: avatar || null,
+        location: user?.location || null,
       });
 
       Alert.alert("Success", "Profile updated successfully!");
@@ -115,6 +118,7 @@ const AccountSettings = () => {
       await GoogleSignin.signOut(); // Sign out from Google
       await signOut(auth); // Sign out from Firebase
       await AsyncStorage.removeItem("user");
+      await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
       setUser(null);
 
       Alert.alert("Success", "You have been logged out.");
@@ -139,6 +143,8 @@ const AccountSettings = () => {
           onPress: async () => {
             try {
               await axios.delete(`${API_URL}/users/deleteUser/${user?.id}`);
+              await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
+              await AsyncStorage.removeItem("user");
               setUser(null);
               Alert.alert("Account Deleted", "Your account has been deleted.");
               router.replace("/(auth)/login");

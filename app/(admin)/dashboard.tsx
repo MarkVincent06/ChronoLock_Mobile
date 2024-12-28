@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { Card, Divider } from "react-native-paper";
-import { LineChart, PieChart } from "react-native-chart-kit";
+import { LineChart } from "react-native-chart-kit";
 import { useWindowDimensions } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import axios from "axios";
@@ -18,13 +18,22 @@ interface User {
   avatar: string;
 }
 
+interface Log {
+  time: string;
+  userName: string;
+  action: string;
+}
+
 const AdminDashboard = () => {
   const { width } = useWindowDimensions();
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalFaculty, setTotalFaculty] = useState(0);
   const [totalStudents, setTotalStudents] = useState(0);
+  const [totalGroups, setTotalGroups] = useState(0);
+  const [recentLogs, setRecentLogs] = useState<Log[]>([]);
 
   useEffect(() => {
+    // Fetch users
     const fetchUsers = async () => {
       try {
         const response = await axios.get<User[]>(`${API_URL}/users/fetchUsers`);
@@ -47,7 +56,31 @@ const AdminDashboard = () => {
       }
     };
 
+    // Fetch total groups
+    const fetchGroups = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/groups/fetchAllgroups`);
+        setTotalGroups(response.data.length);
+      } catch (error) {
+        console.error("Error fetching groups:", error);
+      }
+    };
+
+    // Fetch recent logs
+    const fetchLogs = async () => {
+      try {
+        const response = await axios.get<{ logs: Log[] }>(
+          `${API_URL}/users/fetchUserLogs`
+        );
+        setRecentLogs(response.data.logs);
+      } catch (error) {
+        console.error("Error fetching logs:", error);
+      }
+    };
+
     fetchUsers();
+    fetchGroups();
+    fetchLogs();
   }, []);
 
   return (
@@ -56,9 +89,10 @@ const AdminDashboard = () => {
 
       {/* Summary Cards */}
       <View style={styles.summarySection}>
+        {/* Total Users Card */}
         <Card style={styles.card}>
           <View style={styles.cardContent}>
-            <Icon name="group" size={30} color="#808080" />
+            <Icon name="group" size={24} color="#808080" />
             <View style={styles.cardTextContainer}>
               <Text style={styles.cardTitle}>Total Users</Text>
               <Text style={styles.cardValue}>{totalUsers}</Text>
@@ -69,7 +103,7 @@ const AdminDashboard = () => {
         {/* Total Faculty Card */}
         <Card style={styles.card}>
           <View style={styles.cardContent}>
-            <Icon name="group" size={30} color="#007bff" />
+            <Icon name="group" size={24} color="#007bff" />
             <View style={styles.cardTextContainer}>
               <Text style={styles.cardTitle}>Total Faculty</Text>
               <Text style={styles.cardValue}>{totalFaculty}</Text>
@@ -80,10 +114,21 @@ const AdminDashboard = () => {
         {/* Total Students Card */}
         <Card style={styles.card}>
           <View style={styles.cardContent}>
-            <Icon name="group" size={30} color="#28a745" />
+            <Icon name="group" size={24} color="#28a745" />
             <View style={styles.cardTextContainer}>
               <Text style={styles.cardTitle}>Total Students</Text>
               <Text style={styles.cardValue}>{totalStudents}</Text>
+            </View>
+          </View>
+        </Card>
+
+        {/* Total Groups Card */}
+        <Card style={styles.card}>
+          <View style={styles.cardContent}>
+            <Icon name="group" size={24} color="#ff9800" />
+            <View style={styles.cardTextContainer}>
+              <Text style={styles.cardTitle}>Total Group Chats</Text>
+              <Text style={styles.cardValue}>{totalGroups}</Text>
             </View>
           </View>
         </Card>
@@ -113,55 +158,17 @@ const AdminDashboard = () => {
         style={styles.chart}
       />
 
-      {/* Lab Usage */}
-      <Text style={styles.sectionTitle}>Lab Usage</Text>
-      <PieChart
-        data={[
-          {
-            name: "Occupied",
-            population: 3,
-            color: "#4caf50",
-            legendFontColor: "#000",
-            legendFontSize: 12,
-          },
-          {
-            name: "Available",
-            population: 2,
-            color: "#f44336",
-            legendFontColor: "#000",
-            legendFontSize: 12,
-          },
-        ]}
-        width={width - 40}
-        height={200}
-        chartConfig={{
-          color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-        }}
-        accessor={"population"}
-        backgroundColor={"transparent"}
-        paddingLeft={"15"}
-        absolute
-        style={styles.chart}
-      />
-
-      {/* Alerts */}
-      <Text style={styles.sectionTitle}>Alerts</Text>
-      <Card style={styles.alertCard}>
-        <Text style={styles.alertText}>
-          John Doe missed attendance for Class 101
-        </Text>
-        <Divider />
-        <Text style={styles.alertText}>
-          Unauthorized access attempt in Lab 3
-        </Text>
-      </Card>
-
       {/* Recent Logs */}
-      <Text style={styles.sectionTitle}>Recent Logs</Text>
+      <Text style={styles.sectionTitle}>Recent User Logs</Text>
       <Card style={styles.logsCard}>
-        <Text style={styles.logText}>[10:05 AM] Jane Smith accessed Lab 2</Text>
-        <Divider />
-        <Text style={styles.logText}>[10:10 AM] John Doe logged in</Text>
+        {recentLogs.map((log, index) => (
+          <View key={index}>
+            <Text style={styles.logText}>
+              [{log.time}] {log.userName} {log.action}
+            </Text>
+            {index < recentLogs.length - 1 && <Divider />}
+          </View>
+        ))}
       </Card>
     </ScrollView>
   );
@@ -198,7 +205,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   cardTitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#555",
   },
   cardValue: {
@@ -213,15 +220,6 @@ const styles = StyleSheet.create({
   chart: {
     marginVertical: 10,
     borderRadius: 8,
-  },
-  alertCard: {
-    padding: 10,
-    backgroundColor: "#fff",
-  },
-  alertText: {
-    fontSize: 14,
-    color: "#d32f2f",
-    marginVertical: 5,
   },
   logsCard: {
     padding: 10,

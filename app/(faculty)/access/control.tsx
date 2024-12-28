@@ -64,6 +64,25 @@ const AccessControl = () => {
       setConnectionStatus("Sending command...");
 
       try {
+        // Log the access attempt
+        const currentDate = new Date();
+        const logResponse = await axios.post(
+          `${API_URL}/remote-access/insertAccessLog`,
+          {
+            idNumber: USER_ID_NUMBER,
+            action: `User with ID number ${USER_ID_NUMBER} has attempted to unlock the ERP Laboratory.`,
+            date: currentDate.toLocaleDateString(),
+            time: currentDate.toLocaleTimeString(),
+          }
+        );
+
+        if (logResponse.status === 200) {
+          console.log("Access log inserted successfully.");
+        } else {
+          console.error("Failed to insert access log.");
+        }
+
+        // Send unlock command to Raspberry Pi
         const response = await axios.post(`${RASPBERRY_PI_URL}/control`, {
           command, // 1 for unlock
         });

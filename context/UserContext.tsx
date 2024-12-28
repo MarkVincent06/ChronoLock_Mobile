@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Location from "expo-location";
 
 type User = {
   id: number;
@@ -9,6 +10,7 @@ type User = {
   idNumber: string;
   userType: string;
   avatar: string | null;
+  location: Location.LocationObject | null;
 } | null;
 
 type UserContextType = {
@@ -53,6 +55,33 @@ export const UserContextProvider: React.FC<{ children: React.ReactNode }> = ({
 
     saveUserToStorage();
   }, [user]);
+
+  // Log user changes
+  useEffect(() => {
+    console.log("User state changed:", user);
+  }, [user]);
+
+  const updateUserLocation = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === "granted") {
+        const location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        });
+        console.warn(
+          `Fetched location using "updateUserLocation" function:`,
+          location
+        );
+        setUser((prevUser) =>
+          prevUser ? { ...prevUser, location } : prevUser
+        );
+      } else {
+        console.warn("Location permission denied");
+      }
+    } catch (error) {
+      console.error("Failed to fetch location:", error);
+    }
+  };
 
   return (
     <UserContext.Provider value={{ user, setUser }}>

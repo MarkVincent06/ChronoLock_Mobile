@@ -76,7 +76,8 @@ const TabsLayout = () => {
         screenOptions={{
           tabBarShowLabel: false,
           tabBarStyle: {
-            height: 45,
+            height: 47,
+            paddingTop: 3,
           },
           header: () => <CustomHeader />,
         }}
@@ -98,15 +99,15 @@ const TabsLayout = () => {
         />
 
         <Tabs.Screen
-          name="access-control"
+          name="access"
           options={{
-            title: "Access Control",
+            title: "Access",
             headerShown: true,
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
                 icon={<Icon name="key" size={24} color={color} />}
                 color={color}
-                name="Access Control"
+                name="Access"
                 focused={focused}
               />
             ),
@@ -114,17 +115,33 @@ const TabsLayout = () => {
         />
 
         <Tabs.Screen
-          name="access-logs"
+          name="laboratory"
           options={{
-            title: "Access Logs",
+            title: "Laboratory",
+            headerShown: true,
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon
+                icon={<Icon name="desktop" size={24} color={color} />}
+                color={color}
+                name="Laboratory"
+                focused={focused}
+              />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="groups"
+          options={{
+            title: "Group Chats",
             headerShown: true,
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
                 icon={
-                  <Ionicon name="newspaper-outline" size={24} color={color} />
+                  <Ionicon name="chatbubbles-outline" size={24} color={color} />
                 }
                 color={color}
-                name="Access Logs"
+                name="Group Chats"
                 focused={focused}
               />
             ),

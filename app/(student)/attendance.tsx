@@ -7,9 +7,8 @@ import {
   FlatList,
 } from "react-native";
 import { useUserContext } from "../../context/UserContext";
-import API_URL from "../../config/ngrok-api"; // Adjust the path as needed
+import API_URL from "@/config/ngrok-api";
 
-// Define the type for the attendance record object
 interface AttendanceRecord {
   attendanceID: number;
   userID: string;
@@ -25,15 +24,15 @@ export default function Attendance() {
   const [attendanceRecords, setAttendanceRecords] = useState<
     AttendanceRecord[]
   >([]); // Store attendance records
-  const [isLoading, setIsLoading] = useState(true); // Loading state
+  const [isLoading, setIsLoading] = useState(true);
 
   // Fetch attendance data from API
   useEffect(() => {
     const fetchAttendanceRecords = async () => {
       setIsLoading(true);
       try {
-        const idNumber = await user?.idNumber;
-        if (!idNumber) throw new Error("idNumber not found in AsyncStorage");
+        const idNumber = user?.idNumber;
+        if (!idNumber) throw new Error("idNumber not found.");
 
         const response = await fetch(
           `${API_URL}/users/attendanceByIdNumber/${idNumber}`
@@ -120,10 +119,11 @@ const styles = StyleSheet.create({
   tableCell: {
     flex: 1,
     textAlign: "center",
-    fontSize: 16,
+    fontSize: 14,
     paddingHorizontal: 5,
   },
   headerCell: {
+    fontSize: 12,
     fontWeight: "700",
     backgroundColor: "#f8f8f8",
     color: "#777",

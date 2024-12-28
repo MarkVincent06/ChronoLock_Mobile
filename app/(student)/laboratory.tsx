@@ -12,7 +12,7 @@ import {
 import PushNotification from "react-native-push-notification";
 import API_URL from "@/config/ngrok-api";
 import { TouchableOpacity } from "react-native";
-import { useUserContext } from "../../context/UserContext";
+import { useUserContext } from "@/context/UserContext";
 
 interface Peripheral {
   id: string;
@@ -34,6 +34,7 @@ export default function Laboratory(): JSX.Element {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [showScreen, setShowScreen] = useState<boolean>(false);
   const [attendanceMessage, setAttendanceMessage] = useState<string>("");
+  const [notificationSent, setNotificationSent] = useState<boolean>(false);
 
   // 1. Initialize Notification and Create Channel
   useEffect(() => {
@@ -72,19 +73,10 @@ export default function Laboratory(): JSX.Element {
   };
 
   // 2. Attendance Check
-  const getIdNumberFromStorage = async (): Promise<string | null> => {
-    try {
-      const idNumber = user?.idNumber;
-      return idNumber || null;
-    } catch (error) {
-      console.error("Error retrieving idNumber from AsyncStorage:", error);
-      return null;
-    }
-  };
 
   const checkAttendance = async (): Promise<void> => {
     try {
-      const idNumber = await getIdNumberFromStorage();
+      const idNumber = user?.idNumber;
       if (idNumber) {
         const response = await fetch(
           `${API_URL}/users/checkAttendance/${idNumber}`
@@ -92,14 +84,25 @@ export default function Laboratory(): JSX.Element {
         const data = await response.json();
         if (data.displayScreen) {
           setShowScreen(true);
+          setNotificationSent(false); // Reset notification state when the screen is shown
         } else {
-          // setAttendanceMessage("You have no schedule right now.");
-          // triggerNotification("Attendance", "You have no schedule at the moment.");
+          setAttendanceMessage("You have no schedule right now.");
+          // Send notification only if not already sent
+          if (!notificationSent) {
+            triggerNotification(
+              "Attendance",
+              "You have no schedule at the moment."
+            );
+            setNotificationSent(true); // Prevent duplicate notifications
+          }
         }
       }
     } catch (error) {
       console.error("Error fetching attendance:", error);
-      triggerNotification("Error", "Error fetching attendance data.");
+      if (!notificationSent) {
+        triggerNotification("Error", "Error fetching attendance data.");
+        setNotificationSent(true); // Prevent duplicate notifications for errors
+      }
       setAttendanceMessage("Error fetching attendance data.");
     } finally {
       setIsLoading(false);
@@ -107,10 +110,18 @@ export default function Laboratory(): JSX.Element {
   };
 
   useEffect(() => {
+    const fetchAttendanceData = async () => {
+      await checkAttendance(); // Immediate check when the component mounts
+    };
+
+    fetchAttendanceData();
+
+    // Set interval for periodic checks (every 5 minutes)
     const interval = setInterval(() => {
       checkAttendance();
-    }, 1000);
-    return () => clearInterval(interval);
+    }, 300000); // 5 minutes in milliseconds
+
+    return () => clearInterval(interval); // Cleanup interval on unmount
   }, []);
 
   // 3. Handle Checklist Submission
@@ -129,7 +140,7 @@ export default function Laboratory(): JSX.Element {
     const isNeedAttention = !allChecked;
 
     try {
-      const idNumber = await getIdNumberFromStorage();
+      const idNumber = user?.idNumber;
       if (idNumber) {
         const response = await fetch(
           `${API_URL}/users/updateAttentionStatus/${idNumber}`,

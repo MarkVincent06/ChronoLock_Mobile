@@ -22,8 +22,9 @@ import {
 } from "firebase/auth";
 import { auth } from "../../config/firebase";
 import { useUserContext } from "../../context/UserContext";
+import * as Location from "expo-location";
+import { BACKGROUND_LOCATION_TASK } from "@/app/tasks/backgroundLocationTask";
 import API_URL from "../../config/ngrok-api";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import eye from "../../assets/icons/eye.png";
 import eyeHide from "../../assets/icons/eye-hide.png";
@@ -37,7 +38,7 @@ const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { setUser } = useUserContext();
   const router = useRouter();
-  const [isNavigated, setIsNavigated] = useState(false); // Track if navigation happened
+  const [isNavigated, setIsNavigated] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -81,9 +82,31 @@ const Login: React.FC = () => {
           idNumber: userData.idNumber,
           userType: userData.userType,
           avatar: userData.avatar,
+          location: null,
         };
 
         setUser(mappedUser);
+
+        // Get the user's location after successful login
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === "granted") {
+          const location = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.High,
+          });
+
+          // Update user context with location
+          setUser((prevUser) =>
+            prevUser ? { ...prevUser, location } : prevUser
+          );
+
+          // Start background location tracking
+          await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
+            accuracy: Location.Accuracy.High,
+            distanceInterval: 10, // Update every 10 meters
+          });
+        } else {
+          alert("Location permission is required to use this feature.");
+        }
 
         // Only navigate if not already navigated
         if (!isNavigated) {
@@ -147,15 +170,31 @@ const Login: React.FC = () => {
           idNumber: userData.idNumber,
           userType: userData.userType,
           avatar: userData.avatar,
+          location: null,
         };
 
         setUser(mappedUser);
 
-        console.log("Google sign-in successful:", {
-          id: userData.id,
-          email: userData.email,
-          userType: userData.userType,
-        });
+        // Get the user's location after successful login
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === "granted") {
+          const location = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.High,
+          });
+
+          // Update user context with location
+          setUser((prevUser) =>
+            prevUser ? { ...prevUser, location } : prevUser
+          );
+
+          // Start background location tracking
+          await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
+            accuracy: Location.Accuracy.High,
+            distanceInterval: 10, // Update every 10 meters
+          });
+        } else {
+          alert("Location permission is required to use this feature.");
+        }
 
         // Only navigate if not already navigated
         if (!isNavigated) {

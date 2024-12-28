@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
+  TextInput,
   View,
   TouchableOpacity,
   ScrollView,
@@ -15,6 +16,8 @@ import {
   MenuOption,
 } from "react-native-popup-menu";
 import axios from "axios";
+import { useRouter } from "expo-router";
+import Icon from "react-native-vector-icons/FontAwesome";
 import API_URL from "@/config/ngrok-api";
 
 interface Account {
@@ -24,8 +27,11 @@ interface Account {
 }
 
 const AccessControl = () => {
+  const router = useRouter();
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [filteredAccounts, setFilteredAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   // Fetch accounts from the backend
   const fetchAccounts = async () => {
@@ -35,6 +41,7 @@ const AccessControl = () => {
         `${API_URL}/remote-access/fetchAccounts`
       );
       setAccounts(response.data.data);
+      setFilteredAccounts(response.data.data);
     } catch (error) {
       console.error("Error fetching accounts:", error);
     } finally {
@@ -45,6 +52,15 @@ const AccessControl = () => {
   useEffect(() => {
     fetchAccounts();
   }, []);
+
+  // Handle search input changes
+  const handleSearch = (text: string) => {
+    setSearchTerm(text);
+    const filtered = accounts.filter((account) =>
+      account.idNumber.toLowerCase().includes(text.toLowerCase())
+    );
+    setFilteredAccounts(filtered);
+  };
 
   // Function to handle privilege updates (Grant/Revoke)
   const handlePrivilegeUpdate = async (idNumber: string, action: string) => {
@@ -86,7 +102,18 @@ const AccessControl = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Manage Access Control</Text>
+      <View style={styles.headerContainer}>
+        <TouchableOpacity onPress={router.back}>
+          <Icon name="arrow-left" size={20} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.header}>Manage Access Control</Text>
+      </View>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Search id number..."
+        value={searchTerm}
+        onChangeText={setSearchTerm}
+      />
       {loading ? (
         <ActivityIndicator size="large" color="#007bff" />
       ) : (
@@ -94,14 +121,14 @@ const AccessControl = () => {
           {/* Table Header */}
           <View style={styles.tableRow}>
             <Text style={styles.tableHeader}>#</Text>
-            <Text style={styles.tableHeader}>Student Number</Text>
+            <Text style={styles.tableHeader}>Id Number</Text>
             <Text style={styles.tableHeader}>Privilege Status</Text>
             <Text style={styles.tableHeader}>Actions</Text>
           </View>
 
           {/* Table Data */}
           <ScrollView style={styles.scrollContainer}>
-            {accounts.map((account, index) => (
+            {filteredAccounts.map((account, index) => (
               <View key={account.id} style={styles.tableRow}>
                 <Text style={styles.tableCell}>{index + 1}</Text>
                 <Text style={styles.tableCell}>{account.idNumber}</Text>
@@ -160,10 +187,23 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: "#f4f4f4",
   },
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
   header: {
     fontSize: 24,
     fontWeight: "bold",
+    marginLeft: 15,
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
     marginBottom: 20,
+    fontSize: 16,
   },
   table: {
     borderWidth: 1,

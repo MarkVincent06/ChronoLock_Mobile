@@ -7,13 +7,19 @@ const AccessLayout = () => {
     <>
       <Stack>
         <Stack.Screen
-          name="control"
+          name="index"
           options={{
             headerShown: false,
           }}
         />
         <Stack.Screen
-          name="management"
+          name="access-control"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="access-logs"
           options={{
             headerShown: false,
           }}

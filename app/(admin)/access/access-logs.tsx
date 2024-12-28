@@ -1,6 +1,15 @@
-import { StyleSheet, Text, View, ScrollView } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useRouter } from "expo-router";
+import Icon from "react-native-vector-icons/FontAwesome";
 import API_URL from "@/config/ngrok-api";
 
 interface AccessLog {
@@ -12,7 +21,10 @@ interface AccessLog {
 }
 
 const AccessLogs = () => {
+  const router = useRouter();
   const [logs, setLogs] = useState<AccessLog[]>([]);
+  const [filteredLogs, setFilteredLogs] = useState<AccessLog[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
 
   // Function to format date in 'Month Day, Year' format
@@ -44,11 +56,23 @@ const AccessLogs = () => {
         `${API_URL}/remote-access/fetchAccessLogs`
       );
       setLogs(response.data.data);
+      setFilteredLogs(response.data.data);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching logs:", error);
       setLoading(false);
     }
+  };
+
+  // Update filtered logs based on search query
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    const filtered = logs.filter((log) =>
+      Object.values(log).some((value) =>
+        value.toString().toLowerCase().includes(query.toLowerCase())
+      )
+    );
+    setFilteredLogs(filtered);
   };
 
   useEffect(() => {
@@ -65,11 +89,25 @@ const AccessLogs = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Access Control Logs</Text>
+      <View style={styles.headerContainer}>
+        <TouchableOpacity onPress={router.back}>
+          <Icon name="arrow-left" size={20} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.header}>Access Control Logs</Text>
+      </View>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Search logs..."
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
       <ScrollView style={styles.cardContainer}>
-        {logs.reverse().map((log, index) => (
+        {filteredLogs.reverse().map((log, index) => (
           <View key={log.id} style={styles.card}>
-            <Text style={styles.cardTitle}>Log #{logs.length - index}</Text>
+            <Text style={styles.cardTitle}>
+              Log #{filteredLogs.length - index}
+            </Text>
+            <Text style={styles.cardText}>ID Number: {log.idNumber}</Text>
             <Text style={styles.cardText}>Action: {log.action}</Text>
             <Text style={styles.cardText}>Date: {formatDate(log.date)}</Text>
             <Text style={styles.cardText}>Time: {formatTime(log.time)}</Text>
@@ -86,9 +124,21 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: "#f4f4f4",
   },
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
   header: {
     fontSize: 24,
     fontWeight: "bold",
+    marginLeft: 15,
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
     marginBottom: 20,
   },
   cardContainer: {

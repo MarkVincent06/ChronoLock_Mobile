@@ -110,8 +110,8 @@ export default function SeatPlan() {
     fetchStudents(); // Initial fetch for students
 
     const intervalId = setInterval(() => {
-      fetchStudents(); // Fetch students every second
-    }, 1000);
+      fetchStudents(); // Fetch students every minute
+    }, 10000);
 
     return () => clearInterval(intervalId); // Cleanup the interval on unmount
   }, [selectedClass]); // Re-fetch students when selectedClass changes
