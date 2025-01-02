@@ -118,7 +118,7 @@ const AccountSettings = () => {
       await GoogleSignin.signOut(); // Sign out from Google
       await signOut(auth); // Sign out from Firebase
       await AsyncStorage.removeItem("user");
-      await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
+      // await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
       setUser(null);
 
       Alert.alert("Success", "You have been logged out.");
@@ -143,7 +143,7 @@ const AccountSettings = () => {
           onPress: async () => {
             try {
               await axios.delete(`${API_URL}/users/deleteUser/${user?.id}`);
-              await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
+              // await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
               await AsyncStorage.removeItem("user");
               setUser(null);
               Alert.alert("Account Deleted", "Your account has been deleted.");

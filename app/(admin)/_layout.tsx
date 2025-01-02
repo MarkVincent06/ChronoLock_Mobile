@@ -1,6 +1,6 @@
+import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import React from "react";
 import { Tabs } from "expo-router";
 import { useRouter } from "expo-router";
 import API_URL from "../../config/ngrok-api";
@@ -33,6 +33,30 @@ const CustomHeader = () => {
   const { user } = useUserContext();
   const router = useRouter();
 
+  // State for time and date
+  const [time, setTime] = useState("");
+  const [date, setDate] = useState("");
+
+  useEffect(() => {
+    const updateDateTime = () => {
+      const now = new Date();
+      const hours = now.getHours() % 12 || 12;
+      const minutes = now.getMinutes().toString().padStart(2, "0");
+      const ampm = now.getHours() >= 12 ? "PM" : "AM";
+      const day = now.toLocaleString("en-US", { weekday: "short" });
+      const month = now.toLocaleString("en-US", { month: "short" });
+      const dayDate = now.getDate();
+
+      setTime(`${hours}:${minutes} ${ampm}`);
+      setDate(`${day}, ${month} ${dayDate}`);
+    };
+
+    updateDateTime(); // Update immediately on mount
+    const interval = setInterval(updateDateTime, 60000);
+
+    return () => clearInterval(interval); // Clean up on unmount
+  }, []);
+
   const avatarSource =
     user?.avatar && user.avatar !== ""
       ? {
@@ -54,6 +78,11 @@ const CustomHeader = () => {
         <Text style={styles.appName}>ChronoLock</Text>
       </View>
       <View style={styles.headerRight}>
+        <Text style={styles.dateTime}>
+          <Text style={styles.timeText}>{time}</Text>
+          {"\n"}
+          <Text style={styles.dateText}>{date}</Text>
+        </Text>
         <TouchableOpacity
           onPress={() => router.push("/account")}
           style={styles.accountButton}
@@ -77,7 +106,7 @@ const TabsLayout = () => {
           tabBarShowLabel: false,
           tabBarStyle: {
             height: 47,
-            paddingTop: 3,
+            paddingTop: 8,
           },
           header: () => <CustomHeader />,
         }}
@@ -133,7 +162,7 @@ const TabsLayout = () => {
         <Tabs.Screen
           name="groups"
           options={{
-            title: "Group Chats",
+            title: "Chats",
             headerShown: true,
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
@@ -141,7 +170,7 @@ const TabsLayout = () => {
                   <Ionicon name="chatbubbles-outline" size={24} color={color} />
                 }
                 color={color}
-                name="Group Chats"
+                name="Chats"
                 focused={focused}
               />
             ),
@@ -188,6 +217,20 @@ const styles = StyleSheet.create({
   },
   headerRight: {
     flexDirection: "row",
+    alignItems: "center",
+  },
+  dateTime: {
+    textAlign: "right",
+    marginRight: 10,
+  },
+  timeText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#000",
+  },
+  dateText: {
+    fontSize: 14,
+    color: "#555",
   },
   avatar: {
     width: 30,

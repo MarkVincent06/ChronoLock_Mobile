@@ -18,6 +18,12 @@ const LaboratoryLayout = () => {
             headerShown: false,
           }}
         />
+        <Stack.Screen
+          name="schedule"
+          options={{
+            headerShown: false,
+          }}
+        />
       </Stack>
     </>
   );

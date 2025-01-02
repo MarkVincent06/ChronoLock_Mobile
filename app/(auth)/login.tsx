@@ -8,6 +8,8 @@ import {
   View,
   Image,
   ActivityIndicator,
+  Alert,
+  BackHandler,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -15,6 +17,7 @@ import {
   GoogleSigninButton,
 } from "@react-native-google-signin/google-signin";
 import axios from "axios";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   GoogleAuthProvider,
   signInWithCredential,
@@ -39,6 +42,20 @@ const Login: React.FC = () => {
   const { setUser } = useUserContext();
   const router = useRouter();
   const [isNavigated, setIsNavigated] = useState(false);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        // Disable back action
+        return true;
+      };
+
+      BackHandler.addEventListener("hardwareBackPress", onBackPress);
+
+      return () =>
+        BackHandler.removeEventListener("hardwareBackPress", onBackPress);
+    }, [])
+  );
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -88,25 +105,34 @@ const Login: React.FC = () => {
         setUser(mappedUser);
 
         // Get the user's location after successful login
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status === "granted") {
-          const location = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.High,
-          });
+        // const { status } = await Location.requestForegroundPermissionsAsync();
+        // if (status === "granted") {
+        //   const location = await Location.getCurrentPositionAsync({
+        //     accuracy: Location.Accuracy.High,
+        //   });
 
-          // Update user context with location
-          setUser((prevUser) =>
-            prevUser ? { ...prevUser, location } : prevUser
-          );
+        //   // Update user context with location
+        //   setUser((prevUser) =>
+        //     prevUser ? { ...prevUser, location } : prevUser
+        //   );
 
-          // Start background location tracking
-          await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
-            accuracy: Location.Accuracy.High,
-            distanceInterval: 10, // Update every 10 meters
-          });
-        } else {
-          alert("Location permission is required to use this feature.");
-        }
+        //   // Start background location tracking
+        //   await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
+        //     accuracy: Location.Accuracy.High,
+        //     timeInterval: 10000, // Fetch location every 10 seconds
+        //     foregroundService: {
+        //       notificationTitle: "ChronoLock is tracking your location",
+        //       notificationBody:
+        //         "Your location is being used in the background.",
+        //       notificationColor: "#1A73E8",
+        //     },
+        //   });
+        // } else {
+        //   Alert.alert(
+        //     "Permission Denied",
+        //     "Background location access is required for this feature. Please enable it in your device's settings."
+        //   );
+        // }
 
         // Only navigate if not already navigated
         if (!isNavigated) {
@@ -176,25 +202,26 @@ const Login: React.FC = () => {
         setUser(mappedUser);
 
         // Get the user's location after successful login
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status === "granted") {
-          const location = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.High,
-          });
+        // const { status } = await Location.requestForegroundPermissionsAsync();
+        // if (status === "granted") {
+        //   const location = await Location.getCurrentPositionAsync({
+        //     accuracy: Location.Accuracy.High,
+        //   });
 
-          // Update user context with location
-          setUser((prevUser) =>
-            prevUser ? { ...prevUser, location } : prevUser
-          );
+        //   // Update user context with location
+        //   setUser((prevUser) =>
+        //     prevUser ? { ...prevUser, location } : prevUser
+        //   );
 
-          // Start background location tracking
-          await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
-            accuracy: Location.Accuracy.High,
-            distanceInterval: 10, // Update every 10 meters
-          });
-        } else {
-          alert("Location permission is required to use this feature.");
-        }
+        //   // Start background location tracking
+        //   await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
+        //     accuracy: Location.Accuracy.High,
+        //     distanceInterval: 10, // Minimum distance in meters between updates
+        //     deferredUpdatesInterval: 1000, // Time interval in milliseconds
+        //   });
+        // } else {
+        //   alert("Location permission is required to use this feature.");
+        // }
 
         // Only navigate if not already navigated
         if (!isNavigated) {

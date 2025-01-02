@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
+import { locationEmitter } from "@/app/tasks/backgroundLocationTask";
 
 type User = {
   id: number;
@@ -25,7 +26,29 @@ export const UserContextProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [user, setUser] = useState<User>(null);
 
+  // Request location permissions (both foreground and background)
+  // const requestPermissions = async () => {
+  //   const { status: foregroundStatus } =
+  //     await Location.requestForegroundPermissionsAsync();
+
+  //   if (foregroundStatus === "granted") {
+  //     const { status: backgroundStatus } =
+  //       await Location.requestBackgroundPermissionsAsync();
+
+  //     if (backgroundStatus === "granted") {
+  //       console.log("Background location permissions granted.");
+  //     } else {
+  //       console.error("Background location permissions denied.");
+  //     }
+  //   } else {
+  //     console.error("Foreground location permissions denied.");
+  //   }
+  // };
+
   useEffect(() => {
+    // Request location permissions when the app starts
+    // requestPermissions();
+
     const fetchUserFromStorage = async () => {
       try {
         const userData = await AsyncStorage.getItem("user");
@@ -56,32 +79,39 @@ export const UserContextProvider: React.FC<{ children: React.ReactNode }> = ({
     saveUserToStorage();
   }, [user]);
 
-  // Log user changes
-  useEffect(() => {
-    console.log("User state changed:", user);
-  }, [user]);
+  // useEffect(() => {
+  //   const handleLocationUpdate = (location: Location.LocationObject) => {
+  //     console.warn("Received location update from background task:", location);
+  //     setUser((prevUser) => (prevUser ? { ...prevUser, location } : prevUser));
+  //   };
 
-  const updateUserLocation = async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === "granted") {
-        const location = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High,
-        });
-        console.warn(
-          `Fetched location using "updateUserLocation" function:`,
-          location
-        );
-        setUser((prevUser) =>
-          prevUser ? { ...prevUser, location } : prevUser
-        );
-      } else {
-        console.warn("Location permission denied");
-      }
-    } catch (error) {
-      console.error("Failed to fetch location:", error);
-    }
-  };
+  //   // Subscribe to location updates
+  //   locationEmitter.on("locationUpdate", handleLocationUpdate);
+
+  //   // Clean up the event listener on unmount
+  //   return () => {
+  //     locationEmitter.off("locationUpdate", handleLocationUpdate);
+  //   };
+  // }, []);
+
+  // const updateUserLocation = async () => {
+  //   try {
+  //     const { status } = await Location.requestForegroundPermissionsAsync();
+  //     if (status === "granted") {
+  //       const location = await Location.getCurrentPositionAsync({
+  //         accuracy: Location.Accuracy.High,
+  //       });
+  //       console.warn(`Fetched location using "updateUserLocation":`, location);
+  //       setUser((prevUser) =>
+  //         prevUser ? { ...prevUser, location } : prevUser
+  //       );
+  //     } else {
+  //       console.warn("Location permission denied");
+  //     }
+  //   } catch (error) {
+  //     console.error("Failed to fetch location:", error);
+  //   }
+  // };
 
   return (
     <UserContext.Provider value={{ user, setUser }}>

@@ -4,7 +4,7 @@ export default {
   expo: {
     name: "ChronoLock",
     slug: "chronolock",
-    version: "1.1.10",
+    version: "1.1.15",
     orientation: "portrait",
     icon: "./assets/images/chronolock-logo2.png",
     scheme: "myapp",
@@ -16,6 +16,9 @@ export default {
     },
     ios: {
       supportsTablet: true,
+      infoPlist: {
+        UIBackgroundModes: ["location"],
+      },
     },
     android: {
       adaptiveIcon: {
@@ -30,6 +33,9 @@ export default {
         "BLUETOOTH_CONNECT",
         "BLUETOOTH_SCAN",
         "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
       ],
     },
     web: {
@@ -52,6 +58,8 @@ export default {
         {
           locationAlwaysAndWhenInUsePermission:
             "Allow ChronoLock to use your location.",
+          isAndroidBackgroundLocationEnabled: true,
+          isAndroidForegroundServiceEnabled: true,
         },
       ],
     ],
@@ -70,7 +78,7 @@ export default {
       },
     },
     owner: "markvincentcleofe06",
-    runtimeVersion: "1.0.0", // Set explicit runtime version here
+    runtimeVersion: "1.1.15",
     updates: {
       url: "https://u.expo.dev/a601ec96-9028-42ff-a265-9cfec7ca0f2b",
     },

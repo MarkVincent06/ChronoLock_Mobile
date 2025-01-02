@@ -52,8 +52,8 @@ const LaboratoryIndex = () => {
             <Text style={styles.buttonText}>Attendance</Text>
           </View>
           <Text style={styles.description}>
-            Monitor attendance records for students and instructors, and
-            generate detailed reports.
+            Update and monitor attendance records for students and instructors,
+            and generate detailed reports.
           </Text>
         </TouchableOpacity>
 
@@ -89,11 +89,11 @@ const LaboratoryIndex = () => {
               color="#007BFF"
               style={styles.icon}
             />
-            <Text style={styles.buttonText}>Schedule Management</Text>
+            <Text style={styles.buttonText}>ERP Schedule</Text>
           </View>
           <Text style={styles.description}>
-            Create, update, and monitor lab schedules for efficient session
-            planning.
+            Monitor ERP laboratory schedules to ensure efficient session
+            planning and availability.
           </Text>
         </TouchableOpacity>
 
