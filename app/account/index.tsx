@@ -199,6 +199,13 @@ const AccountSettings = () => {
               editable={false}
             />
 
+            <Text style={styles.label}>ID Number</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: "#f0f0f0" }]}
+              value={user?.idNumber || ""}
+              editable={false}
+            />
+
             <Text style={styles.label}>First Name</Text>
             <TextInput
               style={styles.input}

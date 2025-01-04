@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Tabs, Redirect } from "expo-router";
 import { useRouter } from "expo-router";
 import API_URL from "../../config/ngrok-api";
@@ -49,7 +49,29 @@ const TabIcon: React.FC<TabIconProps> = ({ icon, color, name, focused }) => {
 const CustomHeader = () => {
   const { user } = useUserContext();
   const router = useRouter();
-  const navigation = useNavigation();
+
+  const [time, setTime] = useState("");
+  const [date, setDate] = useState("");
+
+  useEffect(() => {
+    const updateDateTime = () => {
+      const now = new Date();
+      const hours = now.getHours() % 12 || 12;
+      const minutes = now.getMinutes().toString().padStart(2, "0");
+      const ampm = now.getHours() >= 12 ? "PM" : "AM";
+      const day = now.toLocaleString("en-US", { weekday: "short" });
+      const month = now.toLocaleString("en-US", { month: "short" });
+      const dayDate = now.getDate();
+
+      setTime(`${hours}:${minutes} ${ampm}`);
+      setDate(`${day}, ${month} ${dayDate}`);
+    };
+
+    updateDateTime(); // Update immediately on mount
+    const interval = setInterval(updateDateTime, 60000);
+
+    return () => clearInterval(interval); // Clean up on unmount
+  }, []);
 
   const avatarSource =
     user?.avatar && user.avatar !== ""
@@ -144,22 +166,6 @@ const TabsLayout = () => {
                 icon={access}
                 color={color}
                 name="Access"
-                focused={focused}
-              />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
-          name="attendance"
-          options={{
-            title: "Attendance",
-            headerShown: true,
-            tabBarIcon: ({ color, focused }) => (
-              <TabIcon
-                icon={attendance}
-                color={color}
-                name="Attendance"
                 focused={focused}
               />
             ),

@@ -4,7 +4,7 @@ export default {
   expo: {
     name: "ChronoLock",
     slug: "chronolock",
-    version: "1.1.15",
+    version: "1.1.20",
     orientation: "portrait",
     icon: "./assets/images/chronolock-logo2.png",
     scheme: "myapp",
@@ -78,7 +78,7 @@ export default {
       },
     },
     owner: "markvincentcleofe06",
-    runtimeVersion: "1.1.15",
+    runtimeVersion: "1.1.20",
     updates: {
       url: "https://u.expo.dev/a601ec96-9028-42ff-a265-9cfec7ca0f2b",
     },

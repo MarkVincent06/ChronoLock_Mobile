@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native";
 import { Card, Divider } from "react-native-paper";
 import { LineChart } from "react-native-chart-kit";
 import { useWindowDimensions } from "react-native";
@@ -26,11 +32,16 @@ interface Log {
 
 const AdminDashboard = () => {
   const { width } = useWindowDimensions();
+  const [attendanceTrends, setAttendanceTrends] = useState({
+    labels: [],
+    datasets: [{ data: [] }],
+  });
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalFaculty, setTotalFaculty] = useState(0);
   const [totalStudents, setTotalStudents] = useState(0);
   const [totalGroups, setTotalGroups] = useState(0);
   const [recentLogs, setRecentLogs] = useState<Log[]>([]);
+  const [loadingAttendance, setLoadingAttendance] = useState(true); // Add loading state
 
   useEffect(() => {
     // Fetch users
@@ -78,9 +89,41 @@ const AdminDashboard = () => {
       }
     };
 
+    // Fetch attendance trends
+    const fetchAttendanceTrends = async () => {
+      try {
+        const response = await axios.get(
+          `${API_URL}/attendances/admin/attendance-trends`
+        );
+        const trends = response.data;
+
+        const formatDate = (isoString: string | number | Date) => {
+          const date = new Date(isoString);
+          return `${date.getMonth() + 1}/${date.getDate()}`; // MM/DD format
+        };
+
+        const labels = trends.map(
+          (item: { date: string | number | Date }, index: number) =>
+            index % 2 === 0 ? formatDate(item.date) : " " // Avoid empty string as label
+        );
+
+        const data = trends.map((item: { count: any }) => item.count);
+
+        setAttendanceTrends({
+          labels,
+          datasets: [{ data }],
+        });
+        setLoadingAttendance(false); // Set loading to false after data is fetched
+      } catch (error) {
+        console.error("Error fetching attendance trends:", error);
+        setLoadingAttendance(false); // Set loading to false if there is an error
+      }
+    };
+
     fetchUsers();
     fetchGroups();
     fetchLogs();
+    fetchAttendanceTrends();
   }, []);
 
   return (
@@ -136,27 +179,30 @@ const AdminDashboard = () => {
 
       {/* Attendance Trends */}
       <Text style={styles.sectionTitle}>Attendance Trends</Text>
-      <LineChart
-        data={{
-          labels: ["Mon", "Tue", "Wed", "Thu", "Fri"],
-          datasets: [
-            {
-              data: [10, 20, 15, 30, 25],
-            },
-          ],
-        }}
-        width={width - 40}
-        height={200}
-        chartConfig={{
-          backgroundColor: "#f4f4f4",
-          backgroundGradientFrom: "#ffffff",
-          backgroundGradientTo: "#ffffff",
-          decimalPlaces: 0,
-          color: (opacity = 1) => `rgba(0, 123, 255, ${opacity})`,
-          labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-        }}
-        style={styles.chart}
-      />
+      {loadingAttendance ? (
+        <ActivityIndicator
+          size="large"
+          color="#007bff"
+          style={styles.loading}
+        />
+      ) : (
+        attendanceTrends.labels.length > 0 && (
+          <LineChart
+            data={attendanceTrends}
+            width={width - 40}
+            height={200}
+            chartConfig={{
+              backgroundColor: "#f4f4f4",
+              backgroundGradientFrom: "#ffffff",
+              backgroundGradientTo: "#ffffff",
+              decimalPlaces: 0,
+              color: (opacity = 1) => `rgba(0, 123, 255, ${opacity})`,
+              labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+            }}
+            style={styles.chart}
+          />
+        )
+      )}
 
       {/* Recent Logs */}
       <Text style={styles.sectionTitle}>Recent User Logs</Text>
@@ -230,6 +276,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#555",
     marginVertical: 5,
+  },
+  loading: {
+    marginVertical: 20,
   },
 });
 

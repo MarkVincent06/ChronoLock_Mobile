@@ -40,7 +40,7 @@ const LaboratoryIndex = () => {
         {/* Attendance */}
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push("/laboratory/attendance")}
+          onPress={() => router.push("/laboratory/attendances")}
         >
           <View style={styles.iconAndText}>
             <Ionicons
@@ -72,8 +72,8 @@ const LaboratoryIndex = () => {
             <Text style={styles.buttonText}>Seat Plan</Text>
           </View>
           <Text style={styles.description}>
-            Organize seating arrangements for laboratories, ensuring efficient
-            workstation allocation.
+            Organize seating arrangements for the ERP Laboratory, ensuring
+            efficient workstation allocation.
           </Text>
         </TouchableOpacity>
 
@@ -89,7 +89,7 @@ const LaboratoryIndex = () => {
               color="#007BFF"
               style={styles.icon}
             />
-            <Text style={styles.buttonText}>ERP Schedule</Text>
+            <Text style={styles.buttonText}>Schedule</Text>
           </View>
           <Text style={styles.description}>
             Monitor ERP laboratory schedules to ensure efficient session

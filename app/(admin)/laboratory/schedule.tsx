@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -7,9 +7,11 @@ import {
   TouchableOpacity,
   Modal,
   FlatList,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import Icon from "react-native-vector-icons/FontAwesome";
+import API_URL from "@/config/ngrok-api";
 
 const LaboratorySchedule = () => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -17,48 +19,163 @@ const LaboratorySchedule = () => {
   const [monthModalVisible, setMonthModalVisible] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
 
+  interface Schedule {
+    date: string;
+    events: Array<{
+      courseCode: string;
+      courseName: string;
+      startTime: string;
+      endTime: string;
+      instructor: string;
+      day: string; // Day of the week (e.g., Monday)
+      startDate: string;
+      endDate: string;
+    }>;
+  }
+
+  const [scheduleData, setScheduleData] = useState<Schedule[]>([]);
+  const [loading, setLoading] = useState(false);
+
   const router = useRouter();
 
-  const scheduleData = [
-    {
-      date: "2024-09-02",
-      events: [
-        {
-          courseCode: "CCIS 104",
-          courseName: "Data Structures & Algorithms",
-          startTime: "07:00:00",
-          endTime: "10:00:00",
-          instructor: "Mac Dancalan",
-        },
-        {
-          courseCode: "IS 317",
-          courseName: "Database Architecture",
-          startTime: "10:00:00",
-          endTime: "13:00:00",
-          instructor: "Jeremy Jireh Neo",
-        },
-      ],
-    },
-    {
-      date: "2024-09-06",
-      events: [
-        {
-          courseCode: "CCIS 104",
-          courseName: "Event Driven Programming",
-          startTime: "07:00:00",
-          endTime: "10:00:00",
-          instructor: "Mac Dancalan",
-        },
-        {
-          courseCode: "IS 317",
-          courseName: "Web Development",
-          startTime: "10:00:00",
-          endTime: "13:00:00",
-          instructor: "Jeremy Jireh Neo",
-        },
-      ],
-    },
-  ];
+  const formatDate = (date: string | null) => {
+    if (!date) return "";
+    const options: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    };
+    return new Date(date).toLocaleDateString("en-US", options);
+  };
+
+  const formatTime = (timeString: string) => {
+    // Manually parse the time string as local time by creating a Date object
+    const [hours, minutes] = timeString.split(":").map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0); // Set the time without time zone conversion
+
+    let hoursFormatted = date.getHours();
+    const minutesFormatted = date.getMinutes();
+    const ampm = hoursFormatted >= 12 ? "PM" : "AM";
+
+    // Convert to 12-hour format
+    hoursFormatted = hoursFormatted % 12;
+    hoursFormatted = hoursFormatted ? hoursFormatted : 12; // Handle 12 as '12' instead of '0'
+
+    const minutesString =
+      minutesFormatted < 10
+        ? `0${minutesFormatted}`
+        : minutesFormatted.toString();
+
+    return `${hoursFormatted}:${minutesString} ${ampm}`;
+  };
+
+  useEffect(() => {
+    const fetchSchedules = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`${API_URL}/schedules/`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+
+        if (data.success && Array.isArray(data.data)) {
+          // Filter and group schedules based on the start and end dates
+          const filteredSchedules: { [key: string]: { events: any[] } } = {};
+
+          data.data.forEach((schedule: any) => {
+            const {
+              startDate,
+              endDate,
+              courseCode,
+              courseName,
+              startTime,
+              endTime,
+              instFirstName,
+              instLastName,
+              day,
+            } = schedule;
+
+            let currentDate = new Date(startDate);
+            const lastDate = new Date(endDate);
+            // Filter events based on day of the week
+            while (currentDate <= lastDate) {
+              if (currentDate.getDay() === getDayOfWeek(day)) {
+                // Match the day of the week
+                const dateString = currentDate.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+
+                // Initialize the date entry if not present
+                if (!filteredSchedules[dateString]) {
+                  filteredSchedules[dateString] = { events: [] };
+                }
+
+                // Add event if not already added for the current date
+                filteredSchedules[dateString].events.push({
+                  courseCode,
+                  courseName,
+                  startTime,
+                  endTime,
+                  instructor: `${instFirstName} ${instLastName}`,
+                  day,
+                  startDate,
+                  endDate,
+                });
+              }
+
+              currentDate.setDate(currentDate.getDate() + 1); // Increment by one day
+            }
+          });
+
+          // Convert filteredSchedules into an array of schedules
+          const formattedSchedules = Object.keys(filteredSchedules).map(
+            (date) => ({
+              date,
+              events: filteredSchedules[date].events,
+            })
+          );
+
+          setScheduleData(formattedSchedules);
+        } else {
+          console.error(
+            "Invalid or empty data received:",
+            data.message || data
+          );
+          setScheduleData([]);
+        }
+      } catch (error) {
+        console.error(
+          "Error fetching schedules:",
+          error instanceof Error ? error.message : error
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSchedules();
+  }, []);
+
+  const getDayOfWeek = (day: string) => {
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+    // Convert full day names to abbreviated names
+    const fullDayNames = {
+      Sunday: "Sun",
+      Monday: "Mon",
+      Tuesday: "Tue",
+      Wednesday: "Wed",
+      Thursday: "Thu",
+      Friday: "Fri",
+      Saturday: "Sat",
+    };
+
+    if (fullDayNames[day as keyof typeof fullDayNames]) {
+      day = fullDayNames[day as keyof typeof fullDayNames];
+    }
+
+    return days.indexOf(day);
+  };
 
   const getMonthName = (date: Date) => {
     return date.toLocaleString("default", { month: "long", year: "numeric" });
@@ -79,7 +196,9 @@ const LaboratorySchedule = () => {
   };
 
   const getEventsForDate = (date: string | null) => {
-    return scheduleData.find((d) => d.date === date)?.events || [];
+    return (
+      scheduleData.find((schedule) => schedule.date === date)?.events || []
+    );
   };
 
   const generateMonthView = () => {
@@ -95,7 +214,7 @@ const LaboratorySchedule = () => {
     ).getDay();
     const weeks = [];
     let currentWeek = Array(firstDayOffset).fill(null);
-    const today = new Date(); // Current date
+    const today = new Date();
 
     for (let day = 1; day <= daysInMonth; day++) {
       if (currentWeek.length === 7) {
@@ -153,7 +272,8 @@ const LaboratorySchedule = () => {
                   {hasEvents && (
                     <View style={styles.eventIndicator}>
                       <Text style={styles.eventPreviewText}>
-                        {eventsForDay.length} Schedules
+                        {eventsForDay.length} Schedule
+                        {eventsForDay.length > 1 ? "s" : ""}
                       </Text>
                     </View>
                   )}
@@ -187,6 +307,15 @@ const LaboratorySchedule = () => {
   };
 
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text>Loading schedules, please wait...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -237,7 +366,9 @@ const LaboratorySchedule = () => {
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalContainer}>
-          <Text style={styles.modalTitle}>Schedule for {selectedDate}</Text>
+          <Text style={styles.modalTitle}>
+            Schedule for {formatDate(selectedDate)}
+          </Text>
           {getEventsForDate(selectedDate).length > 0 ? (
             <FlatList
               data={getEventsForDate(selectedDate)}
@@ -248,7 +379,7 @@ const LaboratorySchedule = () => {
                     {item.courseCode}: {item.courseName}
                   </Text>
                   <Text style={styles.modalEventText}>
-                    {item.startTime} - {item.endTime}
+                    {formatTime(item.startTime)} - {formatTime(item.endTime)}
                   </Text>
                   <Text style={styles.modalEventText}>
                     Instructor: {item.instructor}
@@ -473,5 +604,11 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
   },
 });

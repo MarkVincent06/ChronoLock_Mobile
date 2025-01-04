@@ -33,7 +33,6 @@ const CustomHeader = () => {
   const { user } = useUserContext();
   const router = useRouter();
 
-  // State for time and date
   const [time, setTime] = useState("");
   const [date, setDate] = useState("");
 

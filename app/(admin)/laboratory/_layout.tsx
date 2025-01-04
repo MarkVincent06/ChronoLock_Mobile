@@ -19,7 +19,19 @@ const LaboratoryLayout = () => {
           }}
         />
         <Stack.Screen
+          name="attendances"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
           name="schedule"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="seat-plan"
           options={{
             headerShown: false,
           }}
