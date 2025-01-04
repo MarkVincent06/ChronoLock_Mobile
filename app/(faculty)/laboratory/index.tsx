@@ -33,8 +33,7 @@ const LaboratoryIndex = () => {
           </View>
           <Text style={styles.description}>
             Track real-time lab occupancy based on user entry/exit data,
-            ensuring optimal space utilization. View logs to review past
-            occupancy trends and user activity details.
+            ensuring optimal space utilization.
           </Text>
         </TouchableOpacity>
 
@@ -50,11 +49,11 @@ const LaboratoryIndex = () => {
               color="#007BFF"
               style={styles.icon}
             />
-            <Text style={styles.buttonText}>Attendance</Text>
+            <Text style={styles.buttonText}>Class Attendance</Text>
           </View>
           <Text style={styles.description}>
-            Update and monitor attendance records for students and instructors,
-            and generate detailed reports.
+            Update and monitor attendance records of your students, and generate
+            detailed reports.
           </Text>
         </TouchableOpacity>
 

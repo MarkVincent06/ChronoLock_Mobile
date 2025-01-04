@@ -11,16 +11,10 @@ import React, { useEffect, useState } from "react";
 import { Tabs, Redirect } from "expo-router";
 import { useRouter } from "expo-router";
 import API_URL from "../../config/ngrok-api";
-import { useNavigation } from "@react-navigation/native";
 
-import home from "../../assets/icons/home.png";
-import access from "../../assets/icons/access.png";
-import attendance from "../../assets/icons/attendance.png";
-import laboratory from "../../assets/icons/laboratory.png";
+import Icon from "react-native-vector-icons/Ionicons";
 import chronolockLogo from "../../assets/images/chronolock-logo2a.png";
 import { useUserContext } from "@/context/UserContext";
-
-import messages from "../../assets/icons/message-circle.png";
 
 interface TabIconProps {
   icon: ImageSourcePropType;
@@ -102,11 +96,7 @@ const CustomHeader = () => {
           onPress={() => router.push("/chat")}
           style={styles.accountButton}
         >
-          <Image
-            source={messages}
-            style={styles.headerIcon}
-            resizeMode="contain"
-          />
+          <Icon name="chatbubble-ellipses-outline" size={24} color="#000" />
         </TouchableOpacity>
 
         {/* Account Button */}
@@ -144,46 +134,58 @@ const TabsLayout = () => {
           options={{
             title: "Home",
             headerShown: true,
-            header: () => <CustomHeader />,
             tabBarIcon: ({ color, focused }) => (
-              <TabIcon
-                icon={home}
-                color={color}
-                name="Home"
-                focused={focused}
-              />
+              <View style={styles.iconContainer}>
+                <Icon name="home-outline" size={24} color={color} />
+                <Text
+                  style={[
+                    styles.iconText,
+                    focused && { color: color, fontWeight: "bold" },
+                  ]}
+                >
+                  Home
+                </Text>
+              </View>
             ),
           }}
         />
-
         <Tabs.Screen
           name="access"
           options={{
             title: "Access",
             headerShown: true,
             tabBarIcon: ({ color, focused }) => (
-              <TabIcon
-                icon={access}
-                color={color}
-                name="Access"
-                focused={focused}
-              />
+              <View style={styles.iconContainer}>
+                <Icon name="key-outline" size={24} color={color} />
+                <Text
+                  style={[
+                    styles.iconText,
+                    focused && { color: color, fontWeight: "bold" },
+                  ]}
+                >
+                  Access
+                </Text>
+              </View>
             ),
           }}
         />
-
         <Tabs.Screen
           name="laboratory"
           options={{
             title: "Laboratory",
             headerShown: true,
             tabBarIcon: ({ color, focused }) => (
-              <TabIcon
-                icon={laboratory}
-                color={color}
-                name="Laboratory"
-                focused={focused}
-              />
+              <View style={styles.iconContainer}>
+                <Icon name="desktop-outline" size={24} color={color} />
+                <Text
+                  style={[
+                    styles.iconText,
+                    focused && { color: color, fontWeight: "bold" },
+                  ]}
+                >
+                  Laboratory
+                </Text>
+              </View>
             ),
           }}
         />
@@ -245,10 +247,5 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     alignItems: "center",
     justifyContent: "center",
-  },
-  headerIcon: {
-    width: 24,
-    height: 24,
-    tintColor: "#000",
   },
 });
