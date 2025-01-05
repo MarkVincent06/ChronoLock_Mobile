@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,20 +7,14 @@ import {
   ScrollView,
   TextInput,
   Modal,
-  ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import axios from "axios";
-import { Picker } from "@react-native-picker/picker";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useRouter } from "expo-router";
-import {
-  Menu,
-  MenuTrigger,
-  MenuOptions,
-  MenuOption,
-} from "react-native-popup-menu";
 import API_URL from "@/config/ngrok-api";
 import { useUserContext } from "@/context/UserContext";
+import usePullToRefresh from "@/hooks/usePullToRefresh";
 
 const StudentAttendance = () => {
   const router = useRouter();
@@ -44,12 +38,9 @@ const StudentAttendance = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
-  const [pickerModalVisible, setPickerModalVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(
     null
   );
-  const [selectedRemark, setSelectedRemark] = useState("Present");
-  const [updating, setUpdating] = useState(false);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -83,84 +74,52 @@ const StudentAttendance = () => {
     return `${hoursFormatted}:${minutesString} ${ampm}`;
   };
 
-  useEffect(() => {
-    // Retrieve personal attendance records
-    const fetchAttendanceRecords = async () => {
-      try {
-        const response = await axios.get(
-          `${API_URL}/attendances/users/${user?.idNumber}/attendance`
-        );
-
-        const formattedData = response.data.map(
-          (record: {
-            attendanceID: string;
-            date: string;
-            time: string;
-            remark: string;
-            courseCode: string;
-            courseName: string;
-            instFirstName: string;
-            instLastName: string;
-            program: string;
-            year: string;
-            section: string;
-          }) => ({
-            attendanceID: record.attendanceID,
-            date: formatDate(record.date),
-            time: record.time,
-            remarks: record.remark,
-            courseCode: record.courseCode,
-            courseName: record.courseName,
-            instructorName: `${record.instFirstName} ${record.instLastName}`,
-            program: record.program,
-            year: record.year,
-            section: record.section,
-          })
-        );
-        setAttendanceData(formattedData);
-        setFilteredData(formattedData);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching attendance records:", error);
-        setLoading(false);
-      }
-    };
-
-    fetchAttendanceRecords();
-  }, []);
-
-  const handleChangeRemark = async () => {
-    if (!selectedRecord) return;
-
-    setUpdating(true);
+  const fetchAttendanceRecords = useCallback(async () => {
     try {
-      const response = await axios.put(
-        `${API_URL}/attendances/admin/attendance-records/${selectedRecord.attendanceID}/remark`,
-        { remark: selectedRemark }
+      const response = await axios.get(
+        `${API_URL}/attendances/users/${user?.idNumber}/attendance`
       );
-      if (response.status === 200) {
-        setAttendanceData((prevData) =>
-          prevData.map((record) =>
-            record.attendanceID === selectedRecord.attendanceID
-              ? { ...record, remarks: selectedRemark }
-              : record
-          )
-        );
-        setFilteredData((prevData) =>
-          prevData.map((record) =>
-            record.attendanceID === selectedRecord.attendanceID
-              ? { ...record, remarks: selectedRemark }
-              : record
-          )
-        );
-        setPickerModalVisible(false);
-      }
+
+      const formattedData = response.data.map(
+        (record: {
+          attendanceID: string;
+          date: string;
+          time: string;
+          remark: string;
+          courseCode: string;
+          courseName: string;
+          instFirstName: string;
+          instLastName: string;
+          program: string;
+          year: string;
+          section: string;
+        }) => ({
+          attendanceID: record.attendanceID,
+          date: formatDate(record.date),
+          time: record.time,
+          remarks: record.remark,
+          courseCode: record.courseCode,
+          courseName: record.courseName,
+          instructorName: `${record.instFirstName} ${record.instLastName}`,
+          program: record.program,
+          year: record.year,
+          section: record.section,
+        })
+      );
+      setAttendanceData(formattedData);
+      setFilteredData(formattedData);
+      setLoading(false);
     } catch (error) {
-      console.error("Error updating remark:", error);
-    } finally {
-      setUpdating(false);
+      console.error("Error fetching attendance records:", error);
+      setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    fetchAttendanceRecords();
+  }, [fetchAttendanceRecords]);
+
+  const { refreshing, onRefresh } = usePullToRefresh(fetchAttendanceRecords);
 
   const getRemarkColor = (remark: string) => {
     switch (remark) {
@@ -189,7 +148,6 @@ const StudentAttendance = () => {
 
   const handleViewDetails = (record: AttendanceRecord) => {
     setSelectedRecord(record);
-    setSelectedRemark(record.remarks);
     setModalVisible(true);
   };
 
@@ -221,7 +179,12 @@ const StudentAttendance = () => {
         <Text style={styles.tableHeaderText}>Action</Text>
       </View>
 
-      <ScrollView style={styles.tableContainer}>
+      <ScrollView
+        style={styles.tableContainer}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         {filteredData.map((item, index) => (
           <View key={index} style={styles.tableRow}>
             <Text style={styles.tableText}>{item.date}</Text>

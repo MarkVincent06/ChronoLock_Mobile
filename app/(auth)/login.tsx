@@ -295,8 +295,16 @@ const Login: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-            <Text style={styles.loginButtonText}>Login</Text>
+          <TouchableOpacity
+            style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.loginButtonText}>Login</Text>
+            )}
           </TouchableOpacity>
 
           <GoogleSigninButton
@@ -313,12 +321,6 @@ const Login: React.FC = () => {
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
         </View>
-
-        {loading && (
-          <View style={styles.loaderContainer}>
-            <ActivityIndicator size="large" color="#1A73E8" />
-          </View>
-        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -403,10 +405,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontSize: 16,
   },
-  loaderContainer: {
-    position: "absolute",
-    top: "40%",
-    left: "50%",
-    transform: [{ translateX: -30 }],
+  loginButtonDisabled: {
+    backgroundColor: "#9BB8E3",
   },
 });

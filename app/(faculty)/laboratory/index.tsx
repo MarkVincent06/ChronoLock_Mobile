@@ -109,11 +109,12 @@ const LaboratoryIndex = () => {
               color="#007BFF"
               style={styles.icon}
             />
-            <Text style={styles.buttonText}>Equipment Check</Text>
+            <Text style={styles.buttonText}>Equipment Issues</Text>
           </View>
           <Text style={styles.description}>
-            Verify workstation functionality before and after sessions, with
-            logged issues sent to technicians.
+            Faculty can view, resolve, or update the status of workstation
+            issues, ensuring all reported problems are properly tracked and
+            handled.
           </Text>
         </TouchableOpacity>
       </View>

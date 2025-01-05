@@ -30,6 +30,8 @@
     "axios": "^1.7.4",
     "buffer": "^6.0.3",
     "chronolock": "file:",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "dotenv": "^16.4.5",
     "events": "^3.3.0",
     "expo": "~51.0.39",

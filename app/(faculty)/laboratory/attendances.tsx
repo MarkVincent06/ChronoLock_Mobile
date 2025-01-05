@@ -87,7 +87,7 @@ const ClassAttendance = () => {
     const fetchClassesAndAttendance = async () => {
       setLoading(true);
       try {
-        // Step 1: Fetch user classes
+        // Fetch user classes
         const classesResponse = await axios.get(
           `${API_URL}/schedules/user-classes/${user?.idNumber}`
         );
@@ -102,7 +102,7 @@ const ClassAttendance = () => {
         // Assuming the user has multiple classes, we'll fetch attendance for all
         const classIds = classes.map((cls: { classID: string }) => cls.classID);
 
-        // Step 2: Fetch attendance records for the fetched classes
+        // Fetch attendance records for the fetched classes
         const attendancePromises = classIds.map((classID: string) =>
           axios.get(`${API_URL}/attendances/classes/${classID}/attendance`)
         );

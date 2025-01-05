@@ -21,7 +21,11 @@ const TabIcon: React.FC<TabIconProps> = ({ icon, color, name, focused }) => {
     <View style={styles.iconContainer}>
       {icon}
       <Text
-        style={[styles.iconText, focused && { fontSize: 13, color: color }]}
+        style={{
+          color: color,
+          fontSize: 13,
+          fontWeight: focused ? "bold" : "normal",
+        }}
       >
         {name}
       </Text>
@@ -123,9 +127,9 @@ const TabsLayout = () => {
                 focused={focused}
               />
             ),
+            tabBarStyle: { paddingBottom: 0 },
           }}
         />
-
         <Tabs.Screen
           name="access"
           options={{
@@ -139,9 +143,9 @@ const TabsLayout = () => {
                 focused={focused}
               />
             ),
+            tabBarStyle: { paddingBottom: 0 },
           }}
         />
-
         <Tabs.Screen
           name="laboratory"
           options={{
@@ -155,9 +159,9 @@ const TabsLayout = () => {
                 focused={focused}
               />
             ),
+            tabBarStyle: { paddingBottom: 0 },
           }}
         />
-
         <Tabs.Screen
           name="groups"
           options={{
@@ -173,6 +177,7 @@ const TabsLayout = () => {
                 focused={focused}
               />
             ),
+            tabBarStyle: { paddingBottom: 0 },
           }}
         />
       </Tabs>
@@ -206,11 +211,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   logo: {
-    width: 55,
-    height: 55,
+    width: 50,
+    height: 50,
   },
   appName: {
-    fontSize: 21,
+    fontSize: 19,
     fontWeight: "bold",
     color: "#000",
   },

@@ -13,6 +13,7 @@ import { useRouter } from "expo-router";
 import API_URL from "../../config/ngrok-api";
 
 import Icon from "react-native-vector-icons/Ionicons";
+import Octicons from "react-native-vector-icons/Octicons";
 import chronolockLogo from "../../assets/images/chronolock-logo2a.png";
 import { useUserContext } from "@/context/UserContext";
 
@@ -84,8 +85,15 @@ const CustomHeader = () => {
         <Text style={styles.appName}>ChronoLock</Text>
       </View>
 
-      {/* Right side with Chat and Account buttons */}
+      {/* Right side with Date, Chat and Account buttons */}
       <View style={styles.headerRight}>
+        {/* Date */}
+        <Text style={styles.dateTime}>
+          <Text style={styles.timeText}>{time}</Text>
+          {"\n"}
+          <Text style={styles.dateText}>{date}</Text>
+        </Text>
+
         {/* Chat Button */}
         <TouchableOpacity
           onPress={() => router.push("/chat")}
@@ -158,15 +166,15 @@ const TabsLayout = () => {
         />
 
         <Tabs.Screen
-          name="equipment"
+          name="report-issue"
           options={{
-            title: "Equipment",
+            title: "Report Issue",
             headerShown: true,
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
-                icon="construct-outline"
+                icon="bug-outline"
                 color={color}
-                name="Equipment"
+                name="Report Issue"
                 focused={focused}
               />
             ),
@@ -207,16 +215,31 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   logo: {
-    width: 55,
-    height: 55,
+    width: 45,
+    height: 45,
   },
   appName: {
-    fontSize: 21,
+    fontSize: 19,
     fontWeight: "bold",
     color: "#000",
   },
   headerRight: {
     flexDirection: "row",
+    alignItems: "center",
+    marginStart: 15,
+  },
+  dateTime: {
+    textAlign: "right",
+    marginRight: 10,
+  },
+  timeText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#000",
+  },
+  dateText: {
+    fontSize: 14,
+    color: "#555",
   },
   avatar: {
     width: 30,
