@@ -141,7 +141,7 @@ const Login: React.FC = () => {
           if (userData.userType === "Faculty") {
             router.push("/home");
           } else if (userData.userType === "Student") {
-            router.push("/(student)/HomeStudents");
+            router.push("/(student)/home");
           } else if (userData.userType === "Admin") {
             router.push("/(admin)/dashboard");
           }
@@ -230,7 +230,7 @@ const Login: React.FC = () => {
           if (userData.userType === "Faculty") {
             router.push("/home"); // Navigate to Home if Faculty
           } else if (userData.userType === "Student") {
-            router.push("/(student)/HomeStudents"); // Navigate to HomeStudent if Student
+            router.push("/(student)/home"); // Navigate to home if Student
           }
         }
       } else {

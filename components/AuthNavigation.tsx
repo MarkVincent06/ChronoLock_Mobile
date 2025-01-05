@@ -93,7 +93,7 @@ const AuthNavigation = () => {
           if (user?.userType === "Faculty") {
             router.replace("/(faculty)/home");
           } else if (user?.userType === "Student") {
-            router.replace("/(student)/HomeStudents");
+            router.replace("/(student)/home");
           } else if (user?.userType === "Admin") {
             router.replace("/(admin)/dashboard");
           }

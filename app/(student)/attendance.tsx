@@ -1,140 +1,441 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
+  TouchableOpacity,
   StyleSheet,
+  ScrollView,
+  TextInput,
+  Modal,
   ActivityIndicator,
-  FlatList,
 } from "react-native";
-import { useUserContext } from "../../context/UserContext";
+import axios from "axios";
+import { Picker } from "@react-native-picker/picker";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import { useRouter } from "expo-router";
+import {
+  Menu,
+  MenuTrigger,
+  MenuOptions,
+  MenuOption,
+} from "react-native-popup-menu";
 import API_URL from "@/config/ngrok-api";
+import { useUserContext } from "@/context/UserContext";
 
-interface AttendanceRecord {
-  attendanceID: number;
-  userID: string;
-  classID: number;
-  date: string;
-  time: string;
-  remark: string;
-  isNeedAttention: number;
-}
+const StudentAttendance = () => {
+  const router = useRouter();
 
-export default function Attendance() {
+  interface AttendanceRecord {
+    date: string;
+    remarks: string;
+    courseCode: string;
+    courseName: string;
+    instructorName: string;
+    program: string;
+    year: string;
+    section: string;
+    time: string;
+    attendanceID: string;
+  }
+
   const { user } = useUserContext();
-  const [attendanceRecords, setAttendanceRecords] = useState<
-    AttendanceRecord[]
-  >([]); // Store attendance records
-  const [isLoading, setIsLoading] = useState(true);
+  const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
+  const [filteredData, setFilteredData] = useState<AttendanceRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
+  const [pickerModalVisible, setPickerModalVisible] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(
+    null
+  );
+  const [selectedRemark, setSelectedRemark] = useState("Present");
+  const [updating, setUpdating] = useState(false);
 
-  // Fetch attendance data from API
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const formatTime = (timeString: string) => {
+    // Manually parse the time string as local time by creating a Date object
+    const [hours, minutes] = timeString.split(":").map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0); // Set the time without time zone conversion
+
+    let hoursFormatted = date.getHours();
+    const minutesFormatted = date.getMinutes();
+    const ampm = hoursFormatted >= 12 ? "PM" : "AM";
+
+    // Convert to 12-hour format
+    hoursFormatted = hoursFormatted % 12;
+    hoursFormatted = hoursFormatted ? hoursFormatted : 12; // Handle 12 as '12' instead of '0'
+
+    const minutesString =
+      minutesFormatted < 10
+        ? `0${minutesFormatted}`
+        : minutesFormatted.toString();
+
+    return `${hoursFormatted}:${minutesString} ${ampm}`;
+  };
+
   useEffect(() => {
+    // Retrieve personal attendance records
     const fetchAttendanceRecords = async () => {
-      setIsLoading(true);
       try {
-        const idNumber = user?.idNumber;
-        if (!idNumber) throw new Error("idNumber not found.");
-
-        const response = await fetch(
-          `${API_URL}/users/attendanceByIdNumber/${idNumber}`
+        const response = await axios.get(
+          `${API_URL}/attendances/users/${user?.idNumber}/attendance`
         );
-        if (!response.ok) {
-          throw new Error("Failed to fetch attendance records");
-        }
 
-        const data = await response.json();
-        setAttendanceRecords(data.data || []); // Ensure data is set to an array if no records are returned
+        const formattedData = response.data.map(
+          (record: {
+            attendanceID: string;
+            date: string;
+            time: string;
+            remark: string;
+            courseCode: string;
+            courseName: string;
+            instFirstName: string;
+            instLastName: string;
+            program: string;
+            year: string;
+            section: string;
+          }) => ({
+            attendanceID: record.attendanceID,
+            date: formatDate(record.date),
+            time: record.time,
+            remarks: record.remark,
+            courseCode: record.courseCode,
+            courseName: record.courseName,
+            instructorName: `${record.instFirstName} ${record.instLastName}`,
+            program: record.program,
+            year: record.year,
+            section: record.section,
+          })
+        );
+        setAttendanceData(formattedData);
+        setFilteredData(formattedData);
+        setLoading(false);
       } catch (error) {
         console.error("Error fetching attendance records:", error);
-      } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
     fetchAttendanceRecords();
   }, []);
 
+  const handleChangeRemark = async () => {
+    if (!selectedRecord) return;
+
+    setUpdating(true);
+    try {
+      const response = await axios.put(
+        `${API_URL}/attendances/admin/attendance-records/${selectedRecord.attendanceID}/remark`,
+        { remark: selectedRemark }
+      );
+      if (response.status === 200) {
+        setAttendanceData((prevData) =>
+          prevData.map((record) =>
+            record.attendanceID === selectedRecord.attendanceID
+              ? { ...record, remarks: selectedRemark }
+              : record
+          )
+        );
+        setFilteredData((prevData) =>
+          prevData.map((record) =>
+            record.attendanceID === selectedRecord.attendanceID
+              ? { ...record, remarks: selectedRemark }
+              : record
+          )
+        );
+        setPickerModalVisible(false);
+      }
+    } catch (error) {
+      console.error("Error updating remark:", error);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const getRemarkColor = (remark: string) => {
+    switch (remark) {
+      case "Present":
+        return "#28a745";
+      case "Absent":
+        return "#dc3545";
+      case "Late":
+        return "#ffc107";
+      default:
+        return "#333";
+    }
+  };
+
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
+    if (text === "") {
+      setFilteredData(attendanceData);
+    } else {
+      const filtered = attendanceData.filter((item) =>
+        item.courseName.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredData(filtered);
+    }
+  };
+
+  const handleViewDetails = (record: AttendanceRecord) => {
+    setSelectedRecord(record);
+    setSelectedRemark(record.remarks);
+    setModalVisible(true);
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Attendance Records</Text>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>My Class Attendance</Text>
+      </View>
 
-      {/* Loading Indicator */}
-      {isLoading ? (
-        <ActivityIndicator size="large" color="#3d85c6" style={styles.loader} />
-      ) : attendanceRecords.length > 0 ? (
-        <FlatList
-          data={attendanceRecords}
-          keyExtractor={(item) => item.attendanceID.toString()}
-          ListHeaderComponent={() => (
-            <View style={styles.tableRow}>
-              <Text style={[styles.tableCell, styles.headerCell]}>DATE</Text>
-              <Text style={[styles.tableCell, styles.headerCell]}>TIME</Text>
-              <Text style={[styles.tableCell, styles.headerCell]}>REMARK</Text>
-              <Text style={[styles.tableCell, styles.headerCell]}>
-                ATTENTION
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Search course name..."
+        value={searchQuery}
+        onChangeText={handleSearch}
+      />
+
+      <View style={styles.fixedHeader}>
+        <Text style={styles.tableHeaderText}>Date</Text>
+        <Text style={styles.tableHeaderText}>Course Name</Text>
+        <Text style={styles.tableHeaderText}>Remarks</Text>
+        <Text style={styles.tableHeaderText}>Action</Text>
+      </View>
+
+      <ScrollView style={styles.tableContainer}>
+        {filteredData.map((item, index) => (
+          <View key={index} style={styles.tableRow}>
+            <Text style={styles.tableText}>{item.date}</Text>
+            <Text style={styles.tableText}>{item.courseName}</Text>
+            <Text
+              style={[
+                styles.tableText,
+                { color: getRemarkColor(item.remarks) },
+              ]}
+            >
+              {item.remarks}
+            </Text>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => handleViewDetails(item)}
+            >
+              <Text style={styles.actionButtonText}>View</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+      </ScrollView>
+
+      {selectedRecord && (
+        <Modal visible={modalVisible} animationType="slide" transparent={true}>
+          <View style={styles.modalContainer}>
+            <TouchableOpacity
+              style={styles.closeIcon}
+              onPress={() => setModalVisible(false)}
+            >
+              <Ionicons name="close" size={24} color="#fff" />
+            </TouchableOpacity>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Attendance Details</Text>
+              <Text style={styles.modalText}>
+                <Text style={styles.boldText}>Date:</Text> {selectedRecord.date}
+              </Text>
+              <Text style={styles.modalText}>
+                <Text style={styles.boldText}>Time:</Text>{" "}
+                {formatTime(selectedRecord.time)}
+              </Text>
+              <Text style={styles.modalText}>
+                <Text style={styles.boldText}>Instructor Name:</Text>{" "}
+                {selectedRecord.instructorName}
+              </Text>
+              <Text style={styles.modalText}>
+                <Text style={styles.boldText}>Course Name:</Text>{" "}
+                {selectedRecord.courseName}
+              </Text>
+              <Text style={styles.modalText}>
+                <Text style={styles.boldText}>Program:</Text>{" "}
+                {selectedRecord.program}
+              </Text>
+              <Text style={styles.modalText}>
+                <Text style={styles.boldText}>Year & Section:</Text>{" "}
+                {selectedRecord.year} - {selectedRecord.section}
+              </Text>
+              <Text style={styles.modalText}>
+                <Text style={styles.boldText}>Remarks:</Text>{" "}
+                {selectedRecord.remarks}
               </Text>
             </View>
-          )}
-          renderItem={({ item }) => (
-            <View style={styles.tableRow}>
-              <Text style={styles.tableCell}>
-                {new Date(item.date).toLocaleDateString()}
-              </Text>
-              <Text style={styles.tableCell}>{item.time}</Text>
-              <Text style={styles.tableCell}>{item.remark}</Text>
-              <Text style={styles.tableCell}>
-                {item.isNeedAttention === 1 ? "Yes" : "No"}
-              </Text>
-            </View>
-          )}
-        />
-      ) : (
-        <Text style={styles.noRecordsMessage}>
-          No attendance records found.
-        </Text>
+          </View>
+        </Modal>
       )}
     </View>
   );
-}
+};
+
+export default StudentAttendance;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: "#ffffff",
+    backgroundColor: "#f9f9f9",
+    padding: 20,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingBottom: 15,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
     color: "#333",
     textAlign: "center",
-    marginBottom: 20,
+    flex: 1,
+  },
+  searchInput: {
+    height: 40,
+    borderColor: "#ddd",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginTop: 15,
+  },
+  fixedHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    borderBottomWidth: 1,
+    borderBottomColor: "#007BFF",
+    paddingBottom: 10,
+    backgroundColor: "#fff",
+    position: "absolute",
+    top: 140,
+    left: 20,
+    right: 20,
+    zIndex: 1,
+  },
+  tableHeaderText: {
+    fontWeight: "bold",
+    color: "#007BFF",
+    flex: 1,
+    textAlign: "center",
+  },
+  tableContainer: {
+    marginTop: 70,
   },
   tableRow: {
     flexDirection: "row",
-    paddingVertical: 12,
+    justifyContent: "space-between",
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderColor: "#e0e0e0",
-    alignItems: "center",
+    borderBottomColor: "#ddd",
   },
-  tableCell: {
+  tableText: {
     flex: 1,
     textAlign: "center",
+    color: "#333",
+  },
+  menuTrigger: {
+    backgroundColor: "#007BFF",
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+  },
+  actionButton: {
+    backgroundColor: "#007BFF",
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3, // Elevation for Android devices
+    marginTop: 5, // Space between button and content
+  },
+  actionButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
     fontSize: 14,
-    paddingHorizontal: 5,
-  },
-  headerCell: {
-    fontSize: 12,
-    fontWeight: "700",
-    backgroundColor: "#f8f8f8",
-    color: "#777",
-  },
-  loader: {
-    marginTop: 20,
-  },
-  noRecordsMessage: {
     textAlign: "center",
-    color: "#999",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    width: "90%",
+  },
+  modalTitle: {
     fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  modalText: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  boldText: {
+    fontWeight: "bold",
+  },
+  closeIcon: {
+    position: "absolute",
+    top: 20,
+    right: 20,
+    backgroundColor: "red",
+    borderRadius: 20,
+    padding: 5,
+  },
+  actionButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 20,
+  },
+  button: {
+    flex: 1,
+    padding: 10,
+    marginHorizontal: 5,
+    borderRadius: 5,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  deleteButton: {
+    backgroundColor: "#dc3545",
+  },
+  changeButton: {
+    backgroundColor: "#007BFF",
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
