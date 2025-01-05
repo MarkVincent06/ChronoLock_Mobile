@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
-import { useRouter } from "expo-router";
 import Icon from "react-native-vector-icons/FontAwesome";
 import API_URL from "@/config/ngrok-api";
 import usePullToRefresh from "@/hooks/usePullToRefresh";
@@ -37,8 +36,6 @@ const LaboratorySchedule = () => {
 
   const [scheduleData, setScheduleData] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(false);
-
-  const router = useRouter();
 
   const formatDate = (date: string | null) => {
     if (!date) return "";
@@ -313,12 +310,6 @@ const LaboratorySchedule = () => {
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backArrow}
-        >
-          <Icon name="arrow-left" size={20} color="#000" />
-        </TouchableOpacity>
         <Text style={styles.header}>ERP Laboratory Schedule</Text>
       </View>
 
@@ -451,13 +442,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginVertical: 10,
   },
-  backArrow: {
-    padding: 10,
-  },
   header: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
+    marginBottom: 10,
     flex: 1,
   },
   navigation: {

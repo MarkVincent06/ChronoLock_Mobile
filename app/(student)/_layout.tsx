@@ -156,9 +156,25 @@ const TabsLayout = () => {
             headerShown: true,
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
-                icon="calendar-outline"
+                icon="checkmark-circle-outline"
                 color={color}
                 name="Attendance"
+                focused={focused}
+              />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="schedule"
+          options={{
+            title: "Schedule",
+            headerShown: true,
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon
+                icon="calendar-outline"
+                color={color}
+                name="Schedule"
                 focused={focused}
               />
             ),

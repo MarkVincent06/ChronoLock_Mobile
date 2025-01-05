@@ -52,6 +52,7 @@
     "expo-updates": "~0.25.27",
     "expo-web-browser": "~13.0.3",
     "firebase": "^11.0.2",
+    "moment-timezone": "^0.5.46",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-native": "0.74.5",

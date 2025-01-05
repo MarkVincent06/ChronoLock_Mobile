@@ -100,7 +100,7 @@ const LaboratoryIndex = () => {
         {/* Equipment */}
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push("/laboratory/equipment")}
+          onPress={() => router.push("/laboratory/equipment-issue")}
         >
           <View style={styles.iconAndText}>
             <Ionicons

@@ -98,19 +98,15 @@ const LaboratorySchedule = () => {
             } = schedule;
 
             let currentDate = new Date(startDate);
+            currentDate.setHours(currentDate.getHours() + 8);
             const lastDate = new Date(endDate);
-            // Filter events based on day of the week
+
             while (currentDate <= lastDate) {
               if (currentDate.getDay() === getDayOfWeek(day)) {
-                // Match the day of the week
-                const dateString = currentDate.toISOString().split("T")[0]; // Format as YYYY-MM-DD
-
-                // Initialize the date entry if not present
+                const dateString = currentDate.toISOString().split("T")[0];
                 if (!filteredSchedules[dateString]) {
                   filteredSchedules[dateString] = { events: [] };
                 }
-
-                // Add event if not already added for the current date
                 filteredSchedules[dateString].events.push({
                   courseCode,
                   courseName,
@@ -122,8 +118,7 @@ const LaboratorySchedule = () => {
                   endDate,
                 });
               }
-
-              currentDate.setDate(currentDate.getDate() + 1); // Increment by one day
+              currentDate.setDate(currentDate.getDate() + 1);
             }
           });
 
