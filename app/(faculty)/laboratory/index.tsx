@@ -112,7 +112,7 @@ const LaboratoryIndex = () => {
             <Text style={styles.buttonText}>Equipment Issues</Text>
           </View>
           <Text style={styles.description}>
-            Faculty can view, resolve, or update the status of workstation
+            Admin/Faculty can view, resolve, or update the status of workstation
             issues, ensuring all reported problems are properly tracked and
             handled.
           </Text>

@@ -449,10 +449,6 @@ const styles = StyleSheet.create({
   backArrow: {
     padding: 10,
   },
-  arrowText: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
   header: {
     fontSize: 20,
     fontWeight: "bold",

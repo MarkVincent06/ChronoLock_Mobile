@@ -1,57 +1,139 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { StyleSheet, View, ScrollView } from "react-native";
 import { Card, Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useUserContext } from "../../context/UserContext";
+import { useUserContext } from "@/context/UserContext";
+import axios from "axios";
+import API_URL from "@/config/ngrok-api";
 
 const Home = () => {
   const { user } = useUserContext();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [sectionsHandled, setSectionsHandled] = useState(0);
+  const [totalChats, setTotalChats] = useState(0);
+  const [totalStudents, setTotalStudents] = useState(0);
+  const [todayScheduleCount, setTodayScheduleCount] = useState(0);
+  const [todaySchedule, setTodaySchedule] = useState<any[]>([]);
+
+  const formatTime = (timeString: string) => {
+    // Manually parse the time string as local time by creating a Date object
+    const [hours, minutes] = timeString.split(":").map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0); // Set the time without time zone conversion
+
+    let hoursFormatted = date.getHours();
+    const minutesFormatted = date.getMinutes();
+    const ampm = hoursFormatted >= 12 ? "PM" : "AM";
+
+    // Convert to 12-hour format
+    hoursFormatted = hoursFormatted % 12;
+    hoursFormatted = hoursFormatted ? hoursFormatted : 12; // Handle 12 as '12' instead of '0'
+
+    const minutesString =
+      minutesFormatted < 10
+        ? `0${minutesFormatted}`
+        : minutesFormatted.toString();
+
+    return `${hoursFormatted}:${minutesString} ${ampm}`;
+  };
+
+  useEffect(() => {
+    const fetchChatsHandled = async () => {
+      try {
+        if (user?.idNumber) {
+          const response = await axios.get(
+            `${API_URL}/groups/fetchFilteredGroups/${user.idNumber}`
+          );
+          setTotalChats(response.data.length); // Count the total groups (chats)
+        }
+      } catch (error) {
+        console.error("Failed to fetch chats handled:", error);
+      }
+    };
+
+    const fetchSectionsHandled = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get(
+          `${API_URL}/schedules/user-classes/${user?.idNumber}`
+        );
+        const sectionsCount = response.data.data.length;
+        setSectionsHandled(sectionsCount);
+      } catch (error) {
+        console.error("Failed to fetch sections handled:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const fetchTotalStudents = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get(
+          `${API_URL}/student-masterlists/faculty/${user?.idNumber}/total-students`
+        );
+        setTotalStudents(response.data.totalStudents);
+      } catch (error) {
+        console.error("Failed to fetch total students handled:", error);
+      }
+    };
+
+    const fetchTodaySchedule = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get(
+          `${API_URL}/schedules/user-classes/today/${user?.idNumber}`
+        );
+
+        setTodayScheduleCount(response.data.data.length);
+
+        setTodaySchedule(
+          response.data.data.length > 0 ? response.data.data : null
+        );
+      } catch (error) {
+        console.error("Failed to fetch sections handled:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (user?.idNumber) {
+      fetchChatsHandled();
+      fetchSectionsHandled();
+      fetchTotalStudents();
+      fetchTodaySchedule();
+    }
+  }, [user?.idNumber]);
 
   // Card data
-  const cardData: {
-    title: string;
-    data: string;
-    icon:
-      | "account-group"
-      | "group"
-      | "school"
-      | "calendar-clock"
-      | "account-check-outline"
-      | "wechat";
-  }[] = [
-    { title: "Sections Handled", data: "2 Sections", icon: "account-group" },
-    { title: "Chats Handled", data: "5 Group Chats", icon: "wechat" },
+  type IconName =
+    | "account-group"
+    | "wechat"
+    | "account-check-outline"
+    | "calendar-clock";
+
+  const cardData: { title: string; data: string; icon: IconName }[] = [
+    {
+      title: "Sections Handled",
+      data: isLoading ? "Loading..." : `${sectionsHandled} Section/s` || "N/A",
+      icon: "account-group",
+    },
+    {
+      title: "Chats Handled",
+      data: isLoading ? "Loading..." : `${totalChats} Group Chat/s` || "N/A",
+      icon: "wechat",
+    },
     {
       title: "Students Handled",
-      data: "120 Students",
+      data: isLoading ? "Loading..." : `${totalStudents} Student/s` || "N/A",
       icon: "account-check-outline",
     },
-    { title: "Today's Schedule", data: "3 Classes", icon: "calendar-clock" },
-  ];
-
-  // Schedule data
-  const scheduleData = [
     {
-      instructor: "John Doe",
-      courseName: "Introduction to Programming",
-      courseCode: "CS101",
-      time: "8:00 AM - 10:00 AM",
-      date: "January 5, 2025",
-    },
-    {
-      instructor: "John Doe",
-      courseName: "Data Structures",
-      courseCode: "CS201",
-      time: "10:30 AM - 12:30 PM",
-      date: "January 5, 2025",
-    },
-    {
-      instructor: "John Doe",
-      courseName: "Database Systems",
-      courseCode: "CS301",
-      time: "1:00 PM - 3:00 PM",
-      date: "January 5, 2025",
+      title: "Today's Schedule",
+      data: isLoading
+        ? "Loading..."
+        : `${todayScheduleCount} Class/es` || "N/A",
+      icon: "calendar-clock",
     },
   ];
 
@@ -93,28 +175,40 @@ const Home = () => {
       {/* Schedule Card */}
       <Card style={styles.scheduleCard}>
         <Card.Content>
-          {scheduleData.map((schedule, index) => (
-            <View key={index}>
-              <View style={styles.scheduleItem}>
-                <Text style={styles.scheduleIndex}>{index + 1}.</Text>
-                <View style={styles.scheduleDetails}>
-                  <Text style={styles.boldText}>Instructor:</Text>
-                  <Text style={styles.normalText}>{schedule.instructor}</Text>
-                  <Text style={styles.boldText}>Course Name:</Text>
-                  <Text style={styles.normalText}>{schedule.courseName}</Text>
-                  <Text style={styles.boldText}>Course Code:</Text>
-                  <Text style={styles.normalText}>{schedule.courseCode}</Text>
-                  <Text style={styles.boldText}>Time:</Text>
-                  <Text style={styles.normalText}>{schedule.time}</Text>
-                  <Text style={styles.boldText}>Date:</Text>
-                  <Text style={styles.normalText}>{schedule.date}</Text>
+          {isLoading ? (
+            <Text>Loading Today's Classes...</Text> // Loading state
+          ) : todaySchedule.length > 0 ? (
+            todaySchedule.map((schedule, index) => (
+              <View key={index}>
+                <View style={styles.scheduleItem}>
+                  <Text style={styles.scheduleIndex}>{index + 1}.</Text>
+                  <View style={styles.scheduleDetails}>
+                    <Text style={styles.boldText}>Instructor:</Text>
+                    <Text style={styles.normalText}>
+                      {schedule.instructorFirstName}{" "}
+                      {schedule.instructorLastName}
+                    </Text>
+                    <Text style={styles.boldText}>Course Name:</Text>
+                    <Text style={styles.normalText}>{schedule.courseName}</Text>
+                    <Text style={styles.boldText}>Course Code:</Text>
+                    <Text style={styles.normalText}>{schedule.courseCode}</Text>
+                    <Text style={styles.boldText}>Time:</Text>
+                    <Text style={styles.normalText}>
+                      {formatTime(schedule.startTime)} -{" "}
+                      {formatTime(schedule.endTime)}
+                    </Text>
+                  </View>
                 </View>
+                {index < todaySchedule.length - 1 && (
+                  <View style={styles.separator} />
+                )}
               </View>
-              {index < scheduleData.length - 1 && (
-                <View style={styles.separator} />
-              )}
-            </View>
-          ))}
+            ))
+          ) : (
+            <Text style={styles.fallbackText}>
+              No classes scheduled for today.
+            </Text>
+          )}
         </Card.Content>
       </Card>
     </ScrollView>
@@ -222,5 +316,12 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "#ccc",
     marginVertical: 8,
+  },
+  fallbackText: {
+    fontSize: 14,
+    fontStyle: "italic",
+    color: "#999",
+    textAlign: "center",
+    paddingVertical: 20,
   },
 });
