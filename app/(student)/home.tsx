@@ -246,13 +246,13 @@ const Home = () => {
                     <Text style={styles.normalText}>
                       {schedule.courseCode} - {schedule.courseName}
                     </Text>
+                    <Text style={styles.boldText}>Day:</Text>
+                    <Text style={styles.normalText}>{schedule.day}</Text>
                     <Text style={styles.boldText}>Time:</Text>
                     <Text style={styles.normalText}>
                       {formatTime(schedule.startTime)} -{" "}
                       {formatTime(schedule.endTime)}
                     </Text>
-                    <Text style={styles.boldText}>Day:</Text>
-                    <Text style={styles.normalText}>{schedule.day}</Text>
                   </View>
                 </View>
                 {index < todaySchedule.length - 1 && (
@@ -298,13 +298,13 @@ const Home = () => {
                       <Text style={styles.normalText}>
                         {schedule.courseCode} - {schedule.courseName}
                       </Text>
+                      <Text style={styles.boldText}>Day:</Text>
+                      <Text style={styles.normalText}>{schedule.day}</Text>
                       <Text style={styles.boldText}>Time:</Text>
                       <Text style={styles.normalText}>
                         {formatTime(schedule.startTime)} -{" "}
                         {formatTime(schedule.endTime)}
                       </Text>
-                      <Text style={styles.boldText}>Day:</Text>
-                      <Text style={styles.normalText}>{schedule.day}</Text>
                     </View>
                   </View>
                   {index < upcomingSchedule.length - 1 && (

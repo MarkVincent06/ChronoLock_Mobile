@@ -11,28 +11,29 @@ import {
 } from "react-native";
 import axios from "axios";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import API_URL from "@/config/ngrok-api";
 import { useUserContext } from "@/context/UserContext";
 import usePullToRefresh from "@/hooks/usePullToRefresh";
 
+interface AttendanceRecord {
+  date: string;
+  remarks: string;
+  courseCode: string;
+  courseName: string;
+  instructorName: string;
+  program: string;
+  year: string;
+  section: string;
+  time: string;
+  attendanceID: string;
+}
+
 const StudentAttendance = () => {
   const router = useRouter();
-
-  interface AttendanceRecord {
-    date: string;
-    remarks: string;
-    courseCode: string;
-    courseName: string;
-    instructorName: string;
-    program: string;
-    year: string;
-    section: string;
-    time: string;
-    attendanceID: string;
-  }
-
   const { user } = useUserContext();
+  const { scheduleID } = useLocalSearchParams<{ scheduleID: string }>();
+  const { courseName } = useLocalSearchParams<{ courseName: string }>();
   const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
   const [filteredData, setFilteredData] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,7 +78,7 @@ const StudentAttendance = () => {
   const fetchAttendanceRecords = useCallback(async () => {
     try {
       const response = await axios.get(
-        `${API_URL}/attendances/users/${user?.idNumber}/attendance`
+        `${API_URL}/attendances/users/${user?.idNumber}/attendance/${scheduleID}`
       );
 
       const formattedData = response.data.map(
@@ -140,7 +141,7 @@ const StudentAttendance = () => {
       setFilteredData(attendanceData);
     } else {
       const filtered = attendanceData.filter((item) =>
-        item.courseName.toLowerCase().includes(text.toLowerCase())
+        item.date.toLowerCase().includes(text.toLowerCase())
       );
       setFilteredData(filtered);
     }
@@ -162,19 +163,28 @@ const StudentAttendance = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Class Attendance</Text>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+        <View style={styles.titleContainer}>
+          <Text style={styles.headerTitle}>My Class Attendance</Text>
+          {courseName && <Text style={styles.courseName}>{courseName}</Text>}
+        </View>
       </View>
 
       <TextInput
         style={styles.searchInput}
-        placeholder="Search course name..."
+        placeholder="Search date..."
         value={searchQuery}
         onChangeText={handleSearch}
       />
 
       <View style={styles.fixedHeader}>
         <Text style={styles.tableHeaderText}>Date</Text>
-        <Text style={styles.tableHeaderText}>Course Name</Text>
+        <Text style={styles.tableHeaderText}>Time</Text>
         <Text style={styles.tableHeaderText}>Remarks</Text>
         <Text style={styles.tableHeaderText}>Action</Text>
       </View>
@@ -185,26 +195,34 @@ const StudentAttendance = () => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {filteredData.map((item, index) => (
-          <View key={index} style={styles.tableRow}>
-            <Text style={styles.tableText}>{item.date}</Text>
-            <Text style={styles.tableText}>{item.courseName}</Text>
-            <Text
-              style={[
-                styles.tableText,
-                { color: getRemarkColor(item.remarks) },
-              ]}
-            >
-              {item.remarks}
+        {filteredData.length > 0 ? (
+          filteredData.map((item, index) => (
+            <View key={index} style={styles.tableRow}>
+              <Text style={styles.tableText}>{item.date}</Text>
+              <Text style={styles.tableText}>{formatTime(item.time)}</Text>
+              <Text
+                style={[
+                  styles.tableText,
+                  { color: getRemarkColor(item.remarks) },
+                ]}
+              >
+                {item.remarks}
+              </Text>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => handleViewDetails(item)}
+              >
+                <Text style={styles.actionButtonText}>View</Text>
+              </TouchableOpacity>
+            </View>
+          ))
+        ) : (
+          <View style={styles.fallbackContainer}>
+            <Text style={styles.fallbackText}>
+              No attendance records found.
             </Text>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => handleViewDetails(item)}
-            >
-              <Text style={styles.actionButtonText}>View</Text>
-            </TouchableOpacity>
           </View>
-        ))}
+        )}
       </ScrollView>
 
       {selectedRecord && (
@@ -265,13 +283,29 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingBottom: 15,
+    position: "relative",
+  },
+  backButton: {
+    position: "absolute",
+    left: -12,
+    top: -8,
+    padding: 10,
+    zIndex: 1,
+  },
+  titleContainer: {
+    flex: 1,
+    alignItems: "center",
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: "bold",
     color: "#333",
     textAlign: "center",
-    flex: 1,
+  },
+  courseName: {
+    fontSize: 16,
+    color: "#666",
+    marginTop: 5,
   },
   searchInput: {
     height: 40,
@@ -279,7 +313,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 5,
     paddingHorizontal: 10,
-    marginTop: 15,
   },
   fixedHeader: {
     flexDirection: "row",
@@ -301,7 +334,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   tableContainer: {
-    marginTop: 70,
+    marginTop: 40,
   },
   tableRow: {
     flexDirection: "row",
@@ -346,6 +379,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  fallbackContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 20,
+  },
+  fallbackText: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+  },
+
   modalContainer: {
     flex: 1,
     justifyContent: "center",
