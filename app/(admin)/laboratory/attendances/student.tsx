@@ -65,6 +65,7 @@ const StudentAttendance = () => {
     date: "",
     time: "",
   });
+  const [isFilterApplied, setIsFilterApplied] = useState(false);
   const [courses, setCourses] = useState<
     { courseCode: string; courseName: string }[]
   >([]);
@@ -378,6 +379,12 @@ const StudentAttendance = () => {
     });
     setFilteredData(filtered);
     setFilterModalVisible(false);
+
+    // Check if any filter is applied
+    const isAnyFilterApplied = Object.values(filters).some(
+      (value) => value !== ""
+    );
+    setIsFilterApplied(isAnyFilterApplied);
   };
 
   const resetFilters = () => {
@@ -392,6 +399,7 @@ const StudentAttendance = () => {
     });
     setFilteredData(attendanceData);
     setFilterModalVisible(false);
+    setIsFilterApplied(false);
   };
 
   const handleDateChange = (event, selectedDate) => {
@@ -423,6 +431,7 @@ const StudentAttendance = () => {
           onPress={() => setFilterModalVisible(true)}
         >
           <Ionicons name="filter-outline" size={24} color="#FFF" />
+          {isFilterApplied && <View style={styles.filterIndicator} />}
         </TouchableOpacity>
       </View>
 
@@ -870,11 +879,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   filterButton: {
-    backgroundColor: "#007BFF",
-    padding: 8,
+    position: "relative",
+    padding: 10,
+    backgroundColor: "#007bff",
     borderRadius: 5,
-    justifyContent: "center",
-    alignItems: "center",
+  },
+  filterIndicator: {
+    position: "absolute",
+    top: -2,
+    right: -2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "red",
   },
   input: {
     height: 40,
@@ -889,6 +906,7 @@ const styles = StyleSheet.create({
     height: 40,
     borderColor: "gray",
     borderWidth: 1,
+    marginTop: 10,
     marginBottom: 10,
     paddingHorizontal: 10,
   },
@@ -896,7 +914,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 10,
     top: "50%",
-    transform: [{ translateY: -18 }], // Center vertically (icon height is ~24)
+    transform: [{ translateY: -14 }], // Center vertically (icon height is ~24)
   },
   buttonGroup: {
     flexDirection: "row",
