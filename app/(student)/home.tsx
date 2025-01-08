@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, View, ScrollView, RefreshControl } from "react-native";
+import {
+  StyleSheet,
+  View,
+  ScrollView,
+  RefreshControl,
+  Image,
+} from "react-native";
 import { Card, Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useUserContext } from "@/context/UserContext";
@@ -10,6 +16,7 @@ import usePullToRefresh from "@/hooks/usePullToRefresh";
 const Home = () => {
   const { user } = useUserContext();
   const [isLoading, setIsLoading] = useState(true);
+  const [academicTerm, setAcademicTerm] = useState<string | null>(null);
   const [attendanceSummary, setAttendanceSummary] = useState({
     presents: 0,
     absents: 0,
@@ -25,6 +32,7 @@ const Home = () => {
       courseCode: string;
       startTime: string;
       endTime: string;
+      avatar: string;
     }[]
   >([]);
   const [upcomingSchedule, setUpcomingSchedule] = useState<
@@ -36,6 +44,7 @@ const Home = () => {
       courseCode: string;
       startTime: string;
       endTime: string;
+      avatar: string;
     }[]
   >([]);
 
@@ -64,7 +73,23 @@ const Home = () => {
   // Function to fetch all necessary data
   const fetchData = async () => {
     try {
-      if (user?.idNumber && user.userType !== "Admin") {
+      if (user?.idNumber && user.userType === "Student") {
+        const fetchAcademicTerm = async () => {
+          try {
+            const response = await axios.get(
+              `${API_URL}/schedules/academic-term`
+            );
+            const { schoolYear, semester } = response.data.data;
+            setAcademicTerm(`SY ${schoolYear} | ${semester}`);
+          } catch (error) {
+            if (axios.isAxiosError(error)) {
+              console.error("Failed to fetch academic term:", error.message);
+            } else {
+              console.error("Failed to fetch academic term:", error);
+            }
+          }
+        };
+
         const fetchAttendanceSummary = async () => {
           const response = await axios.get(
             `${API_URL}/attendances/users/${user.idNumber}/attendance-summary`
@@ -74,31 +99,30 @@ const Home = () => {
 
         const fetchEnrolledCourses = async () => {
           const response = await axios.get(
-            `${API_URL}/attendances/user-classes/student/${user.idNumber}`
+            `${API_URL}/student-masterlists/user-classes/student/${user.idNumber}`
           );
           setEnrolledCourses(response.data.data.enrolledCourses);
         };
 
-        const fetchSchedules = async () => {
+        const fetchTodaySchedules = async () => {
           const response = await axios.get(
-            `${API_URL}/schedules/user-classes/student/${user.idNumber}`
+            `${API_URL}/schedules/user-classes/today-schedule/student/${user.idNumber}`
           );
-          const schedules = response.data?.data;
-          if (Array.isArray(schedules)) {
-            const today = schedules.filter(
-              (schedule: { day: string }) => schedule.day === "Today"
-            );
-            setTodaySchedule(today);
-            const upcoming = schedules.filter(
-              (schedule: { day: string }) => schedule.day !== "Today"
-            );
-            setUpcomingSchedule(upcoming);
-          }
+          setTodaySchedule(response.data?.data);
+        };
+
+        const fetchUpcomingSchedules = async () => {
+          const response = await axios.get(
+            `${API_URL}/schedules/user-classes/upcoming-schedule/student/${user.idNumber}`
+          );
+          setUpcomingSchedule(response.data?.data);
         };
         await Promise.all([
+          fetchAcademicTerm(),
           fetchAttendanceSummary(),
           fetchEnrolledCourses(),
-          fetchSchedules(),
+          fetchTodaySchedules(),
+          fetchUpcomingSchedules(),
         ]);
       }
     } catch (error) {
@@ -166,6 +190,9 @@ const Home = () => {
             Welcome, {user?.firstName || "User"}!
           </Text>
           <Text style={styles.userTypeText}>{user?.userType || "Unknown"}</Text>
+          {academicTerm && (
+            <Text style={styles.academicTermText}>{academicTerm}</Text>
+          )}
         </Card.Content>
       </Card>
 
@@ -198,22 +225,34 @@ const Home = () => {
               <View key={index}>
                 <View style={styles.scheduleItem}>
                   <Text style={styles.scheduleIndex}>{index + 1}.</Text>
+                  <Image
+                    source={
+                      schedule.avatar
+                        ? {
+                            uri: schedule.avatar.startsWith("http")
+                              ? schedule.avatar
+                              : `${API_URL}${schedule.avatar}`,
+                          }
+                        : require("@/assets/images/default_avatar.png")
+                    }
+                    style={styles.avatar}
+                  />
                   <View style={styles.scheduleDetails}>
                     <Text style={styles.boldText}>Instructor:</Text>
                     <Text style={styles.normalText}>
                       {schedule.instFirstName} {schedule.instLastName}
                     </Text>
-                    <Text style={styles.boldText}>Course Name:</Text>
-                    <Text style={styles.normalText}>{schedule.courseName}</Text>
-                    <Text style={styles.boldText}>Course Code:</Text>
-                    <Text style={styles.normalText}>{schedule.courseCode}</Text>
+                    <Text style={styles.boldText}>Course:</Text>
+                    <Text style={styles.normalText}>
+                      {schedule.courseCode} - {schedule.courseName}
+                    </Text>
+                    <Text style={styles.boldText}>Time:</Text>
                     <Text style={styles.normalText}>
                       {formatTime(schedule.startTime)} -{" "}
                       {formatTime(schedule.endTime)}
                     </Text>
-
-                    {/* <Text style={styles.boldText}>Date:</Text>
-                    <Text style={styles.normalText}>{schedule.day}</Text> */}
+                    <Text style={styles.boldText}>Day:</Text>
+                    <Text style={styles.normalText}>{schedule.day}</Text>
                   </View>
                 </View>
                 {index < todaySchedule.length - 1 && (
@@ -229,43 +268,53 @@ const Home = () => {
         </Card.Content>
       </Card>
 
-      <Text style={styles.scheduleHeader}>Upcoming Class Schedule</Text>
-
-      {upcomingSchedule.length > 0 ? (
-        <Card style={styles.scheduleCard}>
-          <Card.Content>
-            {upcomingSchedule.map((schedule, index) => (
-              <View key={index}>
-                <View style={styles.scheduleItem}>
-                  <Text style={styles.scheduleIndex}>{index + 1}.</Text>
-                  <View style={styles.scheduleDetails}>
-                    <Text style={styles.boldText}>Instructor:</Text>
-                    <Text style={styles.normalText}>
-                      {schedule.instFirstName} {schedule.instLastName}
-                    </Text>
-                    <Text style={styles.boldText}>Course Name:</Text>
-                    <Text style={styles.normalText}>{schedule.courseName}</Text>
-                    <Text style={styles.boldText}>Course Code:</Text>
-                    <Text style={styles.normalText}>{schedule.courseCode}</Text>
-                    <Text style={styles.boldText}>Time:</Text>
-                    <Text style={styles.normalText}>
-                      {formatTime(schedule.startTime)} -{" "}
-                      {formatTime(schedule.endTime)}
-                    </Text>
-
-                    {/* <Text style={styles.boldText}>Date:</Text>
-                    <Text style={styles.normalText}>{schedule.day}</Text> */}
+      {upcomingSchedule.length > 0 && (
+        <>
+          <Text style={styles.scheduleHeader}>Upcoming Class Schedule</Text>
+          <Card style={styles.scheduleCard}>
+            <Card.Content>
+              {upcomingSchedule.map((schedule, index) => (
+                <View key={index}>
+                  <View style={styles.scheduleItem}>
+                    <Text style={styles.scheduleIndex}>{index + 1}.</Text>
+                    <Image
+                      source={
+                        schedule.avatar
+                          ? {
+                              uri: schedule.avatar.startsWith("http")
+                                ? schedule.avatar
+                                : `${API_URL}${schedule.avatar}`,
+                            }
+                          : require("@/assets/images/default_avatar.png")
+                      }
+                      style={styles.avatar}
+                    />
+                    <View style={styles.scheduleDetails}>
+                      <Text style={styles.boldText}>Instructor:</Text>
+                      <Text style={styles.normalText}>
+                        {schedule.instFirstName} {schedule.instLastName}
+                      </Text>
+                      <Text style={styles.boldText}>Course:</Text>
+                      <Text style={styles.normalText}>
+                        {schedule.courseCode} - {schedule.courseName}
+                      </Text>
+                      <Text style={styles.boldText}>Time:</Text>
+                      <Text style={styles.normalText}>
+                        {formatTime(schedule.startTime)} -{" "}
+                        {formatTime(schedule.endTime)}
+                      </Text>
+                      <Text style={styles.boldText}>Day:</Text>
+                      <Text style={styles.normalText}>{schedule.day}</Text>
+                    </View>
                   </View>
+                  {index < upcomingSchedule.length - 1 && (
+                    <View style={styles.separator} />
+                  )}
                 </View>
-                {index < upcomingSchedule.length - 1 && (
-                  <View style={styles.separator} />
-                )}
-              </View>
-            ))}
-          </Card.Content>
-        </Card>
-      ) : (
-        <Text style={styles.noScheduleText}>No upcoming class schedule.</Text>
+              ))}
+            </Card.Content>
+          </Card>
+        </>
       )}
     </ScrollView>
   );
@@ -302,6 +351,11 @@ const styles = StyleSheet.create({
     color: "#888",
     fontStyle: "italic",
     textAlign: "center",
+  },
+  academicTermText: {
+    fontSize: 16,
+    color: "#6c757d",
+    marginTop: 4,
   },
   grid: {
     flexDirection: "row",
@@ -374,6 +428,12 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "#ccc",
     marginVertical: 8,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 8,
   },
   noScheduleText: {
     textAlign: "center",

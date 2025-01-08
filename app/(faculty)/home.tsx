@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, View, ScrollView } from "react-native";
+import { StyleSheet, View, ScrollView, Image } from "react-native";
 import { Card, Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useUserContext } from "@/context/UserContext";
@@ -9,6 +9,8 @@ import API_URL from "@/config/ngrok-api";
 const Home = () => {
   const { user } = useUserContext();
   const [isLoading, setIsLoading] = useState(true);
+  const [academicTerm, setAcademicTerm] = useState<string | null>(null);
+
   const [sectionsHandled, setSectionsHandled] = useState(0);
   const [totalChats, setTotalChats] = useState(0);
   const [totalStudents, setTotalStudents] = useState(0);
@@ -38,70 +40,89 @@ const Home = () => {
   };
 
   useEffect(() => {
-    const fetchChatsHandled = async () => {
-      try {
-        if (user?.idNumber) {
-          const response = await axios.get(
-            `${API_URL}/groups/fetchFilteredGroups/${user.idNumber}`
-          );
-          setTotalChats(response.data.length); // Count the total groups (chats)
+    if (user?.idNumber && user.userType === "Faculty") {
+      const fetchChatsHandled = async () => {
+        try {
+          if (user?.idNumber) {
+            const response = await axios.get(
+              `${API_URL}/groups/fetchFilteredGroups/${user.idNumber}`
+            );
+            setTotalChats(response.data.length); // Count the total groups (chats)
+          }
+        } catch (error) {
+          // console.error("Failed to fetch chats handled:", error);
         }
-      } catch (error) {
-        console.error("Failed to fetch chats handled:", error);
+      };
+
+      const fetchAcademicTerm = async () => {
+        try {
+          const response = await axios.get(
+            `${API_URL}/schedules/academic-term`
+          );
+          const { schoolYear, semester } = response.data.data;
+          setAcademicTerm(`SY ${schoolYear} | ${semester}`);
+        } catch (error) {
+          if (axios.isAxiosError(error)) {
+            console.error("Failed to fetch academic term:", error.message);
+          } else {
+            console.error("Failed to fetch academic term:", error);
+          }
+        }
+      };
+
+      const fetchSectionsHandled = async () => {
+        try {
+          setIsLoading(true);
+          const response = await axios.get(
+            `${API_URL}/schedules/user-classes/${user?.idNumber}`
+          );
+          const sectionsCount = response.data.data.length;
+          setSectionsHandled(sectionsCount);
+        } catch (error) {
+          // console.error("Failed to fetch sections handled:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      const fetchTotalStudents = async () => {
+        try {
+          setIsLoading(true);
+          const response = await axios.get(
+            `${API_URL}/student-masterlists/faculty/${user?.idNumber}/total-students`
+          );
+          setTotalStudents(response.data.totalStudents);
+        } catch (error) {
+          // console.error("Failed to fetch total students handled:", error);
+        }
+      };
+
+      const fetchTodaySchedule = async () => {
+        try {
+          setIsLoading(true);
+          const response = await axios.get(
+            `${API_URL}/schedules/user-classes/today/${user?.idNumber}`
+          );
+
+          setTodayScheduleCount(response.data.data.length);
+
+          setTodaySchedule(
+            response.data.data.length > 0 ? response.data.data : null
+          );
+        } catch (error) {
+          // console.error("Failed to fetch sections handled:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      if (user?.idNumber) {
+        fetchAcademicTerm();
+        fetchChatsHandled();
+        fetchSectionsHandled();
+        fetchTotalStudents();
+        fetchTodaySchedule();
       }
-    };
-
-    const fetchSectionsHandled = async () => {
-      try {
-        setIsLoading(true);
-        const response = await axios.get(
-          `${API_URL}/schedules/user-classes/${user?.idNumber}`
-        );
-        const sectionsCount = response.data.data.length;
-        setSectionsHandled(sectionsCount);
-      } catch (error) {
-        console.error("Failed to fetch sections handled:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    const fetchTotalStudents = async () => {
-      try {
-        setIsLoading(true);
-        const response = await axios.get(
-          `${API_URL}/student-masterlists/faculty/${user?.idNumber}/total-students`
-        );
-        setTotalStudents(response.data.totalStudents);
-      } catch (error) {
-        console.error("Failed to fetch total students handled:", error);
-      }
-    };
-
-    const fetchTodaySchedule = async () => {
-      try {
-        setIsLoading(true);
-        const response = await axios.get(
-          `${API_URL}/schedules/user-classes/today/${user?.idNumber}`
-        );
-
-        setTodayScheduleCount(response.data.data.length);
-
-        setTodaySchedule(
-          response.data.data.length > 0 ? response.data.data : null
-        );
-      } catch (error) {
-        console.error("Failed to fetch sections handled:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (user?.idNumber) {
-      fetchChatsHandled();
-      fetchSectionsHandled();
-      fetchTotalStudents();
-      fetchTodaySchedule();
     }
   }, [user?.idNumber]);
 
@@ -115,24 +136,36 @@ const Home = () => {
   const cardData: { title: string; data: string; icon: IconName }[] = [
     {
       title: "Sections Handled",
-      data: isLoading ? "Loading..." : `${sectionsHandled} Section/s` || "N/A",
+      data: isLoading
+        ? "Loading..."
+        : `${sectionsHandled} ${
+            sectionsHandled !== 1 ? "Sections" : "Section"
+          }` || "N/A",
       icon: "account-group",
     },
     {
       title: "Chats Handled",
-      data: isLoading ? "Loading..." : `${totalChats} Group Chat/s` || "N/A",
+      data: isLoading
+        ? "Loading..."
+        : `${totalChats} ${totalChats !== 1 ? "Group Chats" : "Group Chat"}` ||
+          "N/A",
       icon: "wechat",
     },
     {
       title: "Students Handled",
-      data: isLoading ? "Loading..." : `${totalStudents} Student/s` || "N/A",
+      data: isLoading
+        ? "Loading..."
+        : `${totalStudents} ${totalStudents !== 1 ? "Students" : "Student"}` ||
+          "N/A",
       icon: "account-check-outline",
     },
     {
       title: "Today's Schedule",
       data: isLoading
         ? "Loading..."
-        : `${todayScheduleCount} Class/es` || "N/A",
+        : `${todayScheduleCount} ${
+            todayScheduleCount !== 1 ? "Classes" : "Class"
+          }` || "N/A",
       icon: "calendar-clock",
     },
   ];
@@ -146,6 +179,9 @@ const Home = () => {
             Welcome, {user?.firstName || "User"}!
           </Text>
           <Text style={styles.userTypeText}>{user?.userType || "Unknown"}</Text>
+          {academicTerm && (
+            <Text style={styles.academicTermText}>{academicTerm}</Text>
+          )}
         </Card.Content>
       </Card>
 
@@ -182,21 +218,35 @@ const Home = () => {
               <View key={index}>
                 <View style={styles.scheduleItem}>
                   <Text style={styles.scheduleIndex}>{index + 1}.</Text>
+                  <Image
+                    source={
+                      schedule.avatar
+                        ? {
+                            uri: schedule.avatar.startsWith("http")
+                              ? schedule.avatar
+                              : `${API_URL}${schedule.avatar}`,
+                          }
+                        : require("@/assets/images/default_avatar.png")
+                    }
+                    style={styles.avatar}
+                  />
                   <View style={styles.scheduleDetails}>
                     <Text style={styles.boldText}>Instructor:</Text>
                     <Text style={styles.normalText}>
                       {schedule.instructorFirstName}{" "}
                       {schedule.instructorLastName}
                     </Text>
-                    <Text style={styles.boldText}>Course Name:</Text>
-                    <Text style={styles.normalText}>{schedule.courseName}</Text>
-                    <Text style={styles.boldText}>Course Code:</Text>
-                    <Text style={styles.normalText}>{schedule.courseCode}</Text>
+                    <Text style={styles.boldText}>Course:</Text>
+                    <Text style={styles.normalText}>
+                      {schedule.courseCode} - {schedule.courseName}
+                    </Text>
                     <Text style={styles.boldText}>Time:</Text>
                     <Text style={styles.normalText}>
                       {formatTime(schedule.startTime)} -{" "}
                       {formatTime(schedule.endTime)}
                     </Text>
+                    <Text style={styles.boldText}>Day:</Text>
+                    <Text style={styles.normalText}>{schedule.day}</Text>
                   </View>
                 </View>
                 {index < todaySchedule.length - 1 && (
@@ -245,6 +295,12 @@ const styles = StyleSheet.create({
     color: "#888",
     fontStyle: "italic",
   },
+  academicTermText: {
+    fontSize: 16,
+    color: "#6c757d",
+    marginTop: 4,
+  },
+
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -316,6 +372,12 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "#ccc",
     marginVertical: 8,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 8,
   },
   fallbackText: {
     fontSize: 14,

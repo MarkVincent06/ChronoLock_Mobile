@@ -228,9 +228,11 @@ const Login: React.FC = () => {
           setIsNavigated(true); // Set to true to prevent additional navigation
           // Navigate based on userType
           if (userData.userType === "Faculty") {
-            router.push("/home"); // Navigate to Home if Faculty
+            router.push("/home");
           } else if (userData.userType === "Student") {
-            router.push("/(student)/home"); // Navigate to home if Student
+            router.push("/(student)/home");
+          } else if (userData.userType === "Admin") {
+            router.push("/(admin)/dashboard");
           }
         }
       } else {

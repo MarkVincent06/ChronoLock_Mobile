@@ -8,6 +8,7 @@ import {
   TextInput,
   Modal,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import axios from "axios";
 import { Picker } from "@react-native-picker/picker";
@@ -174,6 +175,58 @@ const InstructorAttendance = () => {
     }
   };
 
+  const handleDeleteAttendance = async (attendanceID: string) => {
+    try {
+      // Show a confirmation dialog
+      Alert.alert(
+        "Confirm Deletion",
+        "Are you sure you want to delete this attendance record?",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+          {
+            text: "Delete",
+            onPress: async () => {
+              try {
+                const response = await axios.delete(
+                  `${API_URL}/attendances/admin/attendance-records/${attendanceID}`
+                );
+
+                if (response.status === 200) {
+                  // Update the local state to remove the deleted record
+                  setAttendanceData((prevData) =>
+                    prevData.filter(
+                      (record) => record.attendanceID !== attendanceID
+                    )
+                  );
+                  setFilteredData((prevData) =>
+                    prevData.filter(
+                      (record) => record.attendanceID !== attendanceID
+                    )
+                  );
+
+                  // Show success message
+                  Alert.alert(
+                    "Success",
+                    "Attendance record deleted successfully."
+                  );
+                }
+              } catch (error) {
+                console.error("Error deleting attendance record:", error);
+                Alert.alert("Error", "Failed to delete the attendance record.");
+              }
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error("Unexpected error:", error);
+      Alert.alert("Error", "An unexpected error occurred.");
+    }
+  };
+
   const handleSearch = (text: string) => {
     setSearchQuery(text);
     if (text === "") {
@@ -262,7 +315,9 @@ const InstructorAttendance = () => {
                 <MenuOption onSelect={() => handleOpenPickerModal(item)}>
                   <Text style={styles.menuOption}>Change Remark</Text>
                 </MenuOption>
-                <MenuOption onSelect={() => console.log("Delete")}>
+                <MenuOption
+                  onSelect={() => handleDeleteAttendance(item.attendanceID)}
+                >
                   <Text style={[styles.menuOption, styles.deleteOption]}>
                     Delete
                   </Text>
@@ -443,7 +498,7 @@ const styles = StyleSheet.create({
     color: "#000",
   },
   deleteOption: {
-    color: "red",
+    color: "#dc3545",
     fontWeight: "bold",
   },
   loadingContainer: {

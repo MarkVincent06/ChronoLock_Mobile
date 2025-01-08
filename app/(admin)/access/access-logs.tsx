@@ -3,7 +3,6 @@ import {
   Text,
   View,
   ScrollView,
-  TextInput,
   TouchableOpacity,
 } from "react-native";
 import React, { useEffect, useState } from "react";
@@ -23,30 +22,38 @@ interface AccessLog {
 const AccessLogs = () => {
   const router = useRouter();
   const [logs, setLogs] = useState<AccessLog[]>([]);
-  const [filteredLogs, setFilteredLogs] = useState<AccessLog[]>([]);
-  const [searchQuery, setSearchQuery] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Function to format date in 'Month Day, Year' format
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = (date: string | null) => {
+    if (!date) return "";
     const options: Intl.DateTimeFormatOptions = {
       year: "numeric",
-      month: "long",
+      month: "short",
       day: "numeric",
     };
-    return date.toLocaleDateString("en-US", options);
+    return new Date(date).toLocaleDateString("en-US", options);
   };
 
-  // Function to format time in 12-hour format with AM/PM
   const formatTime = (timeString: string) => {
-    const date = new Date(`1970-01-01T${timeString}Z`); // Assuming time is in 24-hour format
-    const options: Intl.DateTimeFormatOptions = {
-      hour: "numeric",
-      minute: "numeric",
-      hour12: true,
-    };
-    return date.toLocaleTimeString("en-US", options);
+    // Manually parse the time string as local time by creating a Date object
+    const [hours, minutes] = timeString.split(":").map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0); // Set the time without time zone conversion
+
+    let hoursFormatted = date.getHours();
+    const minutesFormatted = date.getMinutes();
+    const ampm = hoursFormatted >= 12 ? "PM" : "AM";
+
+    // Convert to 12-hour format
+    hoursFormatted = hoursFormatted % 12;
+    hoursFormatted = hoursFormatted ? hoursFormatted : 12; // Handle 12 as '12' instead of '0'
+
+    const minutesString =
+      minutesFormatted < 10
+        ? `0${minutesFormatted}`
+        : minutesFormatted.toString();
+
+    return `${hoursFormatted}:${minutesString} ${ampm}`;
   };
 
   // Fetch logs from the backend
@@ -56,23 +63,11 @@ const AccessLogs = () => {
         `${API_URL}/remote-access/fetchAccessLogs`
       );
       setLogs(response.data.data);
-      setFilteredLogs(response.data.data);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching logs:", error);
       setLoading(false);
     }
-  };
-
-  // Update filtered logs based on search query
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    const filtered = logs.filter((log) =>
-      Object.values(log).some((value) =>
-        value.toString().toLowerCase().includes(query.toLowerCase())
-      )
-    );
-    setFilteredLogs(filtered);
   };
 
   useEffect(() => {
@@ -95,18 +90,11 @@ const AccessLogs = () => {
         </TouchableOpacity>
         <Text style={styles.header}>Access Control Logs</Text>
       </View>
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search logs..."
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
+
       <ScrollView style={styles.cardContainer}>
-        {filteredLogs.reverse().map((log, index) => (
+        {logs.map((log, index) => (
           <View key={log.id} style={styles.card}>
-            <Text style={styles.cardTitle}>
-              Log #{filteredLogs.length - index}
-            </Text>
+            <Text style={styles.cardTitle}>Log #{logs.length - index}</Text>
             <Text style={styles.cardText}>ID Number: {log.idNumber}</Text>
             <Text style={styles.cardText}>Action: {log.action}</Text>
             <Text style={styles.cardText}>Date: {formatDate(log.date)}</Text>
@@ -133,13 +121,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     marginLeft: 15,
-  },
-  searchInput: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 20,
   },
   cardContainer: {
     marginBottom: 20,

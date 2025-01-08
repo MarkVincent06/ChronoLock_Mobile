@@ -12,6 +12,7 @@ import { useWindowDimensions } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import axios from "axios";
 import API_URL from "@/config/ngrok-api";
+import { useUserContext } from "@/context/UserContext";
 
 interface User {
   id: number;
@@ -32,6 +33,7 @@ interface Log {
 
 const AdminDashboard = () => {
   const { width } = useWindowDimensions();
+  const { user } = useUserContext();
   const [attendanceTrends, setAttendanceTrends] = useState({
     labels: [],
     datasets: [{ data: [] }],
@@ -44,86 +46,89 @@ const AdminDashboard = () => {
   const [loadingAttendance, setLoadingAttendance] = useState(true); // Add loading state
 
   useEffect(() => {
-    // Fetch users
-    const fetchUsers = async () => {
-      try {
-        const response = await axios.get<User[]>(`${API_URL}/users/fetchUsers`);
-        const users = response.data;
+    if (user?.idNumber && user.userType === "Admin") {
+      // Fetch users
+      const fetchUsers = async () => {
+        try {
+          const response = await axios.get<User[]>(
+            `${API_URL}/users/fetchUsers`
+          );
+          const users = response.data;
 
-        // Calculate totals based on userType
-        const total = users.length;
-        const faculty = users.filter(
-          (user) => user.userType === "Faculty"
-        ).length;
-        const students = users.filter(
-          (user) => user.userType === "Student"
-        ).length;
+          // Calculate totals based on userType
+          const total = users.length;
+          const faculty = users.filter(
+            (user) => user.userType === "Faculty"
+          ).length;
+          const students = users.filter(
+            (user) => user.userType === "Student"
+          ).length;
 
-        setTotalUsers(total);
-        setTotalFaculty(faculty);
-        setTotalStudents(students);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      }
-    };
+          setTotalUsers(total);
+          setTotalFaculty(faculty);
+          setTotalStudents(students);
+        } catch (error) {
+          console.error("Error fetching users:", error);
+        }
+      };
 
-    // Fetch total groups
-    const fetchGroups = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/groups/fetchAllgroups`);
-        setTotalGroups(response.data.length);
-      } catch (error) {
-        console.error("Error fetching groups:", error);
-      }
-    };
+      // Fetch total groups
+      const fetchGroups = async () => {
+        try {
+          const response = await axios.get(`${API_URL}/groups/fetchAllgroups`);
+          setTotalGroups(response.data.length);
+        } catch (error) {
+          console.error("Error fetching groups:", error);
+        }
+      };
 
-    // Fetch recent logs
-    const fetchLogs = async () => {
-      try {
-        const response = await axios.get<{ logs: Log[] }>(
-          `${API_URL}/users/fetchUserLogs`
-        );
-        setRecentLogs(response.data.logs);
-      } catch (error) {
-        console.error("Error fetching logs:", error);
-      }
-    };
+      // Fetch recent logs
+      const fetchLogs = async () => {
+        try {
+          const response = await axios.get<{ logs: Log[] }>(
+            `${API_URL}/users/fetchUserLogs`
+          );
+          setRecentLogs(response.data.logs);
+        } catch (error) {
+          console.error("Error fetching logs:", error);
+        }
+      };
 
-    // Fetch attendance trends
-    const fetchAttendanceTrends = async () => {
-      try {
-        const response = await axios.get(
-          `${API_URL}/attendances/admin/attendance-trends`
-        );
-        const trends = response.data;
+      // Fetch attendance trends
+      const fetchAttendanceTrends = async () => {
+        try {
+          const response = await axios.get(
+            `${API_URL}/attendances/admin/attendance-trends`
+          );
+          const trends = response.data;
 
-        const formatDate = (isoString: string | number | Date) => {
-          const date = new Date(isoString);
-          return `${date.getMonth() + 1}/${date.getDate()}`; // MM/DD format
-        };
+          const formatDate = (isoString: string | number | Date) => {
+            const date = new Date(isoString);
+            return `${date.getMonth() + 1}/${date.getDate()}`; // MM/DD format
+          };
 
-        const labels = trends.map(
-          (item: { date: string | number | Date }, index: number) =>
-            index % 2 === 0 ? formatDate(item.date) : " " // Avoid empty string as label
-        );
+          const labels = trends.map(
+            (item: { date: string | number | Date }, index: number) =>
+              index % 2 === 0 ? formatDate(item.date) : " " // Avoid empty string as label
+          );
 
-        const data = trends.map((item: { count: any }) => item.count);
+          const data = trends.map((item: { count: any }) => item.count);
 
-        setAttendanceTrends({
-          labels,
-          datasets: [{ data }],
-        });
-        setLoadingAttendance(false); // Set loading to false after data is fetched
-      } catch (error) {
-        console.error("Error fetching attendance trends:", error);
-        setLoadingAttendance(false); // Set loading to false if there is an error
-      }
-    };
-
-    fetchUsers();
-    fetchGroups();
-    fetchLogs();
-    fetchAttendanceTrends();
+          setAttendanceTrends({
+            labels,
+            datasets: [{ data }],
+          });
+          setLoadingAttendance(false); // Set loading to false after data is fetched
+        } catch (error) {
+          console.error("Error fetching attendance trends:", error);
+          setLoadingAttendance(false); // Set loading to false if there is an error
+        }
+      };
+      fetchUsers();
+      fetchGroups();
+      fetchLogs();
+      fetchAttendanceTrends();
+    }
   }, []);
 
   return (

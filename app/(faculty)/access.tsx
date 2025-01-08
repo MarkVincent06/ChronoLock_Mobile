@@ -64,15 +64,56 @@ const AccessControl = () => {
       setConnectionStatus("Sending command...");
 
       try {
-        // Log the access attempt
         const currentDate = new Date();
+        const currentDateString = currentDate.toISOString().split("T")[0];
+        const currentTimeString = currentDate.toLocaleTimeString();
+
+        // Fetch all classes scheduled for today
+        const scheduleResponse = await axios.get(
+          `${API_URL}/schedules/user-classes/today/${USER_ID_NUMBER}`
+        );
+        const schedules = scheduleResponse.data.data; // All schedules for today
+
+        let allAttendanceRecorded = true; // Flag to check if all attendance is recorded
+
+        // Check attendance for each class
+        for (const schedule of schedules) {
+          const attendanceResponse = await axios.get(
+            `${API_URL}/attendances/checkAttendanceRecord`,
+            {
+              params: {
+                userID: USER_ID_NUMBER,
+                classID: schedule.classID,
+                date: currentDateString,
+              },
+            }
+          );
+
+          if (attendanceResponse.data.attendanceRecorded) {
+            console.log(
+              `Attendance already recorded for class ${schedule.courseName}`
+            );
+          } else {
+            allAttendanceRecorded = false; // Mark attendance as not recorded
+            break; // No need to check further, we can proceed with unlocking
+          }
+        }
+
+        if (allAttendanceRecorded) {
+          Alert.alert(
+            "Attendance already recorded",
+            "You have already marked your attendance for all classes today."
+          );
+          return;
+        }
+        // Log the access attempt
         const logResponse = await axios.post(
           `${API_URL}/remote-access/insertAccessLog`,
           {
             idNumber: USER_ID_NUMBER,
             action: `User with ID number ${USER_ID_NUMBER} has attempted to unlock the ERP Laboratory.`,
-            date: currentDate.toLocaleDateString(),
-            time: currentDate.toLocaleTimeString(),
+            date: currentDateString,
+            time: currentTimeString,
           }
         );
 
@@ -89,6 +130,27 @@ const AccessControl = () => {
 
         if (response.status === 200) {
           Alert.alert("Success", "Door unlocked successfully!");
+
+          // Record attendance for each class
+          for (const schedule of schedules) {
+            const attendanceRecord = await axios.post(
+              `${API_URL}/faculty/attendance-records/remote-access`,
+              {
+                userID: USER_ID_NUMBER,
+                classID: schedule.classID,
+                date: currentDateString,
+                time: currentTimeString,
+                remark: "Present", // Or customize based on other criteria
+              }
+            );
+
+            if (attendanceRecord.status === 201) {
+              console.log(
+                `Attendance recorded successfully for class ${schedule.courseName}`
+              );
+            }
+          }
+
           setConnectionStatus("Door unlocked successfully!");
         } else {
           throw new Error("Unexpected response from server");
