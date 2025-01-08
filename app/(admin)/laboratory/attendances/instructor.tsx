@@ -266,10 +266,7 @@ const InstructorAttendance = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
+        <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back-outline" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Instructor Attendance</Text>
@@ -430,9 +427,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingBottom: 15,
-  },
-  backButton: {
-    marginRight: 15,
   },
   headerTitle: {
     fontSize: 20,

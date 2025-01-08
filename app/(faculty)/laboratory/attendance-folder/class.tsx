@@ -15,14 +15,14 @@ import API_URL from "@/config/ngrok-api";
 import { useUserContext } from "@/context/UserContext";
 import usePullToRefresh from "@/hooks/usePullToRefresh";
 import { router } from "expo-router";
+import Ionicons from "react-native-vector-icons/Ionicons";
 
 interface ClassItem {
   scheduleID: number;
   courseCode: string;
   courseName: string;
-  avatar: string | null;
-  instFirstName: string;
-  instLastName: string;
+  schoolYear: string | null;
+  semester: string;
   program: string;
   year: string;
   section: string;
@@ -39,10 +39,10 @@ const ClassList = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   const fetchClasses = useCallback(async () => {
-    if (user?.idNumber && user.userType === "Student") {
+    if (user?.idNumber && user.userType === "Faculty") {
       try {
         const response = await axios.get(
-          `${API_URL}/student-masterlists/enrolled-classes/student/${user?.idNumber}`
+          `${API_URL}/schedules/user-classes/${user?.idNumber}`
         );
         setClasses(response.data.data);
         setFilteredClasses(response.data.data);
@@ -106,8 +106,18 @@ const ClassList = () => {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <Text style={styles.header}>My Classes</Text>
-      <Text style={styles.subText}>Select a class to view your attendance</Text>
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>My Classes</Text>
+      </View>
+      <Text style={styles.subText}>
+        Select a class to view your student's attendance
+      </Text>
 
       {/* Search Bar */}
       <TextInput
@@ -126,31 +136,18 @@ const ClassList = () => {
             style={styles.classItem}
             onPress={() =>
               router.push(
-                `/attendance/attendance-view?scheduleID=${
+                `laboratory/attendance-folder/attendances?scheduleID=${
                   item.scheduleID
                 }&courseName=${encodeURIComponent(item.courseName)}`
               )
             }
           >
-            <View style={styles.classHeader}>
-              <Image
-                source={
-                  item.avatar
-                    ? {
-                        uri: item.avatar.startsWith("http")
-                          ? item.avatar
-                          : `${API_URL}${item.avatar}`,
-                      }
-                    : require("@/assets/images/default_avatar.png")
-                }
-                style={styles.avatar}
-              />
-              <Text style={styles.instructorName}>
-                {item.instFirstName} {item.instLastName}
-              </Text>
-            </View>
+            <View style={styles.classHeader}></View>
             <Text style={styles.class}>
               {item.courseCode} - {item.courseName}
+            </Text>
+            <Text style={styles.academicPeriod}>
+              {item.schoolYear} | {item.semester}
             </Text>
             <Text style={styles.programDetails}>
               {item.program} - {item.year}
@@ -182,9 +179,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#f9f9f9",
   },
   header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center", // Center the content
+    marginBottom: 16,
+  },
+  backButton: {
+    position: "absolute",
+    left: 0,
+    padding: 0,
+  },
+  headerTitle: {
     fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 8,
     color: "#333",
     textAlign: "center",
   },
@@ -218,21 +225,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 12,
-  },
-  instructorName: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#555",
-  },
   class: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#333",
+  },
+  academicPeriod: {
+    fontSize: 14,
+    color: "#777",
+    marginTop: 4,
   },
   programDetails: {
     fontSize: 14,

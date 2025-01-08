@@ -390,7 +390,7 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "center",
     fontWeight: "bold",
-    fontSize: 16,
+    fontSize: 14,
   },
   tableIndex: {
     flex: 0.5,
@@ -419,8 +419,8 @@ const styles = StyleSheet.create({
   manageButton: {
     backgroundColor: "#007bff",
     borderRadius: 5,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     alignItems: "center",
     justifyContent: "center",
   },

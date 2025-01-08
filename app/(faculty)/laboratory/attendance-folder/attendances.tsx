@@ -13,7 +13,7 @@ import {
 import axios from "axios";
 import { Picker } from "@react-native-picker/picker";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import {
   Menu,
   MenuTrigger,
@@ -23,23 +23,23 @@ import {
 import API_URL from "@/config/ngrok-api";
 import { useUserContext } from "@/context/UserContext";
 
+interface AttendanceRecord {
+  date: string;
+  studentName: string;
+  remarks: string;
+  courseName: string;
+  program: string;
+  year: string;
+  section: string;
+  time: string;
+  attendanceID: string;
+  studentId: string;
+}
+
 const ClassAttendance = () => {
   const router = useRouter();
-
-  interface AttendanceRecord {
-    date: string;
-    studentName: string;
-    remarks: string;
-    courseName: string;
-    program: string;
-    year: string;
-    section: string;
-    time: string;
-    attendanceID: string;
-    studentId: string;
-  }
-
-  const { user } = useUserContext();
+  const { scheduleID } = useLocalSearchParams<{ scheduleID: string }>();
+  const { courseName } = useLocalSearchParams<{ courseName: string }>();
   const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
   const [filteredData, setFilteredData] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +61,6 @@ const ClassAttendance = () => {
       day: "numeric",
     });
   };
-
   const formatTime = (timeString: string) => {
     // Manually parse the time string as local time by creating a Date object
     const [hours, minutes] = timeString.split(":").map(Number);
@@ -85,71 +84,57 @@ const ClassAttendance = () => {
   };
 
   useEffect(() => {
-    const fetchClassesAndAttendance = async () => {
+    const fetchAttendanceData = async () => {
       setLoading(true);
       try {
-        // Fetch user classes
-        const classesResponse = await axios.get(
-          `${API_URL}/schedules/user-classes/${user?.idNumber}`
-        );
-        const classes = classesResponse.data.data;
-
-        if (classes.length === 0) {
-          console.warn("No classes found for this user.");
-          setLoading(false);
-          return;
-        }
-
-        // Assuming the user has multiple classes, we'll fetch attendance for all
-        const classIds = classes.map((cls: { classID: string }) => cls.classID);
-
-        // Fetch attendance records for the fetched classes
-        const attendancePromises = classIds.map((classID: string) =>
-          axios.get(`${API_URL}/attendances/classes/${classID}/attendance`)
-        );
-        const attendanceResponses = await Promise.all(attendancePromises);
-
-        // Combine attendance data from multiple classes
-        const combinedAttendanceData = attendanceResponses.flatMap((response) =>
-          response.data.map(
-            (record: {
-              attendanceID: string;
-              date: string;
-              time: string;
-              firstName: string;
-              lastName: string;
-              remark: string;
-              studentId: string;
-              courseName: string;
-              program: string;
-              year: string;
-              section: string;
-            }) => ({
-              attendanceID: record.attendanceID,
-              date: formatDate(record.date),
-              time: record.time,
-              studentName: `${record.firstName} ${record.lastName}`,
-              remarks: record.remark,
-              studentId: record.studentId,
-              courseName: record.courseName,
-              program: record.program,
-              year: record.year,
-              section: record.section,
-            })
-          )
+        // Fetch student attendance records of a specific schedule
+        const response = await axios.get(
+          `${API_URL}/attendances/faculty/classes/${scheduleID}/student-attendance`
         );
 
-        setAttendanceData(combinedAttendanceData);
-        setFilteredData(combinedAttendanceData);
+        // Map the response data to match the required structure
+        const attendanceRecords = response.data.map(
+          (record: {
+            attendanceID: string;
+            date: string;
+            time: string;
+            firstName: string;
+            lastName: string;
+            remark: string;
+            studentId: string;
+            courseName: string;
+            program: string;
+            year: string;
+            section: string;
+          }) => ({
+            attendanceID: record.attendanceID,
+            date: formatDate(record.date),
+            time: formatTime(record.time),
+            studentName: `${record.firstName} ${record.lastName}`,
+            remarks: record.remark,
+            studentId: record.studentId,
+            courseName: record.courseName,
+            program: record.program,
+            year: record.year,
+            section: record.section,
+          })
+        );
+
+        setAttendanceData(attendanceRecords);
+        setFilteredData(attendanceRecords);
       } catch (error) {
-        console.error("Error fetching classes or attendance records:", error);
+        console.error("Error fetching attendance records:", error);
+        Alert.alert(
+          "Error",
+          "Unable to fetch attendance records. Please try again later."
+        );
       } finally {
         setLoading(false);
       }
     };
 
-    fetchClassesAndAttendance();
-  }, [user?.idNumber]);
+    fetchAttendanceData();
+  }, [scheduleID]);
 
   const handleChangeRemark = async () => {
     if (!selectedRecord) return;
@@ -288,14 +273,14 @@ const ClassAttendance = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
+        <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back-outline" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Class Attendance</Text>
       </View>
+
+      {/* Display Course Name */}
+      {courseName && <Text style={styles.courseName}>{courseName}</Text>}
 
       <TextInput
         style={styles.searchInput}
@@ -312,42 +297,50 @@ const ClassAttendance = () => {
       </View>
 
       <ScrollView style={styles.tableContainer}>
-        {filteredData.map((item, index) => (
-          <View key={index} style={styles.tableRow}>
-            <Text style={styles.tableText}>{item.date}</Text>
-            <Text style={styles.tableText}>{item.studentName}</Text>
-            <Text
-              style={[
-                styles.tableText,
-                { color: getRemarkColor(item.remarks) },
-              ]}
-            >
-              {item.remarks}
+        {filteredData.length > 0 ? (
+          filteredData.map((item, index) => (
+            <View key={index} style={styles.tableRow}>
+              <Text style={styles.tableText}>{item.date}</Text>
+              <Text style={styles.tableText}>{item.studentName}</Text>
+              <Text
+                style={[
+                  styles.tableText,
+                  { color: getRemarkColor(item.remarks) },
+                ]}
+              >
+                {item.remarks}
+              </Text>
+              <Menu>
+                <MenuTrigger>
+                  <View style={styles.menuTrigger}>
+                    <Text style={styles.actionButtonText}>Actions</Text>
+                  </View>
+                </MenuTrigger>
+                <MenuOptions>
+                  <MenuOption onSelect={() => handleViewDetails(item)}>
+                    <Text style={styles.menuOption}>View Details</Text>
+                  </MenuOption>
+                  <MenuOption onSelect={() => handleOpenPickerModal(item)}>
+                    <Text style={styles.menuOption}>Change Remark</Text>
+                  </MenuOption>
+                  <MenuOption
+                    onSelect={() => handleDeleteAttendance(item.attendanceID)}
+                  >
+                    <Text style={[styles.menuOption, styles.deleteOption]}>
+                      Delete
+                    </Text>
+                  </MenuOption>
+                </MenuOptions>
+              </Menu>
+            </View>
+          ))
+        ) : (
+          <View style={styles.fallbackContainer}>
+            <Text style={styles.fallbackText}>
+              No attendance data available.
             </Text>
-            <Menu>
-              <MenuTrigger>
-                <View style={styles.menuTrigger}>
-                  <Text style={styles.actionButtonText}>Actions</Text>
-                </View>
-              </MenuTrigger>
-              <MenuOptions>
-                <MenuOption onSelect={() => handleViewDetails(item)}>
-                  <Text style={styles.menuOption}>View Details</Text>
-                </MenuOption>
-                <MenuOption onSelect={() => handleOpenPickerModal(item)}>
-                  <Text style={styles.menuOption}>Change Remark</Text>
-                </MenuOption>
-                <MenuOption
-                  onSelect={() => handleDeleteAttendance(item.attendanceID)}
-                >
-                  <Text style={[styles.menuOption, styles.deleteOption]}>
-                    Delete
-                  </Text>
-                </MenuOption>
-              </MenuOptions>
-            </Menu>
           </View>
-        ))}
+        )}
       </ScrollView>
 
       {selectedRecord && (
@@ -365,8 +358,7 @@ const ClassAttendance = () => {
                 <Text style={styles.boldText}>Date:</Text> {selectedRecord.date}
               </Text>
               <Text style={styles.modalText}>
-                <Text style={styles.boldText}>Time:</Text>{" "}
-                {formatTime(selectedRecord.time)}
+                <Text style={styles.boldText}>Time:</Text> {selectedRecord.time}
               </Text>
               <Text style={styles.modalText}>
                 <Text style={styles.boldText}>Student Name:</Text>{" "}
@@ -452,15 +444,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingBottom: 15,
   },
-  backButton: {
-    marginRight: 15,
-  },
   headerTitle: {
     fontSize: 20,
     fontWeight: "bold",
     color: "#333",
     textAlign: "center",
     flex: 1,
+  },
+  courseName: {
+    fontSize: 16,
+    color: "#555",
+    textAlign: "center",
   },
   searchInput: {
     height: 40,
@@ -478,7 +472,7 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     backgroundColor: "#fff",
     position: "absolute",
-    top: 140,
+    top: 155,
     left: 20,
     right: 20,
     zIndex: 1,
@@ -490,7 +484,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   tableContainer: {
-    marginTop: 70,
+    marginTop: 65,
   },
   tableRow: {
     flexDirection: "row",
@@ -522,6 +516,18 @@ const styles = StyleSheet.create({
     color: "#dc3545",
     fontWeight: "bold",
   },
+  fallbackContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 20,
+  },
+  fallbackText: {
+    fontSize: 16,
+    color: "#888",
+    textAlign: "center",
+  },
+
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
