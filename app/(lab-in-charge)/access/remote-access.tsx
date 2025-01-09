@@ -63,19 +63,16 @@ const AccessControl = () => {
       setIsLoading(true);
       setConnectionStatus("Sending command...");
 
-      const currentDate = new Date();
-      const currentDateString = currentDate.toISOString().split("T")[0];
-      const currentTimeString = currentDate.toLocaleTimeString();
-
       try {
-        // Insert log access attempt
+        // Log the access attempt
+        const currentDate = new Date();
         const logResponse = await axios.post(
           `${API_URL}/remote-access/insertAccessLog`,
           {
             idNumber: USER_ID_NUMBER,
             action: `User with ID number ${USER_ID_NUMBER} has attempted to unlock the ERP Laboratory.`,
-            date: currentDateString,
-            time: currentTimeString,
+            date: currentDate.toLocaleDateString(),
+            time: currentDate.toLocaleTimeString(),
           }
         );
 

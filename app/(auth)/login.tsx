@@ -144,6 +144,8 @@ const Login: React.FC = () => {
             router.push("/(student)/home");
           } else if (userData.userType === "Admin") {
             router.push("/(admin)/dashboard");
+          } else if (userData.userType === "Lab-in-Charge") {
+            router.push("/(lab-in-charge)/home");
           }
         }
       } else {
@@ -233,6 +235,8 @@ const Login: React.FC = () => {
             router.push("/(student)/home");
           } else if (userData.userType === "Admin") {
             router.push("/(admin)/dashboard");
+          } else if (userData.userType === "Lab-in-Charge") {
+            router.push("/(lab-in-charge)/home");
           }
         }
       } else {

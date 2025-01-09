@@ -34,6 +34,10 @@ export default function RootLayout() {
           <Stack.Screen name="(admin)" options={{ headerShown: false }} />
           <Stack.Screen name="(faculty)" options={{ headerShown: false }} />
           <Stack.Screen name="(student)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="(lab-in-charge)"
+            options={{ headerShown: false }}
+          />
           <Stack.Screen name="account" options={{ headerShown: false }} />
           <Stack.Screen name="chat" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" />

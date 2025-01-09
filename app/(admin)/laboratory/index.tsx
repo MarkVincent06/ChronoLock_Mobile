@@ -18,7 +18,7 @@ const LaboratoryIndex = () => {
 
       <View style={[styles.buttonContainer, { marginBottom: 25 }]}>
         {/* Class List */}
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.button}
           onPress={() => router.push("/laboratory/class-list")}
         >
@@ -36,7 +36,7 @@ const LaboratoryIndex = () => {
             providing a streamlined overview of schedules and activities for
             effective management.
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {/* Attendance */}
         <TouchableOpacity

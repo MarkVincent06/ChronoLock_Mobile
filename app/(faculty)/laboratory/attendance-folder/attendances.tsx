@@ -9,6 +9,8 @@ import {
   Modal,
   ActivityIndicator,
   Alert,
+  PermissionsAndroid,
+  Platform,
 } from "react-native";
 import axios from "axios";
 import { Picker } from "@react-native-picker/picker";
@@ -21,7 +23,7 @@ import {
   MenuOption,
 } from "react-native-popup-menu";
 import API_URL from "@/config/ngrok-api";
-import { useUserContext } from "@/context/UserContext";
+import RNHTMLtoPDF from "react-native-html-to-pdf";
 
 interface AttendanceRecord {
   date: string;
@@ -51,6 +53,29 @@ const ClassAttendance = () => {
   );
   const [selectedRemark, setSelectedRemark] = useState("Present");
   const [updating, setUpdating] = useState(false);
+
+  const requestStoragePermission = async () => {
+    if (Platform.OS === "android") {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          {
+            title: "Storage Permission Required",
+            message:
+              "This app needs access to your storage to save the PDF files.",
+            buttonNeutral: "Ask Me Later",
+            buttonNegative: "Cancel",
+            buttonPositive: "OK",
+          }
+        );
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          console.log("Storage permission granted");
+        }
+      } catch (err) {
+        console.warn(err);
+      }
+    }
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -82,6 +107,10 @@ const ClassAttendance = () => {
 
     return `${hoursFormatted}:${minutesString} ${ampm}`;
   };
+
+  useEffect(() => {
+    requestStoragePermission();
+  }, []);
 
   useEffect(() => {
     const fetchAttendanceData = async () => {
@@ -246,6 +275,119 @@ const ClassAttendance = () => {
     }
   };
 
+  const generatePDF = async () => {
+    if (filteredData.length === 0) {
+      Alert.alert(
+        "No Records",
+        "There are no attendance records to generate a PDF."
+      );
+      return;
+    }
+
+    setLoading(true);
+
+    if (Platform.OS === "android") {
+      const hasPermission = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
+      );
+      if (!hasPermission) {
+        await requestStoragePermission();
+      }
+    }
+
+    // Sort the filteredData by date and time
+    const sortedData = [...filteredData].sort((a, b) => {
+      const dateA = new Date(`${a.date} ${a.time}`);
+      const dateB = new Date(`${b.date} ${b.time}`);
+      return dateA.getTime() - dateB.getTime(); // Ascending order
+    });
+
+    const rows = sortedData.map(
+      (record, index) => `
+  <tr>
+    <td>${index + 1}</td>
+    <td>${record.studentName}</td>
+    <td>${record.studentId}</td>
+    <td>${record.courseName}</td>
+    <td>${record.program}</td>
+    <td>${record.year} - ${record.section}</td>
+    <td>${record.date}</td>
+    <td>${record.time}</td>
+    <td style="background-color:${getRemarkColor(record.remarks)}">${
+        record.remarks
+      }</td>
+  </tr>`
+    );
+
+    const htmlContent = `
+    <html>
+      <head>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+          }
+          h2 {
+            text-align: center;
+            margin-bottom: 20px;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+          }
+          th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+          }
+          th {
+            background-color: #f2f2f2;
+          }
+        </style>
+      </head>
+      <body>
+        <h2>Student Attendance Report</h2>
+        <table>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>User ID</th>
+            <th>Course Name</th>
+            <th>Program</th>
+            <th>Year & Section</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Remark</th>
+          </tr>
+          ${rows.join("")}
+        </table>
+      </body>
+    </html>
+  `;
+
+    try {
+      const options = {
+        html: htmlContent,
+        fileName: `Attendance_Report_${Date.now()}`,
+        directory: "Documents",
+      };
+      const pdf = await RNHTMLtoPDF.convert(options);
+
+      if (pdf.filePath) {
+        console.log("PDF saved at:", pdf.filePath);
+        Alert.alert(
+          "PDF Saved",
+          `PDF successfully generated and saved at: ${pdf.filePath}`
+        );
+      }
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      Alert.alert("Error", "Failed to generate PDF.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleViewDetails = (record: AttendanceRecord) => {
     setSelectedRecord(record);
     setSelectedRemark(record.remarks);
@@ -282,12 +424,17 @@ const ClassAttendance = () => {
       {/* Display Course Name */}
       {courseName && <Text style={styles.courseName}>{courseName}</Text>}
 
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search student name..."
-        value={searchQuery}
-        onChangeText={handleSearch}
-      />
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search student name..."
+          value={searchQuery}
+          onChangeText={handleSearch}
+        />
+        <TouchableOpacity style={styles.exportButton} onPress={generatePDF}>
+          <Ionicons name="download-outline" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.fixedHeader}>
         <Text style={styles.tableHeaderText}>Date</Text>
@@ -456,7 +603,17 @@ const styles = StyleSheet.create({
     color: "#555",
     textAlign: "center",
   },
+  searchContainer: { flexDirection: "row", alignItems: "center" },
+  exportButton: {
+    backgroundColor: "#007bff",
+    padding: 5,
+    borderRadius: 4,
+    alignItems: "center",
+    marginTop: 15,
+  },
   searchInput: {
+    flex: 1,
+    marginRight: 8,
     height: 40,
     borderColor: "#ddd",
     borderWidth: 1,

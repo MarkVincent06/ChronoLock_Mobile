@@ -96,27 +96,6 @@ const LaboratoryIndex = () => {
             planning and availability.
           </Text>
         </TouchableOpacity>
-
-        {/* Equipment */}
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => router.push("/laboratory/equipment-issue")}
-        >
-          <View style={styles.iconAndText}>
-            <Ionicons
-              name="construct-outline"
-              size={20}
-              color="#007BFF"
-              style={styles.icon}
-            />
-            <Text style={styles.buttonText}>Equipment Issues</Text>
-          </View>
-          <Text style={styles.description}>
-            Admin/Faculty can view, resolve, or update the status of workstation
-            issues, ensuring all reported problems are properly tracked and
-            handled.
-          </Text>
-        </TouchableOpacity>
       </View>
     </ScrollView>
   );

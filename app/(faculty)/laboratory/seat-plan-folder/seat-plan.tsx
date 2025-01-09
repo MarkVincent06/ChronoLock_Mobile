@@ -8,6 +8,8 @@ import {
   FlatList,
   Modal,
   Alert,
+  PermissionsAndroid,
+  Platform,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import axios from "axios";
@@ -16,6 +18,30 @@ import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useUserContext } from "@/context/UserContext";
 import API_URL from "@/config/ngrok-api";
+import RNHTMLtoPDF from "react-native-html-to-pdf";
+
+const requestStoragePermission = async () => {
+  if (Platform.OS === "android") {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        {
+          title: "Storage Permission Required",
+          message:
+            "This app needs access to your storage to save the PDF files.",
+          buttonNeutral: "Ask Me Later",
+          buttonNegative: "Cancel",
+          buttonPositive: "OK",
+        }
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log("Storage permission granted");
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+  }
+};
 
 interface Seat {
   seatLabel: string;
@@ -69,6 +95,10 @@ const SeatPlan = () => {
   const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
+    requestStoragePermission();
+  }, []);
+
+  useEffect(() => {
     const fetchSeatAssignments = async () => {
       try {
         setLoading(true);
@@ -103,6 +133,55 @@ const SeatPlan = () => {
 
     fetchSeatAssignments();
   }, [scheduleID]);
+
+  // PDF layout styles
+  const generatePDFLayout = (seats: Seat[]) => {
+    let seatRows = "";
+    const rows = ["A", "B", "C", "D", "E", "F"];
+    const columns = 5;
+
+    seats.forEach((seat, index) => {
+      const rowLabel = rows[Math.floor(index / columns)];
+      const seatColumn = (index % columns) + 1;
+      seatRows += `
+      <tr>
+        <td>${rowLabel}${seatColumn}</td>
+        <td>${seat.pc_number}</td>
+        <td>${seat.student_name || "Vacant"}</td>
+      </tr>
+    `;
+    });
+
+    return `
+    <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          h2 {text-align: center}
+          td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #f2f2f2; text-align: center }
+          td { text-align: center; }
+        </style>
+      </head>
+      <body>
+        <h2>Seat Assignment Report - ${courseName}</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Seat Label</th>
+              <th>PC#</th>
+              <th>Student</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${seatRows}
+          </tbody>
+        </table>
+      </body>
+    </html>
+  `;
+  };
 
   const handleAutoAssign = async () => {
     if (!selectedOption) {
@@ -200,6 +279,26 @@ const SeatPlan = () => {
       ],
       { cancelable: true }
     );
+  };
+
+  const generatePDF = async () => {
+    const htmlContent = generatePDFLayout(seats);
+    const options = {
+      html: htmlContent,
+      fileName: "seat-assignment-report",
+      directory: "Documents",
+    };
+
+    setLoading(true);
+
+    try {
+      const file = await RNHTMLtoPDF.convert(options);
+      alert(`PDF generated at ${file.filePath}`);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchRemainingStudents = async (scheduleID: string) => {
@@ -356,20 +455,27 @@ const SeatPlan = () => {
       {/* Course Name */}
       {courseName && <Text style={styles.courseName}>{courseName}</Text>}
 
-      {/* Auto Assign Button and Trashcan Icon */}
+      {/* Button Row */}
       <View style={styles.buttonRow}>
         <TouchableOpacity
           style={styles.autoAssignButton}
           onPress={() => setModalVisible(true)}
         >
           <MaterialIcons name="auto-awesome" size={20} color="white" />
-          <Text style={styles.buttonText}>Auto Assign Seats</Text>
+          <Text style={styles.buttonText}>Auto Assign</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
-          style={styles.trashButton}
+          style={styles.clearButton}
           onPress={handleClearAssignments}
         >
-          <MaterialIcons name="delete" size={24} color="white" />
+          <MaterialIcons name="delete" size={20} color="white" />
+          <Text style={styles.buttonText}>Clear</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.exportButton} onPress={generatePDF}>
+          <MaterialIcons name="get-app" size={20} color="white" />
+          <Text style={styles.buttonText}>Export PDF</Text>
         </TouchableOpacity>
       </View>
 
@@ -604,28 +710,33 @@ const styles = StyleSheet.create({
   autoAssignButton: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
     backgroundColor: "#4caf50",
     padding: 10,
-    borderRadius: 6,
-    marginTop: 5,
+    borderRadius: 5,
   },
-  trashButton: {
-    marginLeft: 10,
+  clearButton: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "#f44336",
     padding: 10,
-    borderRadius: 6,
+    borderRadius: 5,
+  },
+  exportButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#2196f3",
+    padding: 10,
+    borderRadius: 5,
   },
   buttonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    marginLeft: 10,
-    fontSize: 16,
+    color: "white",
+    marginLeft: 5,
   },
   buttonRow: {
     flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 10,
+    justifyContent: "space-between",
+    marginBottom: 5,
+    gap: 10,
   },
   tableContainer: {
     marginTop: 10,

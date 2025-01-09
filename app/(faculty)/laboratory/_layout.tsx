@@ -36,12 +36,6 @@ const LaboratoryLayout = () => {
             headerShown: false,
           }}
         />
-        <Stack.Screen
-          name="equipment-issue"
-          options={{
-            headerShown: false,
-          }}
-        />
       </Stack>
     </>
   );
