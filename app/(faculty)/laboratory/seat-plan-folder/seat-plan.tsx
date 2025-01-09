@@ -7,13 +7,9 @@ import {
   TouchableOpacity,
   FlatList,
   Modal,
+  Alert,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from "react-native-reanimated";
 import axios from "axios";
 import { Ionicons } from "@expo/vector-icons";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
@@ -22,12 +18,18 @@ import { useUserContext } from "@/context/UserContext";
 import API_URL from "@/config/ngrok-api";
 
 interface Seat {
-  seatLabel: any;
+  seatLabel: string;
   seat_id: number;
-  seat_name: string;
   assigned: boolean;
+  student_id?: string;
   student_name: string | null;
   pc_number: string;
+}
+
+interface Student {
+  idNumber: string;
+  firstName: string;
+  lastName: string;
 }
 
 const SeatPlan = () => {
@@ -35,81 +37,289 @@ const SeatPlan = () => {
   const { scheduleID } = useLocalSearchParams<{ scheduleID: string }>();
   const { courseName } = useLocalSearchParams<{ courseName: string }>();
   const { user } = useUserContext();
-  const [seats, setSeats] = useState<Seat[]>([]);
+  const [remainingStudents, setRemainingStudents] = useState<Student[]>([]);
+  const [selectedSeat, setSelectedSeat] = useState<Seat | null>(null);
+  const [assignModalVisible, setAssignModalVisible] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+
+  const rows = ["A", "B", "C", "D", "E", "F"];
+  const columns = 5;
+
+  const generateDefaultLabels = (): Seat[] => {
+    const seats: Seat[] = [];
+    let seatId = 1;
+    rows.forEach((row) => {
+      for (let col = 1; col <= columns; col++) {
+        seats.push({
+          seat_id: seatId,
+          seatLabel: `${row}${col}`, // Generates A1, A2, ..., F5
+          assigned: false,
+          student_name: null,
+          pc_number: `PC${seatId}`, // Placeholder for PC number
+        });
+        seatId++;
+      }
+    });
+    return seats;
+  };
+
+  const [seats, setSeats] = useState<Seat[]>(generateDefaultLabels());
   const [loading, setLoading] = useState(true);
   const [selectedOption, setSelectedOption] = useState("");
-  const [modalVisible, setModalVisible] = useState(false); // Modal visibility state
-
-  const scale = useSharedValue(1);
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
-    const hardcodedSeats = [];
-    // Create PC1 to PC30 with assigned seats
-    for (let i = 1; i <= 30; i++) {
-      hardcodedSeats.push({
-        seat_id: i,
-        seatLabel: `S${i}`,
-        seat_name: `PC${i}`,
-        assigned: true,
-        student_name: `Mark Vincent  Cleofe ${i}`,
-        pc_number: `PC${i}`,
-      });
-    }
+    const fetchSeatAssignments = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(
+          `${API_URL}/seats/assignments/${scheduleID}`
+        );
+        const assignments = response.data;
 
-    setSeats(hardcodedSeats);
-    setLoading(false); // Set loading to false after the data is set
-  }, []); // Empty dependency array to run only once when component mounts
+        const updatedSeats = seats.map((seat) => {
+          const assignment = assignments.find(
+            (a: { seat_name: string }) => a.seat_name === seat.pc_number
+          );
 
-  const handleSeatPress = (seatId: any) => {
-    setSeats((prevSeats) =>
-      prevSeats.map((seat) =>
-        seat.seat_id === seatId ? { ...seat, assigned: !seat.assigned } : seat
-      )
-    );
-  };
+          return assignment
+            ? {
+                ...seat,
+                seatLabel: `${assignment.seat_row}${assignment.seat_column}`,
+                assigned: true,
+                student_name: `${assignment.lastName} ${assignment.firstName}`,
+                student_id: assignment.idNumber,
+              }
+            : seat;
+        });
 
-  const handleSeatSelection = (seatId: any) => {
-    handleSeatPress(seatId);
-  };
+        setSeats(updatedSeats);
+      } catch (error) {
+        console.error("Error fetching seat assignments:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (loading) {
-    return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#4caf50" />
-        <Text>Loading Seats...</Text>
-      </View>
-    );
-  }
+    fetchSeatAssignments();
+  }, [scheduleID]);
 
   const handleAutoAssign = async () => {
     if (!selectedOption) {
-      console.log("No option selected.");
+      alert("No option selected.");
       return;
     }
 
+    Alert.alert(
+      "Confirm Auto-Assign",
+      "This will clear all existing seat arrangements. Do you want to continue?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Yes",
+          onPress: async () => {
+            try {
+              setLoading(true);
+
+              // Perform the auto-assign API call
+              const response = await axios.post(
+                `${API_URL}/seats/assign-seats/${selectedOption}/${user?.idNumber}/${scheduleID}`
+              );
+
+              if (response.status === 201) {
+                alert("Seats assigned successfully");
+
+                // Clear the current seat assignments in the state
+                setSeats(generateDefaultLabels()); // Reset to default labels
+
+                // Fetch updated seat assignments
+                const fetchSeatAssignments = await axios.get(
+                  `${API_URL}/seats/assignments/${scheduleID}`
+                );
+
+                const assignments = fetchSeatAssignments.data;
+
+                // Update seats with the new assignments
+                const updatedSeats = seats.map((seat) => {
+                  const assignment = assignments.find(
+                    (a: { seat_name: string }) => a.seat_name === seat.pc_number
+                  );
+                  return assignment
+                    ? {
+                        ...seat,
+                        seatLabel: `${assignment.seat_row}${assignment.seat_column}`,
+                        assigned: true,
+                        student_name: `${assignment.lastName} ${assignment.firstName}`,
+                        student_id: assignment.idNumber,
+                      }
+                    : seat;
+                });
+
+                setSeats(updatedSeats);
+                setModalVisible(false);
+              }
+            } catch (error) {
+              console.error("Error auto-assigning seats:", error);
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const handleClearAssignments = () => {
+    Alert.alert(
+      "Clear All Assignments",
+      "Are you sure you want to empty all seat assignments?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Yes",
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await axios.delete(`${API_URL}/seats/unassign-all/${scheduleID}`);
+              setSeats(generateDefaultLabels()); // Reset seats to default
+              alert("All seat assignments have been cleared.");
+            } catch (error) {
+              console.error("Error clearing seat assignments:", error);
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const fetchRemainingStudents = async (scheduleID: string) => {
     try {
-      setLoading(true);
-      const response = await axios.post(
-        `${API_URL}/seats/assign-seats/${selectedOption}/${user?.idNumber}/${scheduleID}`
+      const response = await axios.get(
+        `${API_URL}/seats/remaining-students/${scheduleID}`
       );
-      const assignedSeats = response.data.assignments;
+      setRemainingStudents(response.data);
+    } catch (error) {}
+  };
 
-      // Map the assignments to update the seats state
-      const updatedSeats = assignedSeats.map((assignment: any) => ({
-        seat_id: assignment.studentID,
-        seat_label: assignment.seatRow + assignment.seatColumn,
-        assigned: true,
-        student_name: assignment.studentID,
-        pc_number: assignment.seatName,
-      }));
+  const openAssignModal = async (seat: Seat) => {
+    setSelectedSeat(seat);
+    await fetchRemainingStudents(scheduleID!);
+    setAssignModalVisible(true);
+  };
 
-      setSeats(updatedSeats);
-      setModalVisible(false); // Close modal after assigning seats
-    } catch (error) {
-      console.error("Error auto-assigning seats:", error);
-    } finally {
-      setLoading(false);
+  const handleAssignSeat = async () => {
+    if (selectedSeat && selectedStudent) {
+      try {
+        setLoading(true);
+        setAssignModalVisible(false);
+
+        // Make the API request
+        const response = await axios.post(
+          `${API_URL}/seats/assign-seat/${user?.idNumber}/${scheduleID}`,
+          {
+            seat_id: selectedSeat.seat_id,
+            studentID: selectedStudent.idNumber,
+          }
+        );
+
+        if (response.status === 201) {
+          Alert.alert(
+            "Success",
+            `Seat ${selectedSeat.seatLabel} assigned to ${selectedStudent.firstName} ${selectedStudent.lastName} successfully.`
+          );
+
+          // Update the seats state to reflect the assignment
+          setSeats((prevSeats) =>
+            prevSeats.map((seat) =>
+              seat.seat_id === selectedSeat.seat_id
+                ? {
+                    ...seat,
+                    assigned: true,
+                    student_name: `${selectedStudent.lastName} ${selectedStudent.firstName}`,
+                  }
+                : seat
+            )
+          );
+        }
+      } catch (error) {
+        // Handle errors
+        if (axios.isAxiosError(error) && error.response) {
+          const { status, data } = error.response;
+          if (status === 409) {
+            Alert.alert("Conflict", data.error || "Conflict occurred.");
+          } else {
+            Alert.alert("Error", data.error || "An error occurred.");
+          }
+        } else {
+          Alert.alert("Error", "Unable to assign seat. Please try again.");
+        }
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      Alert.alert("Error", "Please select a student to assign.");
     }
+  };
+
+  const handleSeatUnassign = async (seatId: number) => {
+    const seat = seats.find((s) => s.seat_id === seatId);
+
+    if (!seat || !seat.assigned) {
+      Alert.alert("Unassign Seat", "This seat is already unassigned.");
+      return;
+    }
+
+    Alert.alert(
+      "Unassign Seat",
+      `Are you sure you want to unassign ${seat.student_name} from ${seat.pc_number}?`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Yes",
+          onPress: async () => {
+            try {
+              setLoading(true);
+
+              // Make the API call to unassign the seat
+              const response = await axios.delete(
+                `${API_URL}/seats/unassign-seat/${scheduleID}/${seat.student_id}`
+              );
+
+              if (response.status === 200) {
+                alert(response.data.message);
+
+                // Update the seat status in the state
+                setSeats((prevSeats) =>
+                  prevSeats.map((s) =>
+                    s.seat_id === seatId
+                      ? { ...s, assigned: false, student_name: null }
+                      : s
+                  )
+                );
+              }
+            } catch (error) {
+              console.error("Error unassigning seat:", error);
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   const handleModalClose = () => {
@@ -118,7 +328,7 @@ const SeatPlan = () => {
 
   const handleBackgroundPress = (e: any) => {
     if (e.target === e.currentTarget) {
-      setModalVisible(false); // Close modal if clicked outside of it
+      setModalVisible(false);
     }
   };
 
@@ -133,24 +343,35 @@ const SeatPlan = () => {
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity
+          onPress={() => router.replace("/laboratory/seat-plan-folder/class")}
+        >
           <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
         <Text style={styles.title}>Manage Seat Plan</Text>
       </View>
 
-      {/* Display Course Name */}
+      {/* Course Name */}
       {courseName && <Text style={styles.courseName}>{courseName}</Text>}
 
-      {/* Auto Assign Button */}
-      <TouchableOpacity
-        style={styles.autoAssignButton}
-        onPress={() => setModalVisible(true)}
-      >
-        <MaterialIcons name="auto-awesome" size={20} color="white" />
-        <Text style={styles.buttonText}>Auto Assign Seats</Text>
-      </TouchableOpacity>
+      {/* Auto Assign Button and Trashcan Icon */}
+      <View style={styles.buttonRow}>
+        <TouchableOpacity
+          style={styles.autoAssignButton}
+          onPress={() => setModalVisible(true)}
+        >
+          <MaterialIcons name="auto-awesome" size={20} color="white" />
+          <Text style={styles.buttonText}>Auto Assign Seats</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.trashButton}
+          onPress={handleClearAssignments}
+        >
+          <MaterialIcons name="delete" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
 
       {/* Modal for Auto Assign */}
       <Modal
@@ -185,7 +406,54 @@ const SeatPlan = () => {
               onPress={handleAutoAssign}
             >
               <MaterialIcons name="auto-awesome" size={20} color="white" />
-              <Text style={styles.buttonText}>Auto Assign Seats</Text>
+              <Text style={styles.buttonText}>Apply</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Remaining Students Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={assignModalVisible}
+        onRequestClose={() => setAssignModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          onPress={() => setAssignModalVisible(false)} // Close modal on overlay press
+          activeOpacity={1}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>
+              Assign Seat {selectedSeat?.seatLabel}
+            </Text>
+            <FlatList
+              data={remainingStudents}
+              keyExtractor={(item: { idNumber: string }) => item.idNumber}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.studentItem,
+                    selectedStudent?.idNumber === item.idNumber &&
+                      styles.selectedStudent,
+                  ]}
+                  onPress={() => setSelectedStudent(item)}
+                >
+                  <Text>{`${item.lastName}, ${item.firstName}`}</Text>
+                </TouchableOpacity>
+              )}
+              ListEmptyComponent={<Text>No remaining students available.</Text>}
+            />
+            <TouchableOpacity
+              style={[
+                styles.assignButton,
+                remainingStudents.length === 0 && styles.disabledButton,
+              ]}
+              onPress={handleAssignSeat}
+              disabled={remainingStudents.length === 0}
+            >
+              <Text style={styles.assignButtonText}>Assign Seat</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -194,7 +462,7 @@ const SeatPlan = () => {
       {/* Table of Seats */}
       <View style={styles.tableContainer}>
         <View style={styles.tableHeader}>
-          <Text style={styles.tableHeaderText}>S_Label</Text>
+          <Text style={styles.tableHeaderText}>Seat Label</Text>
           <Text style={styles.tableHeaderText}>PC#</Text>
           <Text style={styles.tableHeaderText}>Student</Text>
           <Text style={styles.tableHeaderText}>Action</Text>
@@ -212,13 +480,24 @@ const SeatPlan = () => {
             >
               <Text style={styles.tableCell}>{item.seatLabel}</Text>
               <Text style={styles.tableCell}>{item.pc_number}</Text>
-              <Text style={styles.studentColumn}>{item.student_name}</Text>
+              <Text
+                style={[
+                  styles.studentColumn,
+                  !item.student_name && { color: "red" },
+                ]}
+              >
+                {item.student_name ? item.student_name : "Vacant"}
+              </Text>
               <TouchableOpacity
                 style={[
                   styles.actionButton,
                   { backgroundColor: item.assigned ? "#f44336" : "#4caf50" },
                 ]}
-                onPress={() => handleSeatSelection(item.seat_id)}
+                onPress={() =>
+                  item.assigned
+                    ? handleSeatUnassign(item.seat_id)
+                    : openAssignModal(item)
+                }
               >
                 <MaterialIcons
                   name={item.assigned ? "person-remove" : "person-add"}
@@ -244,7 +523,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8f8f8",
   },
   header: {
-    marginTop: 180,
+    marginTop: 190,
     flexDirection: "row",
     alignItems: "center",
     width: "100%",
@@ -286,15 +565,41 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: "90%",
-    backgroundColor: "white",
-    borderRadius: 10,
+    backgroundColor: "#fff",
     padding: 20,
-    alignItems: "center",
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 20,
+    marginBottom: 10,
+  },
+  studentItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+  },
+  selectedStudent: {
+    backgroundColor: "#e0f7fa",
+  },
+  assignButton: {
+    backgroundColor: "#4caf50",
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+    alignItems: "center",
+  },
+  assignButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  disabledButton: {
+    backgroundColor: "#cccccc",
+    borderColor: "#aaaaaa",
   },
   autoAssignButton: {
     flexDirection: "row",
@@ -305,15 +610,26 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginTop: 5,
   },
+  trashButton: {
+    marginLeft: 10,
+    backgroundColor: "#f44336",
+    padding: 10,
+    borderRadius: 6,
+  },
   buttonText: {
     color: "#fff",
     fontWeight: "bold",
     marginLeft: 10,
     fontSize: 16,
   },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 10,
+  },
   tableContainer: {
     marginTop: 10,
-    marginBottom: 185,
+    marginBottom: 200,
     width: "90%",
     backgroundColor: "#fff",
     borderRadius: 10,
@@ -324,7 +640,7 @@ const styles = StyleSheet.create({
   tableHeader: {
     flexDirection: "row",
     backgroundColor: "#3f51b5",
-    paddingVertical: 10,
+    paddingVertical: 15,
     paddingHorizontal: 5,
   },
   tableHeaderText: {

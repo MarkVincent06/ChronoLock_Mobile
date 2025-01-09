@@ -13,7 +13,7 @@ const LaboratoryLayout = () => {
           }}
         />
         <Stack.Screen
-          name="occupancy"
+          name="class-list"
           options={{
             headerShown: false,
           }}
@@ -26,12 +26,6 @@ const LaboratoryLayout = () => {
         />
         <Stack.Screen
           name="schedule"
-          options={{
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="seat-plan"
           options={{
             headerShown: false,
           }}

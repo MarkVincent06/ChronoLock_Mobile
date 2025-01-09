@@ -17,24 +17,24 @@ const LaboratoryIndex = () => {
       <Text style={styles.title}>ERP Laboratory Management</Text>
 
       <View style={[styles.buttonContainer, { marginBottom: 25 }]}>
-        {/* Occupancy */}
+        {/* Class List */}
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push("/laboratory/occupancy")}
+          onPress={() => router.push("/laboratory/class-list")}
         >
           <View style={styles.iconAndText}>
             <Ionicons
-              name="people-outline"
+              name="list"
               size={20}
               color="#007BFF"
               style={styles.icon}
             />
-            <Text style={styles.buttonText}>Occupancy Monitoring</Text>
+            <Text style={styles.buttonText}>Class List</Text>
           </View>
           <Text style={styles.description}>
-            Track real-time lab occupancy based on user entry/exit data,
-            ensuring optimal space utilization. View logs to review past
-            occupancy trends and user activity details.
+            This class list updates and monitors the classes of instructors,
+            providing a streamlined overview of schedules and activities for
+            effective management.
           </Text>
         </TouchableOpacity>
 
@@ -55,26 +55,6 @@ const LaboratoryIndex = () => {
           <Text style={styles.description}>
             Update and monitor attendance records for students and instructors,
             and generate detailed reports.
-          </Text>
-        </TouchableOpacity>
-
-        {/* Seat Plan */}
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => router.push("/laboratory/seat-plan")}
-        >
-          <View style={styles.iconAndText}>
-            <Ionicons
-              name="grid-outline"
-              size={20}
-              color="#007BFF"
-              style={styles.icon}
-            />
-            <Text style={styles.buttonText}>Seat Plan</Text>
-          </View>
-          <Text style={styles.description}>
-            Organize seating arrangements for the ERP Laboratory, ensuring
-            efficient workstation allocation.
           </Text>
         </TouchableOpacity>
 

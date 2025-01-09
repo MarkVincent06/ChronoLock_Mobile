@@ -20,7 +20,7 @@ const AccessControl = () => {
   const [buttonColor, setButtonColor] = useState("#6c757d"); // Default grey
   const animatedValue = useRef(new Animated.Value(0)).current;
 
-  const RASPBERRY_PI_URL = "http://192.168.1.38:5000";
+  const RASPBERRY_PI_URL = "http://192.168.215.17:5000";
   const USER_ID_NUMBER = user?.idNumber;
 
   // Fetch the privilege status from the backend
@@ -64,56 +64,15 @@ const AccessControl = () => {
       setConnectionStatus("Sending command...");
 
       try {
-        const currentDate = new Date();
-        const currentDateString = currentDate.toISOString().split("T")[0];
-        const currentTimeString = currentDate.toLocaleTimeString();
-
-        // Fetch all classes scheduled for today
-        const scheduleResponse = await axios.get(
-          `${API_URL}/schedules/user-classes/today/${USER_ID_NUMBER}`
-        );
-        const schedules = scheduleResponse.data.data; // All schedules for today
-
-        let allAttendanceRecorded = true; // Flag to check if all attendance is recorded
-
-        // Check attendance for each class
-        for (const schedule of schedules) {
-          const attendanceResponse = await axios.get(
-            `${API_URL}/attendances/checkAttendanceRecord`,
-            {
-              params: {
-                userID: USER_ID_NUMBER,
-                classID: schedule.classID,
-                date: currentDateString,
-              },
-            }
-          );
-
-          if (attendanceResponse.data.attendanceRecorded) {
-            console.log(
-              `Attendance already recorded for class ${schedule.courseName}`
-            );
-          } else {
-            allAttendanceRecorded = false; // Mark attendance as not recorded
-            break; // No need to check further, we can proceed with unlocking
-          }
-        }
-
-        if (allAttendanceRecorded) {
-          Alert.alert(
-            "Attendance already recorded",
-            "You have already marked your attendance for all classes today."
-          );
-          return;
-        }
         // Log the access attempt
+        const currentDate = new Date();
         const logResponse = await axios.post(
           `${API_URL}/remote-access/insertAccessLog`,
           {
             idNumber: USER_ID_NUMBER,
             action: `User with ID number ${USER_ID_NUMBER} has attempted to unlock the ERP Laboratory.`,
-            date: currentDateString,
-            time: currentTimeString,
+            date: currentDate.toLocaleDateString(),
+            time: currentDate.toLocaleTimeString(),
           }
         );
 
@@ -130,27 +89,6 @@ const AccessControl = () => {
 
         if (response.status === 200) {
           Alert.alert("Success", "Door unlocked successfully!");
-
-          // Record attendance for each class
-          for (const schedule of schedules) {
-            const attendanceRecord = await axios.post(
-              `${API_URL}/faculty/attendance-records/remote-access`,
-              {
-                userID: USER_ID_NUMBER,
-                classID: schedule.classID,
-                date: currentDateString,
-                time: currentTimeString,
-                remark: "Present", // Or customize based on other criteria
-              }
-            );
-
-            if (attendanceRecord.status === 201) {
-              console.log(
-                `Attendance recorded successfully for class ${schedule.courseName}`
-              );
-            }
-          }
-
           setConnectionStatus("Door unlocked successfully!");
         } else {
           throw new Error("Unexpected response from server");
@@ -205,7 +143,8 @@ const AccessControl = () => {
     <View style={styles.container}>
       <Text style={styles.title}>Access Control</Text>
       <Text style={styles.description}>
-        Remotely unlock the ERP laboratory door by clicking the unlock button.
+        Remotely unlock the ERP laboratory door by clicking the big unlock
+        button.
       </Text>
 
       <Animated.View

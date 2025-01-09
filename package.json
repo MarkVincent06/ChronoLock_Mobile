@@ -64,6 +64,7 @@
     "react-native-gesture-handler": "~2.16.1",
     "react-native-get-random-values": "^1.11.0",
     "react-native-gifted-chat": "^2.6.4",
+    "react-native-html-to-pdf": "^0.12.0",
     "react-native-paper": "^5.12.5",
     "react-native-popup-menu": "^0.16.1",
     "react-native-push-notification": "^8.1.1",

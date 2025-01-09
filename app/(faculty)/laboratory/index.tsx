@@ -17,23 +17,23 @@ const LaboratoryIndex = () => {
       <Text style={styles.title}>ERP Laboratory Management</Text>
 
       <View style={[styles.buttonContainer, { marginBottom: 25 }]}>
-        {/* Occupancy */}
+        {/* Class Record */}
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push("/laboratory/occupancy")}
+          onPress={() => router.push("/laboratory/class-record")}
         >
           <View style={styles.iconAndText}>
             <Ionicons
-              name="people-outline"
+              name="school-outline" // Updated icon to represent classes
               size={20}
               color="#007BFF"
               style={styles.icon}
             />
-            <Text style={styles.buttonText}>Occupancy Monitoring</Text>
+            <Text style={styles.buttonText}>Class Record</Text>
           </View>
           <Text style={styles.description}>
-            Track real-time lab occupancy based on user entry/exit data,
-            ensuring optimal space utilization.
+            Update and monitor your classes, providing a comprehensive overview
+            of schedules and activities to ensure effective class management.
           </Text>
         </TouchableOpacity>
 
