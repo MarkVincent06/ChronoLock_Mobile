@@ -60,7 +60,7 @@ const LaboratoryIndex = () => {
         {/* Seat Plan */}
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push("/laboratory/seat-plan")}
+          onPress={() => router.push("/laboratory/seat-plan-folder/class")}
         >
           <View style={styles.iconAndText}>
             <Ionicons

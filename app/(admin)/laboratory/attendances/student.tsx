@@ -185,53 +185,53 @@ const StudentAttendance = () => {
     }
   };
 
-  useEffect(() => {
-    const fetchAttendanceRecords = async () => {
-      try {
-        const response = await axios.get(
-          `${API_URL}/attendances/admin/student/attendance-records`
-        );
-        const formattedData = response.data.map(
-          (record: {
-            attendanceID: string;
-            date: string;
-            time: string;
-            firstName: string;
-            lastName: string;
-            remark: string;
-            studentId: string;
-            courseCode: string;
-            courseName: string;
-            instFirstName: string;
-            instLastName: string;
-            program: string;
-            year: string;
-            section: string;
-          }) => ({
-            attendanceID: record.attendanceID,
-            date: formatDate(record.date),
-            time: record.time,
-            studentName: `${record.firstName} ${record.lastName}`,
-            remarks: record.remark,
-            studentId: record.studentId,
-            courseCode: record.courseCode,
-            courseName: record.courseName,
-            instFirstName: record.instFirstName,
-            instLastName: record.instLastName,
-            program: record.program,
-            year: record.year,
-            section: record.section,
-          })
-        );
-        setAttendanceData(formattedData);
-        setFilteredData(formattedData);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching attendance records:", error);
-        setLoading(false);
-      }
-    };
+  const fetchAttendanceRecords = async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/attendances/admin/student/attendance-records`
+      );
+      const formattedData = response.data.map(
+        (record: {
+          attendanceID: string;
+          date: string;
+          time: string;
+          firstName: string;
+          lastName: string;
+          remark: string;
+          studentId: string;
+          courseCode: string;
+          courseName: string;
+          instFirstName: string;
+          instLastName: string;
+          program: string;
+          year: string;
+          section: string;
+        }) => ({
+          attendanceID: record.attendanceID,
+          date: formatDate(record.date),
+          time: record.time,
+          studentName: `${record.firstName} ${record.lastName}`,
+          remarks: record.remark,
+          studentId: record.studentId,
+          courseCode: record.courseCode,
+          courseName: record.courseName,
+          instFirstName: record.instFirstName,
+          instLastName: record.instLastName,
+          program: record.program,
+          year: record.year,
+          section: record.section,
+        })
+      );
+      setAttendanceData(formattedData);
+      setFilteredData(formattedData);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching attendance records:", error);
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchAttendanceRecords();
   }, []);
 
@@ -245,24 +245,15 @@ const StudentAttendance = () => {
         { remark: selectedRemark }
       );
       if (response.status === 200) {
-        setAttendanceData((prevData) =>
-          prevData.map((record) =>
-            record.attendanceID === selectedRecord.attendanceID
-              ? { ...record, remarks: selectedRemark }
-              : record
-          )
-        );
-        setFilteredData((prevData) =>
-          prevData.map((record) =>
-            record.attendanceID === selectedRecord.attendanceID
-              ? { ...record, remarks: selectedRemark }
-              : record
-          )
-        );
+        // Re-fetch attendance records to ensure data is up-to-date
+        await fetchAttendanceRecords();
+
         setPickerModalVisible(false);
+        Alert.alert("Success", "Remark updated successfully!");
       }
     } catch (error) {
       console.error("Error updating remark:", error);
+      Alert.alert("Error", "Failed to update remark. Please try again.");
     } finally {
       setUpdating(false);
     }
@@ -769,7 +760,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   tableContainer: {
-    marginTop: 70,
+    marginTop: 50,
   },
   tableRow: {
     flexDirection: "row",

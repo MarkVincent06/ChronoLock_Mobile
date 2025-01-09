@@ -9,7 +9,10 @@ import {
   Modal,
   ActivityIndicator,
   Alert,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import axios from "axios";
 import { Picker } from "@react-native-picker/picker";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -45,20 +48,48 @@ const InstructorAttendance = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [pickerModalVisible, setPickerModalVisible] = useState(false);
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(
     null
   );
   const [selectedRemark, setSelectedRemark] = useState("Present");
   const [updating, setUpdating] = useState(false);
+  const [filters, setFilters] = useState({
+    course: "",
+    instructor: "",
+    yearSection: "",
+    program: "",
+    remark: "",
+    date: "",
+    time: "",
+  });
+  const [isFilterApplied, setIsFilterApplied] = useState(false);
+  const [courses, setCourses] = useState<
+    { courseCode: string; courseName: string }[]
+  >([]);
+  const [instructors, setInstructors] = useState<
+    { instFirstName: string; instLastName: string }[]
+  >([]);
+  const [yearSections, setYearSections] = useState<
+    { year: string; section: string }[]
+  >([]);
+  const [programs, setPrograms] = useState<{ name: string }[]>([]);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      weekday: "short",
+
+    if (isNaN(date.getTime())) {
+      console.error("Invalid date:", dateString);
+      return "Invalid Date";
+    }
+
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Manila",
       year: "numeric",
-      month: "short",
+      month: "numeric",
       day: "numeric",
-    });
+    }).format(date);
   };
 
   const formatTime = (timeString: string) => {
@@ -84,48 +115,117 @@ const InstructorAttendance = () => {
   };
 
   useEffect(() => {
-    const fetchAttendanceRecords = async () => {
-      try {
-        const response = await axios.get(
-          `${API_URL}/attendances/admin/faculty/attendance-records`
-        );
-        const formattedData = response.data.map(
-          (record: {
-            attendanceID: string;
-            date: string;
-            time: string;
-            firstName: string;
-            lastName: string;
-            remark: string;
-            facultyId: string;
-            courseCode: string;
-            courseName: string;
-            program: string;
-            year: string;
-            section: string;
-          }) => ({
-            attendanceID: record.attendanceID,
-            date: formatDate(record.date),
-            time: record.time,
-            facultyName: `${record.firstName} ${record.lastName}`,
-            remarks: record.remark,
-            facultyId: record.facultyId,
-            courseCode: record.courseCode,
-            courseName: record.courseName,
-            program: record.program,
-            year: record.year,
-            section: record.section,
-          })
-        );
-        setAttendanceData(formattedData);
-        setFilteredData(formattedData);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching attendance records:", error);
-        setLoading(false);
-      }
-    };
+    if (filterModalVisible) {
+      fetchCourses();
+      fetchInstructors();
+      fetchYearSections();
+      fetchPrograms();
+    }
+  }, [filterModalVisible]);
 
+  const fetchCourses = async () => {
+    try {
+      const response = await fetch(`${API_URL}/schedules/courses`);
+      const { success, data, message } = await response.json();
+
+      if (success) {
+        setCourses(data);
+      } else {
+        console.error("Error fetching courses:", message);
+      }
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+    }
+  };
+
+  const fetchInstructors = async () => {
+    try {
+      const response = await fetch(`${API_URL}/schedules/instructors`);
+      const { success, data, message } = await response.json();
+
+      if (success) {
+        setInstructors(data);
+      } else {
+        console.error("Error fetching instructors:", message);
+      }
+    } catch (error) {
+      console.error("Error fetching instructors:", error);
+    }
+  };
+
+  const fetchPrograms = async () => {
+    try {
+      const response = await fetch(`${API_URL}/schedules/programs`);
+      const { success, data, message } = await response.json();
+
+      if (success) {
+        setPrograms(data);
+      } else {
+        console.error("Error fetching programs:", message);
+      }
+    } catch (error) {
+      console.error("Error fetching programs:", error);
+    }
+  };
+
+  const fetchYearSections = async () => {
+    try {
+      const response = await fetch(`${API_URL}/schedules/year-sections`);
+      const { success, data, message } = await response.json();
+
+      if (success) {
+        setYearSections(data);
+      } else {
+        console.error("Error fetching year sections:", message);
+      }
+    } catch (error) {
+      console.error("Error fetching year sections:", error);
+    }
+  };
+
+  const fetchAttendanceRecords = async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/attendances/admin/faculty/attendance-records`
+      );
+      const formattedData = response.data.map(
+        (record: {
+          attendanceID: string;
+          date: string;
+          time: string;
+          firstName: string;
+          lastName: string;
+          remark: string;
+          facultyId: string;
+          courseCode: string;
+          courseName: string;
+          program: string;
+          year: string;
+          section: string;
+        }) => ({
+          attendanceID: record.attendanceID,
+          date: formatDate(record.date),
+          time: record.time,
+          facultyName: `${record.firstName} ${record.lastName}`,
+          remarks: record.remark,
+          facultyId: record.facultyId,
+          courseCode: record.courseCode,
+          courseName: record.courseName,
+          program: record.program,
+          year: record.year,
+          section: record.section,
+        })
+      );
+      setAttendanceData(formattedData);
+      setFilteredData(formattedData);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching attendance records:", error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchAttendanceRecords();
   }, []);
 
@@ -139,24 +239,15 @@ const InstructorAttendance = () => {
         { remark: selectedRemark }
       );
       if (response.status === 200) {
-        setAttendanceData((prevData) =>
-          prevData.map((record) =>
-            record.attendanceID === selectedRecord.attendanceID
-              ? { ...record, remarks: selectedRemark }
-              : record
-          )
-        );
-        setFilteredData((prevData) =>
-          prevData.map((record) =>
-            record.attendanceID === selectedRecord.attendanceID
-              ? { ...record, remarks: selectedRemark }
-              : record
-          )
-        );
+        // Re-fetch attendance records to ensure data is up-to-date
+        await fetchAttendanceRecords();
+
         setPickerModalVisible(false);
+        Alert.alert("Success", "Remark updated successfully!");
       }
     } catch (error) {
       console.error("Error updating remark:", error);
+      Alert.alert("Error", "Failed to update remark. Please try again.");
     } finally {
       setUpdating(false);
     }
@@ -255,6 +346,55 @@ const InstructorAttendance = () => {
     setPickerModalVisible(false);
   };
 
+  const applyFilters = () => {
+    const filtered = attendanceData.filter((record) => {
+      return (
+        (!filters.course ||
+          `${record.courseCode}-${record.courseName}` === filters.course) &&
+        (!filters.instructor ||
+          `${record.facultyName}` === filters.instructor) &&
+        (!filters.yearSection ||
+          `${record.year}-${record.section}` === filters.yearSection) &&
+        (!filters.program || record.program === filters.program) &&
+        (!filters.remark || record.remarks === filters.remark) &&
+        (!filters.date || record.date === filters.date) &&
+        (!filters.time || record.time === filters.time)
+      );
+    });
+    setFilteredData(filtered);
+    setFilterModalVisible(false);
+
+    // Check if any filter is applied
+    const isAnyFilterApplied = Object.values(filters).some(
+      (value) => value !== ""
+    );
+    setIsFilterApplied(isAnyFilterApplied);
+  };
+
+  const resetFilters = () => {
+    setFilters({
+      course: "",
+      instructor: "",
+      yearSection: "",
+      program: "",
+      remark: "",
+      date: "",
+      time: "",
+    });
+    setFilteredData(attendanceData);
+    setFilterModalVisible(false);
+    setIsFilterApplied(false);
+  };
+
+  const handleDateChange = (event, selectedDate) => {
+    const currentDate = selectedDate || filters.date;
+    setShowDatePicker(false);
+    setFilters((prev) => ({
+      ...prev,
+      date: currentDate.toLocaleDateString(),
+    }));
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -270,6 +410,13 @@ const InstructorAttendance = () => {
           <Ionicons name="arrow-back-outline" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Instructor Attendance</Text>
+        <TouchableOpacity
+          style={styles.filterButton}
+          onPress={() => setFilterModalVisible(true)}
+        >
+          <Ionicons name="filter-outline" size={24} color="#FFF" />
+          {isFilterApplied && <View style={styles.filterIndicator} />}
+        </TouchableOpacity>
       </View>
 
       <TextInput
@@ -286,45 +433,51 @@ const InstructorAttendance = () => {
         <Text style={styles.tableHeaderText}>Action</Text>
       </View>
 
+      {/* Attendance Table */}
       <ScrollView style={styles.tableContainer}>
-        {filteredData.map((item, index) => (
-          <View key={index} style={styles.tableRow}>
-            <Text style={styles.tableText}>{item.date}</Text>
-            <Text style={styles.tableText}>{item.facultyName}</Text>
-            <Text
-              style={[
-                styles.tableText,
-                { color: getRemarkColor(item.remarks) },
-              ]}
-            >
-              {item.remarks}
-            </Text>
-            <Menu>
-              <MenuTrigger>
-                <View style={styles.menuTrigger}>
-                  <Text style={styles.actionButtonText}>Actions</Text>
-                </View>
-              </MenuTrigger>
-              <MenuOptions>
-                <MenuOption onSelect={() => handleViewDetails(item)}>
-                  <Text style={styles.menuOption}>View Details</Text>
-                </MenuOption>
-                <MenuOption onSelect={() => handleOpenPickerModal(item)}>
-                  <Text style={styles.menuOption}>Change Remark</Text>
-                </MenuOption>
-                <MenuOption
-                  onSelect={() => handleDeleteAttendance(item.attendanceID)}
-                >
-                  <Text style={[styles.menuOption, styles.deleteOption]}>
-                    Delete
-                  </Text>
-                </MenuOption>
-              </MenuOptions>
-            </Menu>
-          </View>
-        ))}
+        {filteredData.length > 0 ? (
+          filteredData.map((item, index) => (
+            <View key={index} style={styles.tableRow}>
+              <Text style={styles.tableText}>{item.date}</Text>
+              <Text style={styles.tableText}>{item.facultyName}</Text>
+              <Text
+                style={[
+                  styles.tableText,
+                  { color: getRemarkColor(item.remarks) },
+                ]}
+              >
+                {item.remarks}
+              </Text>
+              <Menu>
+                <MenuTrigger>
+                  <View style={styles.menuTrigger}>
+                    <Text style={styles.actionButtonText}>Actions</Text>
+                  </View>
+                </MenuTrigger>
+                <MenuOptions>
+                  <MenuOption onSelect={() => handleViewDetails(item)}>
+                    <Text style={styles.menuOption}>View Details</Text>
+                  </MenuOption>
+                  <MenuOption onSelect={() => handleOpenPickerModal(item)}>
+                    <Text style={styles.menuOption}>Change Remark</Text>
+                  </MenuOption>
+                  <MenuOption
+                    onSelect={() => handleDeleteAttendance(item.attendanceID)}
+                  >
+                    <Text style={[styles.menuOption, styles.deleteOption]}>
+                      Delete
+                    </Text>
+                  </MenuOption>
+                </MenuOptions>
+              </Menu>
+            </View>
+          ))
+        ) : (
+          <Text style={styles.noDataText}>No attendance data found.</Text>
+        )}
       </ScrollView>
 
+      {/* Attendance Details Modal */}
       {selectedRecord && (
         <Modal visible={modalVisible} animationType="slide" transparent={true}>
           <View style={styles.modalContainer}>
@@ -411,6 +564,144 @@ const InstructorAttendance = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Filter Modal */}
+      <Modal
+        visible={filterModalVisible}
+        animationType="slide"
+        transparent={true}
+      >
+        <TouchableWithoutFeedback
+          onPress={() => {
+            setFilterModalVisible(false);
+            Keyboard.dismiss();
+          }}
+        >
+          <View style={styles.modalContainer}>
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>
+                  Filter Instructor Attendance
+                </Text>
+
+                <Picker
+                  selectedValue={filters.course}
+                  onValueChange={(value) =>
+                    setFilters((prev) => ({ ...prev, course: value }))
+                  }
+                >
+                  <Picker.Item label="Course" value="" />
+                  {courses.map((item, index) => (
+                    <Picker.Item
+                      key={index}
+                      label={`${item.courseCode}-${item.courseName}`}
+                      value={`${item.courseCode}-${item.courseName}`}
+                    />
+                  ))}
+                </Picker>
+
+                <Picker
+                  selectedValue={filters.instructor}
+                  onValueChange={(value) =>
+                    setFilters((prev) => ({ ...prev, instructor: value }))
+                  }
+                >
+                  <Picker.Item label="Instructor" value="" />
+                  {instructors.map((item, index) => (
+                    <Picker.Item
+                      key={index}
+                      label={`${item.instFirstName} ${item.instLastName}`}
+                      value={`${item.instFirstName} ${item.instLastName}`}
+                    />
+                  ))}
+                </Picker>
+
+                <Picker
+                  selectedValue={filters.yearSection}
+                  onValueChange={(value) =>
+                    setFilters((prev) => ({ ...prev, yearSection: value }))
+                  }
+                >
+                  <Picker.Item label="Year & Section" value="" />
+                  {yearSections.map((item, index) => (
+                    <Picker.Item
+                      key={index}
+                      label={`${item.year}-${item.section}`}
+                      value={`${item.year}-${item.section}`}
+                    />
+                  ))}
+                </Picker>
+
+                <Picker
+                  selectedValue={filters.program}
+                  onValueChange={(value) =>
+                    setFilters((prev) => ({ ...prev, program: value }))
+                  }
+                >
+                  <Picker.Item label="Program" value="" />
+                  {programs.map((item, index) => (
+                    <Picker.Item
+                      key={index}
+                      label={item.name}
+                      value={item.name}
+                    />
+                  ))}
+                </Picker>
+
+                <Picker
+                  selectedValue={filters.remark}
+                  onValueChange={(value) =>
+                    setFilters((prev) => ({ ...prev, remark: value }))
+                  }
+                >
+                  <Picker.Item label="Remark" value="" />
+                  <Picker.Item label="Present" value="Present" />
+                  <Picker.Item label="Absent" value="Absent" />
+                  <Picker.Item label="Late" value="Late" />
+                </Picker>
+                <View style={{ position: "relative", marginBottom: 10 }}>
+                  <TextInput
+                    style={styles.dateInput}
+                    placeholder="Select Date"
+                    value={filters.date}
+                    editable={false}
+                  />
+                  <TouchableOpacity
+                    style={styles.dateButton}
+                    onPress={() => setShowDatePicker(true)}
+                  >
+                    <Ionicons name="calendar-outline" size={24} color="#000" />
+                  </TouchableOpacity>
+                </View>
+
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={new Date()}
+                    mode="date"
+                    display="default"
+                    onChange={handleDateChange}
+                  />
+                )}
+
+                <View style={styles.buttonGroup}>
+                  <TouchableOpacity
+                    style={styles.resetButton}
+                    onPress={resetFilters}
+                  >
+                    <Text style={styles.buttonText}>Reset</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.applyButton}
+                    onPress={applyFilters}
+                  >
+                    <Text style={styles.buttonText}>Apply</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </View>
   );
 };
@@ -463,7 +754,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   tableContainer: {
-    marginTop: 70,
+    marginTop: 50,
+  },
+  noDataText: {
+    textAlign: "center",
+    color: "gray",
+    fontSize: 16,
+    marginTop: 20,
   },
   tableRow: {
     flexDirection: "row",
@@ -562,5 +859,68 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     justifyContent: "center",
     alignItems: "center",
+  },
+  filterButton: {
+    position: "relative",
+    padding: 10,
+    backgroundColor: "#007bff",
+    borderRadius: 5,
+  },
+  filterIndicator: {
+    position: "absolute",
+    top: -2,
+    right: -2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "red",
+  },
+  input: {
+    height: 40,
+    borderColor: "#ddd",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginVertical: 10,
+    backgroundColor: "#fff",
+  },
+  dateInput: {
+    height: 40,
+    borderColor: "gray",
+    borderWidth: 1,
+    marginTop: 10,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+  },
+  dateButton: {
+    position: "absolute",
+    right: 10,
+    top: "50%",
+    transform: [{ translateY: -14 }], // Center vertically (icon height is ~24)
+  },
+  buttonGroup: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+  },
+  resetButton: {
+    flex: 1,
+    backgroundColor: "#ff9800",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+  },
+  applyButton: {
+    flex: 1,
+    backgroundColor: "#007BFF",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 10,
   },
 });

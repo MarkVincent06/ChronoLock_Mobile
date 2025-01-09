@@ -118,10 +118,10 @@ const AdminDashboard = () => {
             labels,
             datasets: [{ data }],
           });
-          setLoadingAttendance(false); // Set loading to false after data is fetched
         } catch (error) {
           console.error("Error fetching attendance trends:", error);
-          setLoadingAttendance(false); // Set loading to false if there is an error
+        } finally {
+          setLoadingAttendance(false);
         }
       };
       fetchUsers();

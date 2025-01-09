@@ -31,7 +31,7 @@ const LaboratoryLayout = () => {
           }}
         />
         <Stack.Screen
-          name="seat-plan"
+          name="seat-plan-folder"
           options={{
             headerShown: false,
           }}

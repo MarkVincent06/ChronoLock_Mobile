@@ -116,7 +116,7 @@ const ClassList = () => {
         <Text style={styles.headerTitle}>Select Class</Text>
       </View>
       <Text style={styles.subText}>
-        Tap on a class below to view your student's attendance
+        Tap on a class below to view and manage your student's seating plan.
       </Text>
 
       {/* Search Bar */}
@@ -136,7 +136,7 @@ const ClassList = () => {
             style={styles.classItem}
             onPress={() =>
               router.push(
-                `laboratory/attendance-folder/attendances?scheduleID=${
+                `laboratory/seat-plan-folder/seat-plan?scheduleID=${
                   item.scheduleID
                 }&courseName=${encodeURIComponent(item.courseName)}`
               )
