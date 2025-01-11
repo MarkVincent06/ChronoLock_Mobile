@@ -6,11 +6,14 @@ import {
   StyleSheet,
   Alert,
   Animated,
+  ScrollView,
+  RefreshControl,
 } from "react-native";
 import axios from "axios";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useUserContext } from "@/context/UserContext";
 import API_URL from "@/config/ngrok-api";
+import usePullToRefresh from "@/hooks/usePullToRefresh";
 
 const AccessControl = () => {
   const { user } = useUserContext();
@@ -18,10 +21,49 @@ const AccessControl = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [privilegeStatus, setPrivilegeStatus] = useState("");
   const [buttonColor, setButtonColor] = useState("#6c757d"); // Default grey
+  const [isWithinSchedule, setIsWithinSchedule] = useState(false);
   const animatedValue = useRef(new Animated.Value(0)).current;
 
   const RASPBERRY_PI_URL = "http://192.168.215.17:5000";
   const USER_ID_NUMBER = user?.idNumber;
+
+  // Fetch today's schedule for the instructor
+  const fetchTodayClasses = async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/schedules/user-classes/today/${USER_ID_NUMBER}`
+      );
+      const classes = response.data.data; // Use `data` field as shown in your response.
+
+      if (classes && classes.length > 0) {
+        const currentDateTime = new Date();
+        const currentTimeInMinutes =
+          currentDateTime.getHours() * 60 + currentDateTime.getMinutes();
+
+        // Check if the current time is within any scheduled class
+        const isScheduled = classes.some((classItem) => {
+          const [startHour, startMinutes] = classItem.startTime
+            .split(":")
+            .map(Number);
+          const [endHour, endMinutes] = classItem.endTime
+            .split(":")
+            .map(Number);
+
+          const startTotalMinutes = startHour * 60 + startMinutes;
+          const endTotalMinutes = endHour * 60 + endMinutes;
+
+          return (
+            currentTimeInMinutes >= startTotalMinutes &&
+            currentTimeInMinutes <= endTotalMinutes
+          );
+        });
+
+        setIsWithinSchedule(isScheduled);
+      } else {
+        setIsWithinSchedule(false);
+      }
+    } catch (error) {}
+  };
 
   // Fetch the privilege status from the backend
   const fetchPrivilegeStatus = async () => {
@@ -44,6 +86,20 @@ const AccessControl = () => {
     }
   };
 
+  // Combine both fetch functions for refresh
+  const fetchData = async () => {
+    await Promise.all([fetchPrivilegeStatus(), fetchTodayClasses()]);
+  };
+
+  const { refreshing, onRefresh } = usePullToRefresh(fetchData);
+
+  // Fetch privilege status and today's schedule on component mount
+  useEffect(() => {
+    if (user?.userType === "Faculty") {
+      fetchData();
+    }
+  }, []);
+
   // Update button appearance based on privilege status
   const updateButtonAppearance = (status: string) => {
     if (status === "Granted") {
@@ -59,7 +115,7 @@ const AccessControl = () => {
 
   // Send command to unlock the door
   const sendCommand = async (command: number) => {
-    if (privilegeStatus === "Granted") {
+    if (privilegeStatus === "Granted" && isWithinSchedule) {
       setIsLoading(true);
       setConnectionStatus("Sending command...");
 
@@ -103,6 +159,11 @@ const AccessControl = () => {
       } finally {
         setIsLoading(false);
       }
+    } else if (!isWithinSchedule) {
+      Alert.alert(
+        "Access Denied",
+        "You can only unlock the lab during your scheduled time."
+      );
     } else if (privilegeStatus === "Revoked") {
       Alert.alert(
         "Access Denied",
@@ -137,13 +198,13 @@ const AccessControl = () => {
     outputRange: ["#28a745", "#1e90ff"],
   });
 
-  // Fetch privilege status on component mount
-  useEffect(() => {
-    fetchPrivilegeStatus();
-  }, []);
-
   return (
-    <View style={styles.container}>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
       <Text style={styles.title}>Remote Unlock</Text>
       <Text style={styles.description}>
         Remotely unlock the ERP laboratory door by clicking the big unlock
@@ -167,7 +228,7 @@ const AccessControl = () => {
       <Text style={{ fontWeight: "bold", fontSize: 20, marginTop: 20 }}>
         {connectionStatus}
       </Text>
-    </View>
+    </ScrollView>
   );
 };
 

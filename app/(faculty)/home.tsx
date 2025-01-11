@@ -5,6 +5,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useUserContext } from "@/context/UserContext";
 import axios from "axios";
 import API_URL from "@/config/ngrok-api";
+import usePullToRefresh from "@/hooks/usePullToRefresh";
 
 const Home = () => {
   const { user } = useUserContext();

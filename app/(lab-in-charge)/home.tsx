@@ -17,7 +17,10 @@ const Home = () => {
   const [todayScheduleCount, setTodayScheduleCount] = useState(0);
 
   useEffect(() => {
-    if (user?.idNumber && user.userType === "Lab-in-Charge") {
+    if (
+      (user?.idNumber && user.userType === "Lab-in-Charge") ||
+      (user?.idNumber && user.userType === "Technician")
+    ) {
       const fetchChatsHandled = async () => {
         try {
           if (user?.idNumber) {

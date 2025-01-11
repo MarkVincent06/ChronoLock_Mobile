@@ -96,7 +96,10 @@ const AuthNavigation = () => {
             router.replace("/(student)/home");
           } else if (user?.userType === "Admin") {
             router.replace("/(admin)/dashboard");
-          } else if (user?.userType === "Lab-in-Charge") {
+          } else if (
+            user?.userType === "Lab-in-Charge" ||
+            user?.userType === "Technician"
+          ) {
             router.replace("/(lab-in-charge)/home");
           }
         } else {

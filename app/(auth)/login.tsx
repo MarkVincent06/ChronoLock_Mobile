@@ -144,7 +144,10 @@ const Login: React.FC = () => {
             router.push("/(student)/home");
           } else if (userData.userType === "Admin") {
             router.push("/(admin)/dashboard");
-          } else if (userData.userType === "Lab-in-Charge") {
+          } else if (
+            userData.userType === "Lab-in-Charge" ||
+            userData.userType === "Technician"
+          ) {
             router.push("/(lab-in-charge)/home");
           }
         }
@@ -235,7 +238,10 @@ const Login: React.FC = () => {
             router.push("/(student)/home");
           } else if (userData.userType === "Admin") {
             router.push("/(admin)/dashboard");
-          } else if (userData.userType === "Lab-in-Charge") {
+          } else if (
+            userData.userType === "Lab-in-Charge" ||
+            userData.userType === "Technician"
+          ) {
             router.push("/(lab-in-charge)/home");
           }
         }
