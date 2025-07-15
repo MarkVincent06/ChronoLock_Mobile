@@ -72,14 +72,14 @@ const AccountSettings = () => {
       updatedFormData.append("lastName", formData.lastName || "");
       updatedFormData.append("email", formData.email || "");
 
-      // Append the avatar file if it exists
-      if (avatar) {
+      // Only append avatar if it's a new file (not the same as the original user avatar)
+      if (avatar && avatar !== user?.avatar) {
         const filename = avatar.split("/").pop();
         const fileType = filename?.split(".").pop();
         updatedFormData.append("avatar", {
           uri: avatar,
           name: filename || "avatar.jpg",
-          type: `image/${fileType}`, // E.g., image/jpeg, image/png
+          type: `image/${fileType}`,
         } as any);
       }
 

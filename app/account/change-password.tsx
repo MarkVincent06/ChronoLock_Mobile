@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 15,
   },
-  input: { flex: 1, fontSize: 16, paddingVertical: 10 },
+  input: { flex: 1, fontSize: 16, paddingVertical: 10, color: "#222" },
   button: {
     backgroundColor: "#007bff",
     padding: 15,

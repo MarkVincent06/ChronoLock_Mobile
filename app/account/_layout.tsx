@@ -1,14 +1,17 @@
 import { StyleSheet, TouchableOpacity } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
 import Icon from "react-native-vector-icons/Ionicons";
 
 import React from "react";
 
+const Ionicons = Icon as any;
+
 const AccountLayout = () => {
   const router = useRouter();
 
   return (
-    <>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
       <Stack>
         <Stack.Screen
           name="index"
@@ -20,7 +23,7 @@ const AccountLayout = () => {
                 style={styles.backButton}
                 onPress={() => router.back()}
               >
-                <Icon name="arrow-back" size={24} color="#000" />
+                <Ionicons name="arrow-back" size={24} color="#000" />
               </TouchableOpacity>
             ),
           }}
@@ -33,7 +36,7 @@ const AccountLayout = () => {
           }}
         />
       </Stack>
-    </>
+    </SafeAreaView>
   );
 };
 
