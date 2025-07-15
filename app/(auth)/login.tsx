@@ -26,7 +26,7 @@ import {
 import { auth } from "../../config/firebase";
 import { useUserContext } from "../../context/UserContext";
 import * as Location from "expo-location";
-import { BACKGROUND_LOCATION_TASK } from "@/app/tasks/backgroundLocationTask";
+import { BACKGROUND_LOCATION_TASK } from "@/tasks/backgroundLocationTask";
 import API_URL from "../../config/ngrok-api";
 import { useRouter } from "expo-router";
 import eye from "../../assets/icons/eye.png";
@@ -50,10 +50,12 @@ const Login: React.FC = () => {
         return true;
       };
 
-      BackHandler.addEventListener("hardwareBackPress", onBackPress);
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress
+      );
 
-      return () =>
-        BackHandler.removeEventListener("hardwareBackPress", onBackPress);
+      return () => subscription.remove();
     }, [])
   );
 
@@ -157,7 +159,6 @@ const Login: React.FC = () => {
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error("Axios error during login:", error.message);
         if (error.response) {
           console.log("Error response:", error.response.data);
           setError(
@@ -294,6 +295,7 @@ const Login: React.FC = () => {
               onChangeText={setPassword}
               onFocus={() => setFocusedInput("password")}
               onBlur={() => setFocusedInput(null)}
+              textContentType="password"
             />
             <TouchableOpacity
               style={styles.eyeContainer}
@@ -370,6 +372,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     backgroundColor: "#fff",
     fontSize: 16,
+    color: "#000",
   },
   inputFocused: {
     borderColor: "#1A73E8",

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
-import { locationEmitter } from "@/app/tasks/backgroundLocationTask";
+import { locationEmitter } from "@/tasks/backgroundLocationTask";
 
 type User = {
   id: number;

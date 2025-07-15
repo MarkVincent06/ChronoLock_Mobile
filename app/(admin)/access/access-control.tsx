@@ -17,7 +17,7 @@ import {
 } from "react-native-popup-menu";
 import axios from "axios";
 import { useRouter } from "expo-router";
-import Icon from "react-native-vector-icons/FontAwesome";
+import FontAwesome from "react-native-vector-icons/FontAwesome";
 import API_URL from "@/config/ngrok-api";
 
 interface Account {
@@ -25,6 +25,9 @@ interface Account {
   idNumber: string;
   privilege_status: string;
 }
+
+// Type assertion to fix TypeScript compatibility issues
+const Icon = FontAwesome as any;
 
 const AccessControl = () => {
   const router = useRouter();
@@ -113,6 +116,7 @@ const AccessControl = () => {
         placeholder="Search id number..."
         value={searchTerm}
         onChangeText={setSearchTerm}
+        placeholderTextColor="#b0b0b0"
       />
       {loading ? (
         <ActivityIndicator size="large" color="#007bff" />

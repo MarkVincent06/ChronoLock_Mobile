@@ -8,9 +8,12 @@ import {
   Animated,
 } from "react-native";
 import axios from "axios";
-import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import FontAwesome from "react-native-vector-icons/MaterialCommunityIcons";
 import { useUserContext } from "@/context/UserContext";
 import API_URL from "@/config/ngrok-api";
+
+// Type assertion to fix TypeScript compatibility issues
+const Icon = FontAwesome as any;
 
 const AccessControl = () => {
   const { user } = useUserContext();

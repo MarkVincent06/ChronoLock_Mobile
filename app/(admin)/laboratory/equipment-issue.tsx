@@ -244,6 +244,7 @@ const EquipmentIssue = () => {
                 selectedValue={status}
                 onValueChange={(itemValue) => setStatus(itemValue)}
                 style={styles.picker}
+                dropdownIconColor="#888"
               >
                 <Picker.Item label="Pending" value="Pending" />
                 <Picker.Item label="Fixing" value="Fixing" />
@@ -257,6 +258,7 @@ const EquipmentIssue = () => {
                 value={comment}
                 onChangeText={setComment}
                 placeholder="Add comment"
+                placeholderTextColor="#b0b0b0"
               />
 
               {/* Button to update the issue status */}
@@ -311,8 +313,8 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     backgroundColor: "#fff",
     borderRadius: 8,
-    padding: 10,
     elevation: 3,
+    color: "#222",
   },
   issueItem: {
     padding: 15,

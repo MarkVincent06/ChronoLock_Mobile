@@ -17,7 +17,7 @@ import {
 import DateTimePicker from "@react-native-community/datetimepicker";
 import axios from "axios";
 import { Picker } from "@react-native-picker/picker";
-import Ionicons from "react-native-vector-icons/Ionicons";
+import Ion from "react-native-vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import {
   Menu,
@@ -27,6 +27,9 @@ import {
 } from "react-native-popup-menu";
 import API_URL from "@/config/ngrok-api";
 import RNHTMLtoPDF from "react-native-html-to-pdf";
+
+// Type assertion to fix TypeScript compatibility issues
+const Ionicons = Ion as any;
 
 const InstructorAttendance = () => {
   const router = useRouter();
@@ -529,7 +532,7 @@ const InstructorAttendance = () => {
     setIsFilterApplied(false);
   };
 
-  const handleDateChange = (event, selectedDate) => {
+  const handleDateChange = (event: any, selectedDate: any) => {
     const currentDate = selectedDate || filters.date;
     setShowDatePicker(false);
     setFilters((prev) => ({
@@ -566,6 +569,7 @@ const InstructorAttendance = () => {
         <TextInput
           style={styles.searchInput}
           placeholder="Search instructor name..."
+          placeholderTextColor="#b0b0b0"
           value={searchQuery}
           onChangeText={handleSearch}
         />
@@ -691,6 +695,8 @@ const InstructorAttendance = () => {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Select Remark</Text>
             <Picker
+              style={{ color: "#222", backgroundColor: "#fff" }}
+              dropdownIconColor="#888"
               selectedValue={selectedRemark}
               onValueChange={(itemValue) => setSelectedRemark(itemValue)}
             >
@@ -733,6 +739,8 @@ const InstructorAttendance = () => {
                 </Text>
 
                 <Picker
+                  style={{ color: "#222", backgroundColor: "#fff" }}
+                  dropdownIconColor="#888"
                   selectedValue={filters.course}
                   onValueChange={(value) =>
                     setFilters((prev) => ({ ...prev, course: value }))
@@ -749,6 +757,8 @@ const InstructorAttendance = () => {
                 </Picker>
 
                 <Picker
+                  style={{ color: "#222", backgroundColor: "#fff" }}
+                  dropdownIconColor="#888"
                   selectedValue={filters.instructor}
                   onValueChange={(value) =>
                     setFilters((prev) => ({ ...prev, instructor: value }))
@@ -765,6 +775,8 @@ const InstructorAttendance = () => {
                 </Picker>
 
                 <Picker
+                  style={{ color: "#222", backgroundColor: "#fff" }}
+                  dropdownIconColor="#888"
                   selectedValue={filters.yearSection}
                   onValueChange={(value) =>
                     setFilters((prev) => ({ ...prev, yearSection: value }))
@@ -781,6 +793,8 @@ const InstructorAttendance = () => {
                 </Picker>
 
                 <Picker
+                  style={{ color: "#222", backgroundColor: "#fff" }}
+                  dropdownIconColor="#888"
                   selectedValue={filters.program}
                   onValueChange={(value) =>
                     setFilters((prev) => ({ ...prev, program: value }))
@@ -797,6 +811,8 @@ const InstructorAttendance = () => {
                 </Picker>
 
                 <Picker
+                  style={{ color: "#222", backgroundColor: "#fff" }}
+                  dropdownIconColor="#888"
                   selectedValue={filters.remark}
                   onValueChange={(value) =>
                     setFilters((prev) => ({ ...prev, remark: value }))
@@ -811,6 +827,7 @@ const InstructorAttendance = () => {
                   <TextInput
                     style={styles.dateInput}
                     placeholder="Select Date"
+                    placeholderTextColor="#b0b0b0"
                     value={filters.date}
                     editable={false}
                   />

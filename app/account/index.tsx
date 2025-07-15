@@ -16,7 +16,7 @@ import * as ImagePicker from "expo-image-picker";
 import axios from "axios";
 import { useRouter } from "expo-router";
 import * as Location from "expo-location";
-import { BACKGROUND_LOCATION_TASK } from "@/app/tasks/backgroundLocationTask";
+import { BACKGROUND_LOCATION_TASK } from "@/tasks/backgroundLocationTask";
 import API_URL from "../../config/ngrok-api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
@@ -52,7 +52,7 @@ const AccountSettings = () => {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"],
       allowsEditing: true,
       quality: 0.7,
     });

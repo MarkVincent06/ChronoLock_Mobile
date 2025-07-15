@@ -6,8 +6,12 @@ import { useRouter } from "expo-router";
 import API_URL from "../../config/ngrok-api";
 import chronolockLogo from "@/assets/images/chronolock-logo2a.png";
 import { useUserContext } from "@/context/UserContext";
-import Icon from "react-native-vector-icons/FontAwesome";
-import Ionicon from "react-native-vector-icons/Ionicons";
+import FontAwesome from "react-native-vector-icons/FontAwesome";
+import Ionicons from "react-native-vector-icons/Ionicons";
+
+// Type assertion to fix TypeScript compatibility issues
+const Icon = FontAwesome as any;
+const Ionicon = Ionicons as any;
 
 interface TabIconProps {
   icon: React.ReactNode;
@@ -21,11 +25,14 @@ const TabIcon: React.FC<TabIconProps> = ({ icon, color, name, focused }) => {
     <View style={styles.iconContainer}>
       {icon}
       <Text
-        style={{
-          color: color,
-          fontSize: 13,
-          fontWeight: focused ? "bold" : "normal",
-        }}
+        style={[
+          styles.tabLabel,
+          {
+            color: color,
+            fontWeight: focused ? "bold" : "normal",
+          },
+        ]}
+        numberOfLines={1}
       >
         {name}
       </Text>
@@ -108,8 +115,9 @@ const TabsLayout = () => {
         screenOptions={{
           tabBarShowLabel: false,
           tabBarStyle: {
-            height: 47,
-            paddingTop: 8,
+            height: 70,
+            paddingTop: 15,
+            paddingHorizontal: 0,
           },
           header: () => <CustomHeader />,
         }}
@@ -121,7 +129,7 @@ const TabsLayout = () => {
             headerShown: true,
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
-                icon={<Icon name="dashboard" size={24} color={color} />}
+                icon={<Icon name="dashboard" size={20} color={color} />}
                 color={color}
                 name="Dashboard"
                 focused={focused}
@@ -137,7 +145,7 @@ const TabsLayout = () => {
             headerShown: true,
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
-                icon={<Icon name="key" size={24} color={color} />}
+                icon={<Icon name="key" size={20} color={color} />}
                 color={color}
                 name="Access"
                 focused={focused}
@@ -153,7 +161,7 @@ const TabsLayout = () => {
             headerShown: true,
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
-                icon={<Icon name="desktop" size={24} color={color} />}
+                icon={<Icon name="desktop" size={20} color={color} />}
                 color={color}
                 name="Laboratory"
                 focused={focused}
@@ -170,7 +178,7 @@ const TabsLayout = () => {
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
                 icon={
-                  <Ionicon name="chatbubbles-outline" size={24} color={color} />
+                  <Ionicon name="chatbubbles-outline" size={20} color={color} />
                 }
                 color={color}
                 name="Chats"
@@ -191,10 +199,18 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: "center",
     justifyContent: "center",
+    minWidth: 80,
+    paddingHorizontal: 5,
+    marginTop: 8,
   },
   iconText: {
     fontSize: 12,
     color: "#000",
+  },
+  tabLabel: {
+    fontSize: 11,
+    textAlign: "center",
+    marginTop: 2,
   },
   headerContainer: {
     flexDirection: "row",

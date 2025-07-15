@@ -97,6 +97,7 @@ const ForgotPassword = () => {
               focusedInput === "email" && styles.inputFocused,
             ]}
             placeholder="Enter your email"
+            placeholderTextColor="#b0b0b0"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -120,6 +121,7 @@ const ForgotPassword = () => {
                 focusedInput === "new-password" && styles.inputFocused,
               ]}
               placeholder="Enter new password"
+              placeholderTextColor="#b0b0b0"
               value={newPassword}
               onChangeText={setNewPassword}
               secureTextEntry={!showNewPassword}
@@ -145,6 +147,7 @@ const ForgotPassword = () => {
                 focusedInput === "confirm-new-password" && styles.inputFocused,
               ]}
               placeholder="Confirm new password"
+              placeholderTextColor="#b0b0b0"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry={!showConfirmPassword}

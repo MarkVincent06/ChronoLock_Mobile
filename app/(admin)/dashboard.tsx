@@ -9,7 +9,7 @@ import {
 import { Card, Divider } from "react-native-paper";
 import { LineChart } from "react-native-chart-kit";
 import { useWindowDimensions } from "react-native";
-import Icon from "react-native-vector-icons/FontAwesome";
+import FontAwesome from "react-native-vector-icons/FontAwesome";
 import axios from "axios";
 import API_URL from "@/config/ngrok-api";
 import { useUserContext } from "@/context/UserContext";
@@ -30,6 +30,9 @@ interface Log {
   userName: string;
   action: string;
 }
+
+// Type assertion to fix TypeScript compatibility issues
+const Icon = FontAwesome as any;
 
 const AdminDashboard = () => {
   const { width } = useWindowDimensions();

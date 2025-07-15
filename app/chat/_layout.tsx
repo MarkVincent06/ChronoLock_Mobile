@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Stack, useRouter } from "expo-router";
 import { TouchableOpacity, StyleSheet } from "react-native";
-import Icon from "react-native-vector-icons/Ionicons";
-import { useUserContext } from "../../context/UserContext";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import { useUserContext } from "@/context/UserContext";
+
+// Type assertion to fix TypeScript compatibility issues
+const Ionicon = Ionicons as any;
 
 const ChatLayout = () => {
   const { user } = useUserContext();
@@ -33,7 +36,7 @@ const ChatLayout = () => {
               style={styles.backButton}
               onPress={() => router.back()}
             >
-              <Icon name="arrow-back" size={24} color="#000" />
+              <Ionicon name="arrow-back" size={24} color="#000" />
             </TouchableOpacity>
           ),
         }}

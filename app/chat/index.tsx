@@ -14,7 +14,7 @@ import { useRouter } from "expo-router";
 import axios from "axios";
 import API_URL from "../../config/ngrok-api";
 import { useFocusEffect } from "@react-navigation/native";
-import Icon from "react-native-vector-icons/Ionicons";
+import IonIcons from "react-native-vector-icons/Ionicons";
 import { useUserContext } from "../../context/UserContext";
 import {
   Menu,
@@ -22,6 +22,9 @@ import {
   MenuOption,
   MenuTrigger,
 } from "react-native-popup-menu";
+
+// Type assertion to fix TypeScript compatibility issues
+const Icon = IonIcons as any;
 
 interface Group {
   group_id: number;
@@ -227,8 +230,9 @@ const FacultyGroupChat = () => {
   return (
     <View style={styles.container}>
       <TextInput
-        style={styles.searchInput}
+        style={{ borderColor: "blue" }}
         placeholder="Search chats..."
+        placeholderTextColor="#9CA3AF"
         value={searchText}
         onChangeText={handleSearch}
       />
@@ -282,10 +286,12 @@ const styles = StyleSheet.create({
   searchInput: {
     marginVertical: 10,
     padding: 10,
-    borderColor: "#ddd",
+    borderColor: "red",
     borderWidth: 1,
     borderRadius: 8,
     fontSize: 16,
+    // color: "#000",
+    backgroundColor: "#000000",
   },
   loader: {
     flex: 1,

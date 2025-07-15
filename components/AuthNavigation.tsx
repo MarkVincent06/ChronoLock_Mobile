@@ -7,7 +7,7 @@ import { useUserContext } from "@/context/UserContext";
 import * as SplashScreen from "expo-splash-screen";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import * as Location from "expo-location";
-import { BACKGROUND_LOCATION_TASK } from "@/app/tasks/backgroundLocationTask";
+import { BACKGROUND_LOCATION_TASK } from "@/tasks/backgroundLocationTask";
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -80,7 +80,7 @@ const AuthNavigation = () => {
     });
 
     return () => unsubscribe();
-  }, [setUser]);
+  }, []);
   // Navigation Logic
   useEffect(() => {
     const navigate = async () => {

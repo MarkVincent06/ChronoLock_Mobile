@@ -184,7 +184,7 @@ const GroupChats = () => {
 
   const handleAvatarChange = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
@@ -237,6 +237,7 @@ const GroupChats = () => {
       <TextInput
         style={styles.searchInput}
         placeholder="Search group chats..."
+        placeholderTextColor="#9CA3AF"
         value={searchQuery}
         onChangeText={handleSearch}
       />
@@ -296,31 +297,48 @@ const GroupChats = () => {
                 </TouchableOpacity>
                 <Text style={styles.label}>Group Name</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    editable ? styles.inputEnabled : styles.inputDisabled,
+                  ]}
                   value={groupName}
                   onChangeText={setGroupName}
                   editable={editable}
                   placeholder="Group Name"
+                  placeholderTextColor="#b0b0b0"
                 />
                 <Text style={styles.label}>Group Key</Text>
-                <View style={styles.inputContainer}>
+                <View
+                  style={[
+                    styles.inputContainer,
+                    editable
+                      ? styles.inputContainerEnabled
+                      : styles.inputContainerDisabled,
+                  ]}
+                >
                   <TextInput
-                    style={styles.inputWithIcon}
+                    style={[
+                      styles.inputWithIcon,
+                      editable ? styles.inputEnabled : styles.inputDisabled,
+                    ]}
                     value={groupKey}
                     onChangeText={setGroupKey}
                     editable={editable}
                     secureTextEntry={!showGroupKey}
                     placeholder="Group Key"
+                    placeholderTextColor="#b0b0b0"
                   />
                   <TouchableOpacity
                     style={styles.iconContainer}
                     onPress={() => editable && setShowGroupKey((prev) => !prev)}
                     disabled={!editable}
+                    activeOpacity={editable ? 0.7 : 1}
                   >
                     <Ionicons
                       name={showGroupKey ? "eye-off" : "eye"}
                       size={24}
                       color={editable ? "black" : "gray"}
+                      style={!editable ? { opacity: 0.5 } : undefined}
                     />
                   </TouchableOpacity>
                 </View>
@@ -452,16 +470,22 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f0f0f0",
     borderRadius: 5,
     marginVertical: 10,
     paddingHorizontal: 10,
+  },
+  inputContainerEnabled: {
+    backgroundColor: "#f0f0f0",
+  },
+  inputContainerDisabled: {
+    backgroundColor: "#e0e0e0",
   },
   inputWithIcon: {
     flex: 1,
     paddingVertical: 10,
     paddingHorizontal: 5,
     fontSize: 16,
+    color: "black",
   },
   iconContainer: {
     paddingLeft: 5,
@@ -482,8 +506,15 @@ const styles = StyleSheet.create({
     width: "100%",
     padding: 10,
     marginVertical: 10,
-    backgroundColor: "#f0f0f0",
     borderRadius: 5,
+  },
+  inputEnabled: {
+    backgroundColor: "#f0f0f0",
+    color: "#000",
+  },
+  inputDisabled: {
+    backgroundColor: "#e0e0e0",
+    color: "#888",
   },
   buttonContainer: {
     flexDirection: "row",

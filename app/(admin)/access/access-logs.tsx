@@ -8,7 +8,7 @@ import {
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "expo-router";
-import Icon from "react-native-vector-icons/FontAwesome";
+import FontAwesome from "react-native-vector-icons/FontAwesome";
 import API_URL from "@/config/ngrok-api";
 
 interface AccessLog {
@@ -18,6 +18,9 @@ interface AccessLog {
   date: string;
   time: string;
 }
+
+// Type assertion to fix TypeScript compatibility issues
+const Icon = FontAwesome as any;
 
 const AccessLogs = () => {
   const router = useRouter();

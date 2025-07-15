@@ -7,8 +7,12 @@ import {
   ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
-import Ionicons from "react-native-vector-icons/Ionicons";
-import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
+import Ion from "react-native-vector-icons/Ionicons";
+import MaterialCommunity from "react-native-vector-icons/MaterialCommunityIcons";
+
+// Type assertion to fix TypeScript compatibility issues
+const Ionicons = Ion as any;
+const MaterialCommunityIcons = MaterialCommunity as any;
 
 const AttendanceIndex = () => {
   const router = useRouter();
