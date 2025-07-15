@@ -30,10 +30,15 @@ const ForgotPassword = () => {
 
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [infoMessage, setInfoMessage] = useState("");
+  const [infoType, setInfoType] = useState<"info" | "success" | "error">(
+    "info"
+  );
 
   const handleVerifyEmail = async () => {
     if (!email) {
-      Alert.alert("Please enter your email.");
+      setInfoMessage("Please enter your email.");
+      setInfoType("error");
       return;
     }
     setIsLoading(true);
@@ -42,14 +47,27 @@ const ForgotPassword = () => {
         email,
       });
       if (response.data.success) {
-        Alert.alert("Verification successful. Please enter your new password.");
+        setInfoMessage(
+          "Verification successful. Please enter your new password."
+        );
+        setInfoType("success");
         setStep("reset");
       } else {
-        Alert.alert("Email not found.");
+        setInfoMessage("Email not found.");
+        setInfoType("error");
       }
     } catch (error) {
-      console.error(error);
-      Alert.alert("An error occurred. Please try again.");
+      let message = "An error occurred. Please try again.";
+      let type: "info" | "success" | "error" = "error";
+      if (
+        axios.isAxiosError(error) &&
+        error.response &&
+        error.response.data?.error
+      ) {
+        message = error.response.data.error;
+      }
+      setInfoMessage(message);
+      setInfoType(type);
     } finally {
       setIsLoading(false);
     }
@@ -57,7 +75,8 @@ const ForgotPassword = () => {
 
   const handleResetPassword = async () => {
     if (newPassword !== confirmPassword) {
-      Alert.alert("Passwords do not match.");
+      setInfoMessage("Passwords do not match.");
+      setInfoType("error");
       return;
     }
     setIsLoading(true);
@@ -67,14 +86,27 @@ const ForgotPassword = () => {
         newPassword,
       });
       if (response.data.success) {
-        Alert.alert("Password reset successfully.");
-        router.replace("/login");
+        setInfoMessage("Password reset successfully. Redirecting to login...");
+        setInfoType("success");
+        setTimeout(() => {
+          router.replace("/login");
+        }, 1500);
       } else {
-        Alert.alert("Error resetting password.");
+        setInfoMessage("Error resetting password.");
+        setInfoType("error");
       }
     } catch (error) {
-      console.error(error);
-      Alert.alert("An error occurred. Please try again.");
+      let message = "An error occurred. Please try again.";
+      let type: "info" | "success" | "error" = "error";
+      if (
+        axios.isAxiosError(error) &&
+        error.response &&
+        error.response.data?.error
+      ) {
+        message = error.response.data.error;
+      }
+      setInfoMessage(message);
+      setInfoType(type);
     } finally {
       setIsLoading(false);
     }
@@ -89,6 +121,18 @@ const ForgotPassword = () => {
         <Ionicons name="arrow-back" size={24} color="#000" />
       </TouchableOpacity>
       <Text style={styles.header}>Forgot Password</Text>
+      {infoMessage ? (
+        <Text
+          style={[
+            styles.infoMessage,
+            infoType === "success" && styles.infoSuccess,
+            infoType === "error" && styles.infoError,
+            infoType === "info" && styles.infoNeutral,
+          ]}
+        >
+          {infoMessage}
+        </Text>
+      ) : null}
       {step === "email" ? (
         <View>
           <TextInput
@@ -211,6 +255,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     backgroundColor: "#fff",
     fontSize: 16,
+    color: "#222",
   },
   inputFocused: {
     borderColor: "#1A73E8",
@@ -235,5 +280,20 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     tintColor: "black",
+  },
+  infoMessage: {
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 10,
+    marginTop: 10,
+  },
+  infoSuccess: {
+    color: "#2e7d32",
+  },
+  infoError: {
+    color: "#d32f2f",
+  },
+  infoNeutral: {
+    color: "#1A73E8",
   },
 });
