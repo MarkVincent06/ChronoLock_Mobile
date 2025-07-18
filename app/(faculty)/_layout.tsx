@@ -19,30 +19,6 @@ import { useUserContext } from "@/context/UserContext";
 // Type assertion to fix TypeScript compatibility issues
 const Icon = IonIcon as any;
 
-interface TabIconProps {
-  icon: ImageSourcePropType;
-  color: string;
-  name: string;
-  focused: boolean;
-}
-
-const TabIcon: React.FC<TabIconProps> = ({ icon, color, name, focused }) => {
-  return (
-    <View style={styles.iconContainer}>
-      <Image
-        source={icon}
-        resizeMode="contain"
-        style={[styles.icon, { tintColor: color }]}
-      />
-      <Text
-        style={[styles.iconText, focused && { fontSize: 13, color: color }]}
-      >
-        {name}
-      </Text>
-    </View>
-  );
-};
-
 const CustomHeader = () => {
   const { user } = useUserContext();
   const router = useRouter();

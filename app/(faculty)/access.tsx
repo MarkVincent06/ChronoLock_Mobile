@@ -10,10 +10,12 @@ import {
   RefreshControl,
 } from "react-native";
 import axios from "axios";
-import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import MaterialCommunityIcon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useUserContext } from "@/context/UserContext";
 import API_URL from "@/config/ngrok-api";
 import usePullToRefresh from "@/hooks/usePullToRefresh";
+// Type assertion to fix TypeScript compatibility issues
+const Icon = MaterialCommunityIcon as any;
 
 const AccessControl = () => {
   const { user } = useUserContext();
@@ -41,7 +43,7 @@ const AccessControl = () => {
           currentDateTime.getHours() * 60 + currentDateTime.getMinutes();
 
         // Check if the current time is within any scheduled class
-        const isScheduled = classes.some((classItem) => {
+        const isScheduled = classes.some((classItem: any) => {
           const [startHour, startMinutes] = classItem.startTime
             .split(":")
             .map(Number);

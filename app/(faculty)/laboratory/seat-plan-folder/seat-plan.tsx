@@ -14,11 +14,15 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import axios from "axios";
 import { Ionicons } from "@expo/vector-icons";
-import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import Material from "react-native-vector-icons/MaterialIcons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useUserContext } from "@/context/UserContext";
 import API_URL from "@/config/ngrok-api";
 import RNHTMLtoPDF from "react-native-html-to-pdf";
+
+// Type assertion to fix TypeScript compatibility issues
+const Ion = Ionicons as any;
+const MaterialIcons = Material as any;
 
 const requestStoragePermission = async () => {
   if (Platform.OS === "android") {
@@ -239,6 +243,14 @@ const SeatPlan = () => {
 
                 setSeats(updatedSeats);
                 setModalVisible(false);
+                // Force a screen refresh by replacing the route
+                router.replace({
+                  pathname: "/laboratory/seat-plan-folder/seat-plan",
+                  params: {
+                    scheduleID,
+                    courseName,
+                  },
+                });
               }
             } catch (error) {
               console.error("Error auto-assigning seats:", error);
@@ -301,15 +313,20 @@ const SeatPlan = () => {
     }
   };
 
+  // Update fetchRemainingStudents to return the data
   const fetchRemainingStudents = async (scheduleID: string) => {
     try {
       const response = await axios.get(
         `${API_URL}/seats/remaining-students/${scheduleID}`
       );
       setRemainingStudents(response.data);
-    } catch (error) {}
+      return response.data; // return the fetched data
+    } catch (error) {
+      return [];
+    }
   };
 
+  // Update openAssignModal to use the returned value
   const openAssignModal = async (seat: Seat) => {
     setSelectedSeat(seat);
     await fetchRemainingStudents(scheduleID!);
@@ -349,6 +366,16 @@ const SeatPlan = () => {
                 : seat
             )
           );
+
+          // Force a screen refresh by replacing the route
+          router.replace({
+            pathname: "/laboratory/seat-plan-folder/seat-plan",
+            params: {
+              scheduleID,
+              courseName,
+            },
+          });
+          return;
         }
       } catch (error) {
         // Handle errors
@@ -447,7 +474,7 @@ const SeatPlan = () => {
         <TouchableOpacity
           onPress={() => router.replace("/laboratory/seat-plan-folder/class")}
         >
-          <Ionicons name="arrow-back" size={24} color="black" />
+          <Ion name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
         <Text style={styles.title}>Manage Seat Plan</Text>
       </View>
@@ -493,6 +520,7 @@ const SeatPlan = () => {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Select Auto Assign Type</Text>
             <Picker
+              dropdownIconColor="#888"
               selectedValue={selectedOption}
               onValueChange={(value) => setSelectedOption(value)}
               style={styles.picker}
@@ -534,23 +562,32 @@ const SeatPlan = () => {
             <Text style={styles.modalTitle}>
               Assign Seat {selectedSeat?.seatLabel}
             </Text>
-            <FlatList
-              data={remainingStudents}
-              keyExtractor={(item: { idNumber: string }) => item.idNumber}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.studentItem,
-                    selectedStudent?.idNumber === item.idNumber &&
-                      styles.selectedStudent,
-                  ]}
-                  onPress={() => setSelectedStudent(item)}
-                >
-                  <Text>{`${item.lastName}, ${item.firstName}`}</Text>
-                </TouchableOpacity>
-              )}
-              ListEmptyComponent={<Text>No remaining students available.</Text>}
-            />
+            <View style={{ maxHeight: 360, marginBottom: 10 }}>
+              <FlatList
+                data={remainingStudents}
+                keyExtractor={(item: {
+                  firstName: any;
+                  lastName: any;
+                  idNumber: string;
+                }) => item.idNumber}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[
+                      styles.studentItem,
+                      selectedStudent?.idNumber === item.idNumber &&
+                        styles.selectedStudent,
+                    ]}
+                    onPress={() => setSelectedStudent(item)}
+                  >
+                    <Text>{`${item.lastName}, ${item.firstName}`}</Text>
+                  </TouchableOpacity>
+                )}
+                ListEmptyComponent={
+                  <Text>No remaining students available.</Text>
+                }
+                showsVerticalScrollIndicator={true}
+              />
+            </View>
             <TouchableOpacity
               style={[
                 styles.assignButton,
@@ -662,6 +699,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     alignSelf: "center",
+    color: "#222",
   },
   modalOverlay: {
     flex: 1,

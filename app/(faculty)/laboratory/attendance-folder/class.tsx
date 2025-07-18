@@ -15,7 +15,7 @@ import API_URL from "@/config/ngrok-api";
 import { useUserContext } from "@/context/UserContext";
 import usePullToRefresh from "@/hooks/usePullToRefresh";
 import { router } from "expo-router";
-import Ionicons from "react-native-vector-icons/Ionicons";
+import Ion from "react-native-vector-icons/Ionicons";
 
 interface ClassItem {
   scheduleID: number;
@@ -30,6 +30,9 @@ interface ClassItem {
   startTime: string;
   endTime: string;
 }
+
+// Type assertion to fix TypeScript compatibility issues
+const Ionicons = Ion as any;
 
 const ClassList = () => {
   const { user } = useUserContext();
@@ -122,7 +125,8 @@ const ClassList = () => {
       {/* Search Bar */}
       <TextInput
         style={styles.searchBar}
-        placeholder="Search by course name"
+        placeholder="Search class name..."
+        placeholderTextColor="#b2b2b2"
         value={searchQuery}
         onChangeText={handleSearch}
       />
@@ -135,11 +139,13 @@ const ClassList = () => {
           <TouchableOpacity
             style={styles.classItem}
             onPress={() =>
-              router.push(
-                `laboratory/attendance-folder/attendances?scheduleID=${
-                  item.scheduleID
-                }&courseName=${encodeURIComponent(item.courseName)}`
-              )
+              router.push({
+                pathname: "/laboratory/attendance-folder/attendances",
+                params: {
+                  scheduleID: item.scheduleID.toString(),
+                  courseName: item.courseName,
+                },
+              })
             }
           >
             <View style={styles.classHeader}></View>

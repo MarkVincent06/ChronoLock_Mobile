@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from "react-native";
-import Icon from "react-native-vector-icons/MaterialIcons"; // For the back arrow icon
+import MaterialIcons from "react-native-vector-icons/MaterialIcons"; // For the back arrow icon
 import axios from "axios";
 import { useUserContext } from "@/context/UserContext";
 import { useRouter } from "expo-router"; // For navigation
@@ -30,6 +30,8 @@ interface ClassRecordData {
   section: string;
   scheduleStatus: string;
 }
+// Type assertion to fix TypeScript compatibility issues
+const Icon = MaterialIcons as any;
 
 const ClassRecord = () => {
   const { user } = useUserContext();
@@ -109,10 +111,7 @@ const ClassRecord = () => {
     <View style={styles.container}>
       {/* Header with Back Arrow */}
       <View style={styles.headerContainer}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
+        <TouchableOpacity onPress={() => router.back()}>
           <Icon name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.header}>My Class Record</Text>
@@ -122,6 +121,7 @@ const ClassRecord = () => {
       <TextInput
         style={styles.searchInput}
         placeholder="Search course name..."
+        placeholderTextColor="#b2b2b2"
         value={searchTerm}
         onChangeText={handleSearch}
       />

@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import axios from "axios";
 import { Picker } from "@react-native-picker/picker";
-import Ionicons from "react-native-vector-icons/Ionicons";
+import Ion from "react-native-vector-icons/Ionicons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import {
   Menu,
@@ -37,6 +37,9 @@ interface AttendanceRecord {
   attendanceID: string;
   studentId: string;
 }
+
+// Type assertion to fix TypeScript compatibility issues
+const Ionicons = Ion as any;
 
 const ClassAttendance = () => {
   const router = useRouter();
@@ -428,6 +431,7 @@ const ClassAttendance = () => {
         <TextInput
           style={styles.searchInput}
           placeholder="Search student name..."
+          placeholderTextColor="#b2b2b2"
           value={searchQuery}
           onChangeText={handleSearch}
         />
@@ -553,6 +557,8 @@ const ClassAttendance = () => {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Select Remark</Text>
             <Picker
+              style={{ color: "#222", backgroundColor: "#fff" }}
+              dropdownIconColor="#888"
               selectedValue={selectedRemark}
               onValueChange={(itemValue) => setSelectedRemark(itemValue)}
             >
