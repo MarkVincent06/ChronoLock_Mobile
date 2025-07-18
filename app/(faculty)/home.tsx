@@ -51,7 +51,7 @@ const Home = () => {
             setTotalChats(response.data.length); // Count the total groups (chats)
           }
         } catch (error) {
-          // console.error("Failed to fetch chats handled:", error);
+          console.log("Failed to fetch chats handled:", error);
         }
       };
 
@@ -64,9 +64,9 @@ const Home = () => {
           setAcademicTerm(`SY ${schoolYear} | ${semester}`);
         } catch (error) {
           if (axios.isAxiosError(error)) {
-            console.error("Failed to fetch academic term:", error.message);
+            console.log("Failed to fetch academic term:", error.message);
           } else {
-            console.error("Failed to fetch academic term:", error);
+            console.log("Failed to fetch academic term:", error);
           }
         }
       };
@@ -80,7 +80,7 @@ const Home = () => {
           const sectionsCount = response.data.data.length;
           setSectionsHandled(sectionsCount);
         } catch (error) {
-          // console.error("Failed to fetch sections handled:", error);
+          console.log("Failed to fetch sections handled:", error);
         } finally {
           setIsLoading(false);
         }
@@ -94,7 +94,7 @@ const Home = () => {
           );
           setTotalStudents(response.data.totalStudents);
         } catch (error) {
-          // console.error("Failed to fetch total students handled:", error);
+          console.log("Failed to fetch total students handled:", error);
         }
       };
 
@@ -111,7 +111,7 @@ const Home = () => {
             response.data.data.length > 0 ? response.data.data : null
           );
         } catch (error) {
-          // console.error("Failed to fetch sections handled:", error);
+          console.log("Failed to fetch sections handled:", error);
         } finally {
           setIsLoading(false);
         }

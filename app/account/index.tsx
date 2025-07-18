@@ -35,6 +35,21 @@ const AccountSettings = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
+  // Store original data for comparison
+  const originalData = {
+    firstName: user?.firstName || "",
+    lastName: user?.lastName || "",
+    email: user?.email || "",
+    avatar: user?.avatar || null,
+  };
+
+  // Check if any changes have been made
+  const hasChanges =
+    formData.firstName !== originalData.firstName ||
+    formData.lastName !== originalData.lastName ||
+    formData.email !== originalData.email ||
+    avatar !== originalData.avatar;
+
   const handleInputChange = (field: string, value: string) => {
     setFormData({ ...formData, [field]: value });
   };
@@ -208,7 +223,10 @@ const AccountSettings = () => {
 
             <Text style={styles.label}>First Name</Text>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                !isEditing && { backgroundColor: "#f0f0f0" },
+              ]}
               value={formData.firstName}
               onChangeText={(value) => handleInputChange("firstName", value)}
               editable={isEditing}
@@ -216,7 +234,10 @@ const AccountSettings = () => {
 
             <Text style={styles.label}>Last Name</Text>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                !isEditing && { backgroundColor: "#f0f0f0" },
+              ]}
               value={formData.lastName}
               onChangeText={(value) => handleInputChange("lastName", value)}
               editable={isEditing}
@@ -224,7 +245,10 @@ const AccountSettings = () => {
 
             <Text style={styles.label}>Email</Text>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                !isEditing && { backgroundColor: "#f0f0f0" },
+              ]}
               value={formData.email}
               onChangeText={(value) => handleInputChange("email", value)}
               editable={isEditing}
@@ -232,8 +256,20 @@ const AccountSettings = () => {
           </View>
 
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: "#007bff" }]}
-            onPress={isEditing ? handleSaveChanges : () => setIsEditing(true)}
+            style={[
+              styles.button,
+              {
+                backgroundColor: isEditing && !hasChanges ? "#aaa" : "#007bff", // gray only if editing and no changes
+              },
+            ]}
+            onPress={
+              isEditing
+                ? hasChanges
+                  ? handleSaveChanges
+                  : undefined // disables press if no changes
+                : () => setIsEditing(true) // always allow entering edit mode
+            }
+            disabled={isEditing && !hasChanges} // only disable if editing and no changes
           >
             <Text style={styles.buttonText}>
               {isEditing ? "Save Changes" : "Edit Details"}

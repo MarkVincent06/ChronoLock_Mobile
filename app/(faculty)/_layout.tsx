@@ -12,9 +12,12 @@ import { Tabs, Redirect } from "expo-router";
 import { useRouter } from "expo-router";
 import API_URL from "../../config/ngrok-api";
 
-import Icon from "react-native-vector-icons/Ionicons";
+import IonIcon from "react-native-vector-icons/Ionicons";
 import chronolockLogo from "../../assets/images/chronolock-logo2a.png";
 import { useUserContext } from "@/context/UserContext";
+
+// Type assertion to fix TypeScript compatibility issues
+const Icon = IonIcon as any;
 
 interface TabIconProps {
   icon: ImageSourcePropType;
@@ -207,6 +210,9 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: "center",
     justifyContent: "center",
+    minWidth: 85,
+    paddingHorizontal: 10,
+    marginTop: 8,
   },
   icon: {
     width: 24,
