@@ -120,6 +120,7 @@ const CreateGroupChat = () => {
         value={name}
         onChangeText={setName}
         placeholder="Enter group name"
+        placeholderTextColor="#b2b2b2"
       />
 
       <Text style={styles.label}>Group Key</Text>
@@ -129,6 +130,7 @@ const CreateGroupChat = () => {
           value={groupKey}
           onChangeText={setGroupKey}
           placeholder="Enter group key"
+          placeholderTextColor="#b2b2b2"
           secureTextEntry={!showGroupKey}
         />
         <TouchableOpacity onPress={() => setShowGroupKey((prev) => !prev)}>
@@ -165,7 +167,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     paddingHorizontal: 8,
   },
-  inputWithIcon: { flex: 1, paddingVertical: 8 },
+  inputWithIcon: { flex: 1, paddingVertical: 8, color: "#000" },
   icon: { width: 20, height: 20, marginLeft: 8 },
   avatar: { width: 100, height: 100, borderRadius: 50, marginVertical: 16 },
   imagePickerButton: {

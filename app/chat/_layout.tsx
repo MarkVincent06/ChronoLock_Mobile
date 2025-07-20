@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Stack, useRouter } from "expo-router";
 import { TouchableOpacity, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useUserContext } from "@/context/UserContext";
 
@@ -24,62 +25,63 @@ const ChatLayout = () => {
   }, [user, router, hasNavigated]);
 
   return (
-    <Stack>
-      {/* FACULTY GROUP CHAT */}
-      <Stack.Screen
-        name="index"
-        options={{
-          title: "Chats",
-          headerShown: true,
-          headerLeft: () => (
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => router.back()}
-            >
-              <Ionicon name="arrow-back" size={24} color="#000" />
-            </TouchableOpacity>
-          ),
-        }}
-      />
-      {/* STUDENT GROUP CHAT */}
-      <Stack.Screen
-        name="student-chat"
-        options={{
-          title: "Chats",
-          headerShown: false,
-        }}
-      />
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+      <Stack>
+        {/* LAB-IN-CHARGE/FACULTY GROUP CHAT */}
+        <Stack.Screen
+          name="index"
+          options={{
+            title: "Chats",
+            headerShown: true,
+            headerLeft: () => (
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => router.back()}
+              >
+                <Ionicon name="arrow-back" size={24} color="#000" />
+              </TouchableOpacity>
+            ),
+          }}
+        />
+        {/* STUDENT GROUP CHAT */}
+        <Stack.Screen
+          name="student-chat"
+          options={{
+            title: "Chats",
+            headerShown: false,
+          }}
+        />
 
-      {/* Additional Screens */}
-      <Stack.Screen
-        name="message"
-        options={{
-          title: "Message",
-          headerShown: true,
-        }}
-      />
-      <Stack.Screen
-        name="create-group"
-        options={{
-          title: "Create Group",
-          headerShown: true,
-        }}
-      />
-      <Stack.Screen
-        name="group-details"
-        options={{
-          title: "Group Details",
-          headerShown: true,
-        }}
-      />
-      <Stack.Screen
-        name="edit-group"
-        options={{
-          title: "Edit Group",
-          headerShown: true,
-        }}
-      />
-    </Stack>
+        {/* Additional Screens */}
+        <Stack.Screen
+          name="message"
+          options={{
+            headerShown: true,
+          }}
+        />
+        <Stack.Screen
+          name="create-group"
+          options={{
+            title: "Create Group",
+            headerShown: true,
+          }}
+        />
+        <Stack.Screen
+          name="group-details"
+          options={{
+            title: "Group Details",
+            headerShown: true,
+          }}
+        />
+        <Stack.Screen
+          name="edit-group"
+          options={{
+            title: "Edit Group",
+            headerShown: true,
+          }}
+        />
+      </Stack>
+    </SafeAreaView>
   );
 };
 

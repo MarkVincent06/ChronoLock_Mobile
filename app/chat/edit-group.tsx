@@ -35,6 +35,15 @@ const EditGroupChat = () => {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  const originalName = group_name || "";
+  const originalKey = group_key || "";
+  const originalAvatar = group_avatar || null;
+
+  const hasChanges =
+    name !== originalName ||
+    groupKey !== originalKey ||
+    avatar !== originalAvatar;
+
   useEffect(() => {
     if (group_key) setGroupKey(group_key);
     if (group_avatar) setAvatar(group_avatar);
@@ -114,7 +123,8 @@ const EditGroupChat = () => {
       }
 
       Alert.alert("Success", "Group details updated!");
-      router.push("/chat");
+      // router.push("/chat");
+      router.back();
     } catch (error) {
       console.error("Error updating group:", error);
       Alert.alert("Error", "Could not update group details.");
@@ -174,6 +184,7 @@ const EditGroupChat = () => {
             value={name}
             onChangeText={setName}
             placeholder="Enter group name"
+            placeholderTextColor="#b2b2b2"
           />
 
           <Text style={styles.label}>Group Key</Text>
@@ -183,6 +194,7 @@ const EditGroupChat = () => {
               value={groupKey}
               onChangeText={setGroupKey}
               placeholder="Enter group key"
+              placeholderTextColor="#b2b2b2"
               secureTextEntry={!showGroupKey}
             />
             <TouchableOpacity onPress={() => setShowGroupKey((prev) => !prev)}>
@@ -225,8 +237,12 @@ const EditGroupChat = () => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.saveChangesButton}
-              onPress={handleSaveChanges}
+              style={[
+                styles.saveChangesButton,
+                { backgroundColor: hasChanges ? "#007BFF" : "#aaa" },
+              ]}
+              onPress={hasChanges ? handleSaveChanges : undefined}
+              disabled={!hasChanges}
             >
               <Text style={styles.saveChangesButtonText}>Save Changes</Text>
             </TouchableOpacity>
@@ -250,7 +266,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     paddingHorizontal: 8,
   },
-  inputWithIcon: { flex: 1, paddingVertical: 8 },
+  inputWithIcon: { flex: 1, paddingVertical: 8, color: "#000" },
   icon: { width: 20, height: 20, marginLeft: 8 },
   avatar: { width: 100, height: 100, borderRadius: 50, marginVertical: 16 },
   noAvatarText: { fontStyle: "italic", color: "#888", marginBottom: 16 },

@@ -12,7 +12,7 @@ import {
   Alert,
 } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import Icon from "react-native-vector-icons/Ionicons";
+import IonIcons from "react-native-vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import axios from "axios";
 import API_URL from "../../config/ngrok-api";
@@ -29,6 +29,9 @@ interface Group {
   latest_message?: string;
   latest_message_isSeen?: boolean;
 }
+
+// Type assertion to fix TypeScript compatibility issues
+const Icon = IonIcons as any;
 
 const GroupList = ({
   fetchGroupsApi,
@@ -139,6 +142,7 @@ const GroupList = ({
       <TextInput
         style={styles.searchInput}
         placeholder="Search chats..."
+        placeholderTextColor="#b2b2b2"
         value={searchText}
         onChangeText={handleSearch}
       />
@@ -320,6 +324,7 @@ const JoinChats = () => {
             <TextInput
               style={styles.input}
               placeholder="Enter Group Key"
+              placeholderTextColor="#b2b2b2"
               value={groupKey}
               onChangeText={setGroupKey}
               secureTextEntry
@@ -467,6 +472,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     marginBottom: 15,
+    color: "#000",
   },
   modalActions: {
     flexDirection: "row",

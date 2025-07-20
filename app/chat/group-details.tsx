@@ -13,7 +13,7 @@ import axios from "axios";
 import { useLocalSearchParams } from "expo-router";
 import { useUserContext } from "../../context/UserContext";
 import API_URL from "@/config/ngrok-api";
-import Icon from "react-native-vector-icons/MaterialIcons";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
 interface Member {
   idNumber: string;
@@ -22,6 +22,9 @@ interface Member {
   userType: string;
   avatar?: string;
 }
+
+// Type assertion to fix TypeScript compatibility issues
+const Icon = MaterialIcons as any;
 
 const GroupDetails = () => {
   const { user } = useUserContext();

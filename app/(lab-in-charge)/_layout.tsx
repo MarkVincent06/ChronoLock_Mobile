@@ -89,7 +89,7 @@ const CustomHeader = () => {
         <Text style={styles.appName}>ChronoLock</Text>
       </View>
 
-      {/* Right side with Date and Account buttons */}
+      {/* Right side with Date, Chat, and Account buttons */}
       <View style={styles.headerRight}>
         {/* Date */}
         <Text style={styles.dateTime}>

@@ -1,64 +1,104 @@
-import React, { useState, useEffect, useCallback } from "react";
-import {
-  GiftedChat,
-  Bubble,
-  InputToolbar,
-  Send,
-} from "react-native-gifted-chat";
+import React, { useState, useEffect } from "react";
+import Chat from "@codsod/react-native-chat";
 import axios from "axios";
-import { useLocalSearchParams, useNavigation } from "expo-router";
-import { View, Text, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
+import Ionicon from "react-native-vector-icons/Ionicons";
 import API_URL from "../../config/ngrok-api";
 import { useUserContext } from "../../context/UserContext";
 
 const Message = () => {
   const [messages, setMessages] = useState([]);
-  const { group_id: groupId, group_name: groupName } = useLocalSearchParams();
+  const {
+    group_id: groupId,
+    group_name: groupName,
+    group_avatar: groupAvatar,
+  } = useLocalSearchParams();
   const { user } = useUserContext();
   const currentIdNumber = user?.idNumber || "unknown_user";
+  const currentUserType = user?.userType || "unknown_user";
   const navigation = useNavigation();
+  const router = useRouter();
 
   useEffect(() => {
     if (groupName) {
-      navigation.setOptions({ title: groupName });
-    }
-  }, [groupName, navigation]);
+      navigation.setOptions({
+        header: () => (
+          <View style={styles.headerContainer}>
+            {/* Back Button */}
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <Ionicon name="arrow-back" size={24} color="#000" />
+            </TouchableOpacity>
 
-  // Fetch messages from the server
+            {/* Group Info */}
+            <View style={styles.groupInfoContainer}>
+              {groupAvatar ? (
+                <Image
+                  source={
+                    groupAvatar.startsWith("http")
+                      ? { uri: groupAvatar }
+                      : { uri: `${API_URL}${groupAvatar}` }
+                  }
+                  style={styles.groupAvatar}
+                />
+              ) : (
+                <View style={styles.defaultAvatar}>
+                  <Ionicon name="people" size={18} color="#666" />
+                </View>
+              )}
+
+              <View style={styles.groupTextInfo}>
+                <Text style={styles.groupName} numberOfLines={1}>
+                  {groupName}
+                </Text>
+              </View>
+            </View>
+
+            {/* Optional: Right side actions */}
+            <View style={styles.rightActions}>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => {
+                  // Navigate to group details or show menu
+                  console.log("Group actions pressed");
+                }}
+              >
+                <Ionicon name="ellipsis-vertical" size={20} color="#000" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        ),
+      });
+    }
+  }, [groupName, groupAvatar, navigation, router]);
+
   useEffect(() => {
     const fetchMessages = async () => {
       try {
         const response = await axios.get(
           `${API_URL}/messages/group/${groupId}/fetchMessages`
         );
-        const formattedMessages = response.data.map((message) => {
-          if (message.isSystem === 1) {
-            // Format system messages
-            return {
-              _id: message.id.toString(),
-              text: message.text,
-              createdAt: new Date(message.created_at),
-              system: true,
-            };
-          } else {
-            // Format regular user messages
-            return {
-              _id: message.id.toString(),
-              text: message.text,
-              createdAt: new Date(message.created_at),
-              user: {
-                _id: message.user_id.toString(),
-                name: `${message.firstName} ${message.lastName}`,
-                avatar: message.user_avatar
-                  ? message.user_avatar.startsWith("http")
-                    ? message.user_avatar
-                    : `${API_URL}${message.user_avatar}`
-                  : require("@/assets/images/default_avatar.png"), // Default avatar logic
-              },
-            };
-          }
-        });
+        const formattedMessages = response.data.map((message) => ({
+          _id: message.id.toString(),
+          text: message.text,
+          createdAt: new Date(message.created_at),
+          user: {
+            _id: message.user_id?.toString() || "system",
+            name:
+              message.firstName && message.lastName
+                ? `${message.firstName} ${message.lastName}`
+                : "System",
+            avatar: message.user_avatar
+              ? message.user_avatar.startsWith("http")
+                ? message.user_avatar
+                : `${API_URL}${message.user_avatar}`
+              : undefined,
+          },
+          system: message.isSystem === 1,
+        }));
         setMessages(formattedMessages);
       } catch (error) {
         console.error("Error fetching messages:", error);
@@ -66,126 +106,130 @@ const Message = () => {
     };
 
     fetchMessages();
-    const intervalId = setInterval(fetchMessages, 3000); // Fetch every 3 seconds
-
+    const intervalId = setInterval(fetchMessages, 3000);
     return () => clearInterval(intervalId);
   }, [groupId]);
 
-  const onSend = useCallback(
-    async (newMessages = []) => {
-      setMessages((previousMessages) =>
-        GiftedChat.append(previousMessages, newMessages)
+  const onSendMessage = async (text) => {
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      {
+        _id: (prevMessages.length + 1).toString(),
+        text,
+        createdAt: new Date(),
+        user: {
+          _id: currentIdNumber,
+          name: `${user.firstName} ${user.lastName}`,
+          avatar: user.avatar
+            ? user.avatar.startsWith("http")
+              ? user.avatar
+              : `${API_URL}${user.avatar}`
+            : undefined,
+        },
+        system: false,
+      },
+    ]);
+
+    try {
+      await axios.post(`${API_URL}/messages/group/${groupId}/newMessage`, {
+        userId: currentIdNumber,
+        text,
+      });
+      await axios.post(
+        `${API_URL}/messages/group/${groupId}/markMessageAsSeen`
       );
-
-      const message = newMessages[0];
-      try {
-        // Post the new message to the server
-        await axios.post(`${API_URL}/messages/group/${groupId}/newMessage`, {
-          userId: currentIdNumber,
-          text: message.text,
-        });
-
-        // Mark the message as seen (refetch groups and update UI)
-        await axios.post(
-          `${API_URL}/messages/group/${groupId}/markMessageAsSeen`
-        );
-      } catch (error) {
-        console.error("Error sending message:", error);
-      }
-    },
-    [currentIdNumber]
-  );
-
-  const renderBubble = (props) => {
-    const { currentMessage } = props;
-
-    return (
-      <View style={{ marginBottom: 10 }}>
-        {currentMessage.user && currentMessage.user._id !== currentIdNumber && (
-          <Text style={styles.username}>{currentMessage.user.name}</Text>
-        )}
-        <Bubble
-          {...props}
-          wrapperStyle={{
-            left: {
-              backgroundColor: "#e6e6e6",
-            },
-            right: {
-              backgroundColor: "#007BFF",
-            },
-          }}
-          textStyle={{
-            left: {
-              color: "#000",
-            },
-            right: {
-              color: "#fff",
-            },
-          }}
-        />
-      </View>
-    );
-  };
-
-  const renderInputToolbar = (props) => {
-    return (
-      <InputToolbar
-        {...props}
-        containerStyle={styles.inputToolbar}
-        primaryStyle={{ alignItems: "center" }}
-      />
-    );
-  };
-
-  const renderSend = (props) => {
-    return (
-      <Send {...props}>
-        <View style={styles.sendButton}>
-          <Ionicons name="send" size={24} color="#007BFF" />
-        </View>
-      </Send>
-    );
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
   };
 
   return (
-    <GiftedChat
-      messages={messages}
-      onSend={(newMessages) => onSend(newMessages)}
-      user={{
-        _id: currentIdNumber,
-        name: `${user.firstName} ${user.lastName}`,
-        avatar: user.avatar
-          ? user.avatar.startsWith("http")
-            ? user.avatar
-            : `${API_URL}${user.avatar}`
-          : require("@/assets/images/default_avatar.png"),
-      }}
-      renderBubble={renderBubble}
-      renderInputToolbar={renderInputToolbar}
-      renderSend={renderSend}
-    />
+    <View style={{ flex: 1 }}>
+      <Chat
+        messages={messages}
+        setMessages={onSendMessage}
+        themeColor="#007BFF"
+        themeTextColor="#fff"
+        showSenderAvatar={true}
+        showReceiverAvatar={true}
+        inputBorderColor="#007BFF"
+        user={{
+          _id: currentIdNumber,
+          name: `${user.firstName} ${user.lastName}`,
+        }}
+        backgroundColor="#fff"
+        inputBackgroundColor="#fff"
+        placeholder="Type a message..."
+        placeholderColor="gray"
+        showEmoji={true}
+        onPressEmoji={() => console.log("Emoji Button Pressed..")}
+        showAttachment={true}
+        onPressAttachment={() => console.log("Attachment Button Pressed..")}
+        timeContainerColor="#007BFF"
+        timeContainerTextColor="#fff"
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  inputToolbar: {
-    backgroundColor: "#f5f5f5",
-    borderTopWidth: 1,
-    borderTopColor: "#ddd",
-    paddingHorizontal: 8,
-  },
-  sendButton: {
-    marginRight: 10,
-    marginBottom: 8,
+  headerContainer: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: "#fff",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
-  username: {
-    fontSize: 12,
-    fontWeight: "bold",
-    color: "#555",
-    marginBottom: 3,
-    marginLeft: 5,
+  backButton: {
+    paddingRight: 16,
+    paddingVertical: 4,
+  },
+  groupInfoContainer: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  groupAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
+  },
+  defaultAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#f0f0f0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  groupTextInfo: {
+    flex: 1,
+  },
+  groupName: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#000",
+    marginBottom: 2,
+  },
+  rightActions: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  actionButton: {
+    padding: 8,
+    marginLeft: 8,
   },
 });
 

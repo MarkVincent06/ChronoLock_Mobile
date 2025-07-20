@@ -85,7 +85,8 @@ const FacultyGroupChat = () => {
 
   const handleGroupClick = async (
     groupId: string | number,
-    groupName: string
+    groupName: string,
+    groupAvatar: string
   ) => {
     try {
       await axios.post(
@@ -96,6 +97,7 @@ const FacultyGroupChat = () => {
         params: {
           group_id: groupId,
           group_name: groupName,
+          group_avatar: groupAvatar,
         },
       });
     } catch (error) {
@@ -138,7 +140,9 @@ const FacultyGroupChat = () => {
   const renderFacultyItem = ({ item }: { item: Group }) => (
     <TouchableOpacity
       style={styles.groupItem}
-      onPress={() => handleGroupClick(item.group_id, item.group_name)}
+      onPress={() =>
+        handleGroupClick(item.group_id, item.group_name, item.avatar || "")
+      }
     >
       <Image
         source={
@@ -173,7 +177,7 @@ const FacultyGroupChat = () => {
       <Menu>
         <MenuTrigger>
           <View style={styles.dropdownTrigger}>
-            <Icon name="ellipsis-horizontal" size={24} color="#777" />
+            <Icon name="ellipsis-horizontal" size={16} color="#777" />
           </View>
         </MenuTrigger>
         <MenuOptions>
@@ -230,7 +234,7 @@ const FacultyGroupChat = () => {
   return (
     <View style={styles.container}>
       <TextInput
-        style={{ borderColor: "blue" }}
+        style={[styles.searchInput]}
         placeholder="Search chats..."
         placeholderTextColor="#9CA3AF"
         value={searchText}
@@ -286,12 +290,10 @@ const styles = StyleSheet.create({
   searchInput: {
     marginVertical: 10,
     padding: 10,
-    borderColor: "red",
+    borderColor: "#ddd",
     borderWidth: 1,
     borderRadius: 8,
     fontSize: 16,
-    // color: "#000",
-    backgroundColor: "#000000",
   },
   loader: {
     flex: 1,
@@ -314,12 +316,12 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   groupAvatar: {
-    width: 60,
-    height: 60,
+    width: 50,
+    height: 50,
     borderRadius: 30,
     borderWidth: 3,
     borderColor: "#fff",
-    marginRight: 1,
+    marginRight: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -330,13 +332,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   groupName: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: "bold",
     color: "#333",
     marginBottom: 4,
   },
   latestMessage: {
-    fontSize: 14,
+    fontSize: 12,
     color: "#777",
   },
   unseenMessage: {
