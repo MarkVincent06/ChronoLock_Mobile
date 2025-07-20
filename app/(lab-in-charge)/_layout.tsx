@@ -12,7 +12,7 @@ import { Tabs, Redirect } from "expo-router";
 import { useRouter } from "expo-router";
 import API_URL from "../../config/ngrok-api";
 
-import Icon from "react-native-vector-icons/Ionicons";
+import IonIcon from "react-native-vector-icons/Ionicons";
 import chronolockLogo from "../../assets/images/chronolock-logo2a.png";
 import { useUserContext } from "@/context/UserContext";
 
@@ -22,6 +22,9 @@ interface TabIconProps {
   name: string;
   focused: boolean;
 }
+
+// Type assertion to fix TypeScript compatibility issues
+const Icon = IonIcon as any;
 
 const TabIcon: React.FC<TabIconProps> = ({ icon, color, name, focused }) => {
   return (
@@ -98,6 +101,14 @@ const CustomHeader = () => {
           <Text style={styles.dateText}>{date}</Text>
         </Text>
 
+        {/* Chat Button */}
+        <TouchableOpacity
+          onPress={() => router.push("/chat")}
+          style={styles.accountButton}
+        >
+          <Icon name="chatbubble-ellipses-outline" size={24} color="#000" />
+        </TouchableOpacity>
+
         {/* Account Button */}
         <TouchableOpacity
           onPress={() => {
@@ -169,20 +180,20 @@ const TabsLayout = () => {
           }}
         />
         <Tabs.Screen
-          name="schedule"
+          name="laboratory"
           options={{
-            title: "Schedule",
+            title: "Laboratory",
             headerShown: true,
             tabBarIcon: ({ color, focused }) => (
               <View style={styles.iconContainer}>
-                <Icon name="time-outline" size={24} color={color} />
+                <Icon name="desktop-outline" size={24} color={color} />
                 <Text
                   style={[
                     styles.iconText,
                     focused && { color: color, fontWeight: "bold" },
                   ]}
                 >
-                  Schedule
+                  Laboratory
                 </Text>
               </View>
             ),
@@ -220,6 +231,9 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: "center",
     justifyContent: "center",
+    minWidth: 85,
+    paddingHorizontal: 10,
+    marginTop: 8,
   },
   icon: {
     width: 24,

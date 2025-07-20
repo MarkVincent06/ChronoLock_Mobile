@@ -49,7 +49,7 @@ const FacultyGroupChat = () => {
     setLoading(true);
     try {
       const apiEndPoint =
-        user?.userType === "Faculty"
+        user?.userType === "Faculty" || user?.userType === "Lab-in-Charge"
           ? `${API_URL}/groups/fetchFilteredGroups/${user?.idNumber}`
           : `${API_URL}/groups/fetchAllgroups`;
 
@@ -86,6 +86,7 @@ const FacultyGroupChat = () => {
   const handleGroupClick = async (
     groupId: string | number,
     groupName: string,
+    groupKey: string,
     groupAvatar: string
   ) => {
     try {
@@ -97,6 +98,7 @@ const FacultyGroupChat = () => {
         params: {
           group_id: groupId,
           group_name: groupName,
+          group_key: groupKey,
           group_avatar: groupAvatar,
         },
       });
@@ -141,7 +143,12 @@ const FacultyGroupChat = () => {
     <TouchableOpacity
       style={styles.groupItem}
       onPress={() =>
-        handleGroupClick(item.group_id, item.group_name, item.avatar || "")
+        handleGroupClick(
+          item.group_id,
+          item.group_name,
+          item.group_key || "",
+          item.avatar || ""
+        )
       }
     >
       <Image
@@ -221,11 +228,14 @@ const FacultyGroupChat = () => {
         <Text style={styles.emptySubText}>
           Create your first group chat to get started!
         </Text>
-        {user?.userType === "Faculty" && (
-          <Button
-            title="Create Group Chat"
+        {(user?.userType === "Faculty" ||
+          user?.userType === "Lab-in-Charge") && (
+          <TouchableOpacity
+            style={styles.createGroupButton}
             onPress={() => router.push("/chat/create-group")}
-          />
+          >
+            <Text style={styles.createGroupButtonText}>Create Group Chat</Text>
+          </TouchableOpacity>
         )}
       </View>
     );
@@ -256,10 +266,12 @@ const FacultyGroupChat = () => {
           />
           <View style={{ marginBottom: 10 }}>
             <TouchableOpacity
-              style={styles.createButton}
+              style={styles.createGroupButton}
               onPress={() => router.push("/chat/create-group")}
             >
-              <Text style={styles.createButtonText}>Create Group Chat</Text>
+              <Text style={styles.createGroupButtonText}>
+                Create Group Chat
+              </Text>
             </TouchableOpacity>
           </View>
         </>
@@ -332,7 +344,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   groupName: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "bold",
     color: "#333",
     marginBottom: 4,
@@ -366,27 +378,27 @@ const styles = StyleSheet.create({
     color: "#777",
     marginBottom: 20,
   },
-  createButton: {
-    backgroundColor: "#1A73E8",
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    borderRadius: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 5,
-    alignItems: "center",
-  },
-  createButtonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
   emptyMessage: {
     textAlign: "center",
     color: "#777",
     fontSize: 16,
+  },
+  createGroupButton: {
+    backgroundColor: "#007BFF",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  createGroupButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
 

@@ -149,7 +149,14 @@ const CreateGroupChat = () => {
       {loading ? (
         <ActivityIndicator size="large" color="#007BFF" style={styles.loader} />
       ) : (
-        <Button title="Create Group" onPress={handleCreateGroup} />
+        <View style={{ marginBottom: 10 }}>
+          <TouchableOpacity
+            style={styles.createGroupButton}
+            onPress={handleCreateGroup}
+          >
+            <Text style={styles.createGroupButtonText}>Create Group</Text>
+          </TouchableOpacity>
+        </View>
       )}
     </View>
   );
@@ -180,6 +187,23 @@ const styles = StyleSheet.create({
   imagePickerText: { color: "#fff", fontWeight: "bold" },
   loader: {
     marginTop: 16,
+  },
+  createGroupButton: {
+    backgroundColor: "#007BFF",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  createGroupButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
 

@@ -7,9 +7,10 @@ import {
   ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
-import Ionicon from "react-native-vector-icons/Ionicons";
+import Ion from "react-native-vector-icons/Ionicons";
 
-const Ionicons = Ionicon as any;
+// Type assertion to fix TypeScript compatibility issues
+const Ionicons = Ion as any;
 
 const LaboratoryIndex = () => {
   const router = useRouter();
@@ -19,31 +20,30 @@ const LaboratoryIndex = () => {
       <Text style={styles.title}>ERP Laboratory Management</Text>
 
       <View style={[styles.buttonContainer, { marginBottom: 25 }]}>
-        {/* Class List */}
-        {/* <TouchableOpacity
+        {/* Class Record */}
+        <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push("/laboratory/class-list")}
+          onPress={() => router.push("/laboratory/class-record")}
         >
           <View style={styles.iconAndText}>
             <Ionicons
-              name="list"
+              name="school-outline" // Updated icon to represent classes
               size={20}
               color="#007BFF"
               style={styles.icon}
             />
-            <Text style={styles.buttonText}>Class List</Text>
+            <Text style={styles.buttonText}>Class Record</Text>
           </View>
           <Text style={styles.description}>
-            This class list updates and monitors the classes of instructors,
-            providing a streamlined overview of schedules and activities for
-            effective management.
+            Update and monitor your classes, providing a comprehensive overview
+            of schedules and activities.
           </Text>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
 
         {/* Attendance */}
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push("/laboratory/attendances")}
+          onPress={() => router.push("/laboratory/attendance-folder/class")}
         >
           <View style={styles.iconAndText}>
             <Ionicons
@@ -52,11 +52,31 @@ const LaboratoryIndex = () => {
               color="#007BFF"
               style={styles.icon}
             />
-            <Text style={styles.buttonText}>Attendance</Text>
+            <Text style={styles.buttonText}>Class Attendance</Text>
           </View>
           <Text style={styles.description}>
-            Update and monitor attendance records for students and instructors,
-            and generate detailed reports.
+            Update and monitor attendance records of your students, and generate
+            detailed reports.
+          </Text>
+        </TouchableOpacity>
+
+        {/* Seat Plan */}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => router.push("/laboratory/seat-plan-folder/class")}
+        >
+          <View style={styles.iconAndText}>
+            <Ionicons
+              name="grid-outline"
+              size={20}
+              color="#007BFF"
+              style={styles.icon}
+            />
+            <Text style={styles.buttonText}>Seat Plan</Text>
+          </View>
+          <Text style={styles.description}>
+            Organize seating arrangements for the ERP Laboratory, ensuring
+            efficient workstation allocation.
           </Text>
         </TouchableOpacity>
 
@@ -77,27 +97,6 @@ const LaboratoryIndex = () => {
           <Text style={styles.description}>
             Monitor ERP laboratory schedules to ensure efficient session
             planning and availability.
-          </Text>
-        </TouchableOpacity>
-
-        {/* Equipment */}
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => router.push("/laboratory/equipment-issue")}
-        >
-          <View style={styles.iconAndText}>
-            <Ionicons
-              name="construct-outline"
-              size={20}
-              color="#007BFF"
-              style={styles.icon}
-            />
-            <Text style={styles.buttonText}>Equipment Issues</Text>
-          </View>
-          <Text style={styles.description}>
-            Admin/Lab-in-Charge can view, resolve, or update the status of
-            workstation issues, ensuring all reported problems are properly
-            tracked and handled.
           </Text>
         </TouchableOpacity>
       </View>

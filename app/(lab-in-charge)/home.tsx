@@ -15,6 +15,29 @@ const Home = () => {
   const [totalChats, setTotalChats] = useState(0);
   const [totalStudents, setTotalStudents] = useState(0);
   const [todayScheduleCount, setTodayScheduleCount] = useState(0);
+  const [todaySchedule, setTodaySchedule] = useState<any[]>([]);
+
+  const formatTime = (timeString: string) => {
+    // Manually parse the time string as local time by creating a Date object
+    const [hours, minutes] = timeString.split(":").map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0); // Set the time without time zone conversion
+
+    let hoursFormatted = date.getHours();
+    const minutesFormatted = date.getMinutes();
+    const ampm = hoursFormatted >= 12 ? "PM" : "AM";
+
+    // Convert to 12-hour format
+    hoursFormatted = hoursFormatted % 12;
+    hoursFormatted = hoursFormatted ? hoursFormatted : 12; // Handle 12 as '12' instead of '0'
+
+    const minutesString =
+      minutesFormatted < 10
+        ? `0${minutesFormatted}`
+        : minutesFormatted.toString();
+
+    return `${hoursFormatted}:${minutesString} ${ampm}`;
+  };
 
   useEffect(() => {
     if (
@@ -30,7 +53,7 @@ const Home = () => {
             setTotalChats(response.data.length); // Count the total groups (chats)
           }
         } catch (error) {
-          // console.error("Failed to fetch chats handled:", error);
+          console.log("Failed to fetch chats handled:", error);
         }
       };
 
@@ -43,9 +66,9 @@ const Home = () => {
           setAcademicTerm(`SY ${schoolYear} | ${semester}`);
         } catch (error) {
           if (axios.isAxiosError(error)) {
-            console.error("Failed to fetch academic term:", error.message);
+            console.log("Failed to fetch academic term:", error.message);
           } else {
-            console.error("Failed to fetch academic term:", error);
+            console.log("Failed to fetch academic term:", error);
           }
         }
       };
@@ -59,7 +82,7 @@ const Home = () => {
           const sectionsCount = response.data.data.length;
           setSectionsHandled(sectionsCount);
         } catch (error) {
-          // console.error("Failed to fetch sections handled:", error);
+          console.log("Failed to fetch sections handled:", error);
         } finally {
           setIsLoading(false);
         }
@@ -73,7 +96,7 @@ const Home = () => {
           );
           setTotalStudents(response.data.totalStudents);
         } catch (error) {
-          // console.error("Failed to fetch total students handled:", error);
+          console.log("Failed to fetch total students handled:", error);
         }
       };
 
@@ -85,8 +108,11 @@ const Home = () => {
           );
 
           setTodayScheduleCount(response.data.data.length);
+          setTodaySchedule(
+            response.data.data.length > 0 ? response.data.data : null
+          );
         } catch (error) {
-          // console.error("Failed to fetch sections handled:", error);
+          console.log("Failed to fetch sections handled:", error);
         } finally {
           setIsLoading(false);
         }
@@ -180,6 +206,63 @@ const Home = () => {
           </Card>
         ))}
       </View>
+
+      {/* My Today's Class Schedule Header */}
+      <Text style={styles.scheduleHeader}>My Today's Class Schedule</Text>
+
+      {/* Schedule Card */}
+      <Card style={styles.scheduleCard}>
+        <Card.Content>
+          {isLoading ? (
+            <Text>Loading Today's Classes...</Text> // Loading state
+          ) : todaySchedule.length > 0 ? (
+            todaySchedule.map((schedule, index) => (
+              <View key={index}>
+                <View style={styles.scheduleItem}>
+                  <Text style={styles.scheduleIndex}>{index + 1}.</Text>
+                  <Image
+                    source={
+                      schedule.avatar
+                        ? {
+                            uri: schedule.avatar.startsWith("http")
+                              ? schedule.avatar
+                              : `${API_URL}${schedule.avatar}`,
+                          }
+                        : require("@/assets/images/default_avatar.png")
+                    }
+                    style={styles.avatar}
+                  />
+                  <View style={styles.scheduleDetails}>
+                    <Text style={styles.boldText}>Instructor:</Text>
+                    <Text style={styles.normalText}>
+                      {schedule.instructorFirstName}{" "}
+                      {schedule.instructorLastName}
+                    </Text>
+                    <Text style={styles.boldText}>Course:</Text>
+                    <Text style={styles.normalText}>
+                      {schedule.courseCode} - {schedule.courseName}
+                    </Text>
+                    <Text style={styles.boldText}>Day:</Text>
+                    <Text style={styles.normalText}>{schedule.day}</Text>
+                    <Text style={styles.boldText}>Time:</Text>
+                    <Text style={styles.normalText}>
+                      {formatTime(schedule.startTime)} -{" "}
+                      {formatTime(schedule.endTime)}
+                    </Text>
+                  </View>
+                </View>
+                {index < todaySchedule.length - 1 && (
+                  <View style={styles.separator} />
+                )}
+              </View>
+            ))
+          ) : (
+            <Text style={styles.fallbackText}>
+              No classes scheduled for today.
+            </Text>
+          )}
+        </Card.Content>
+      </Card>
     </ScrollView>
   );
 };
@@ -249,5 +332,60 @@ const styles = StyleSheet.create({
   placeholderData: {
     fontSize: 13,
     color: "#666",
+  },
+  scheduleHeader: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  scheduleCard: {
+    borderRadius: 12,
+    elevation: 4,
+    backgroundColor: "#fff",
+    padding: 16,
+    marginBottom: 30,
+  },
+  scheduleItem: {
+    flexDirection: "row",
+    marginBottom: 16,
+  },
+  scheduleIndex: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginRight: 8,
+    color: "#333",
+  },
+  scheduleDetails: {
+    flex: 1,
+  },
+  boldText: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  normalText: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 4,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: "#ccc",
+    marginVertical: 8,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 8,
+  },
+  fallbackText: {
+    fontSize: 14,
+    fontStyle: "italic",
+    color: "#999",
+    textAlign: "center",
+    paddingVertical: 20,
   },
 });

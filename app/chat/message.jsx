@@ -6,6 +6,12 @@ import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import Ionicon from "react-native-vector-icons/Ionicons";
 import API_URL from "../../config/ngrok-api";
 import { useUserContext } from "../../context/UserContext";
+import {
+  Menu,
+  MenuOptions,
+  MenuOption,
+  MenuTrigger,
+} from "react-native-popup-menu";
 
 const Message = () => {
   const [messages, setMessages] = useState([]);
@@ -13,12 +19,36 @@ const Message = () => {
     group_id: groupId,
     group_name: groupName,
     group_avatar: groupAvatar,
+    group_key: groupKey,
   } = useLocalSearchParams();
   const { user } = useUserContext();
   const currentIdNumber = user?.idNumber || "unknown_user";
   const currentUserType = user?.userType || "unknown_user";
   const navigation = useNavigation();
   const router = useRouter();
+
+  const handleGroupDetails = () => {
+    router.push({
+      pathname: "/chat/group-details",
+      params: {
+        group_id: groupId,
+        group_name: groupName,
+        group_avatar: groupAvatar,
+      },
+    });
+  };
+
+  const handleEditGroup = () => {
+    router.push({
+      pathname: "/chat/edit-group",
+      params: {
+        group_id: groupId,
+        group_name: groupName,
+        group_key: groupKey,
+        group_avatar: groupAvatar,
+      },
+    });
+  };
 
   useEffect(() => {
     if (groupName) {
@@ -57,17 +87,23 @@ const Message = () => {
               </View>
             </View>
 
-            {/* Optional: Right side actions */}
+            {/* Group Menu */}
             <View style={styles.rightActions}>
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => {
-                  // Navigate to group details or show menu
-                  console.log("Group actions pressed");
-                }}
-              >
-                <Ionicon name="ellipsis-vertical" size={20} color="#000" />
-              </TouchableOpacity>
+              <Menu>
+                <MenuTrigger>
+                  <View style={styles.dropdownTrigger}>
+                    <Ionicon name="ellipsis-vertical" size={20} color="#000" />
+                  </View>
+                </MenuTrigger>
+                <MenuOptions>
+                  <MenuOption onSelect={handleGroupDetails}>
+                    <Text style={styles.menuOption}>Group Details</Text>
+                  </MenuOption>
+                  <MenuOption onSelect={handleEditGroup}>
+                    <Text style={styles.menuOption}>Edit Group</Text>
+                  </MenuOption>
+                </MenuOptions>
+              </Menu>
             </View>
           </View>
         ),
@@ -227,9 +263,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  actionButton: {
+  dropdownTrigger: {
+    justifyContent: "center",
+    alignItems: "center",
     padding: 8,
-    marginLeft: 8,
+    borderRadius: 50,
+  },
+  menuOption: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: "#333",
   },
 });
 

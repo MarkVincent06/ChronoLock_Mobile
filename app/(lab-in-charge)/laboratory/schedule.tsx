@@ -11,9 +11,12 @@ import {
   RefreshControl,
 } from "react-native";
 import { useRouter } from "expo-router";
-import Icon from "react-native-vector-icons/FontAwesome";
+import IonIcon from "react-native-vector-icons/FontAwesome";
 import API_URL from "@/config/ngrok-api";
 import usePullToRefresh from "@/hooks/usePullToRefresh";
+
+// Type assertion to fix TypeScript compatibility issues
+const Icon = IonIcon as any;
 
 const LaboratorySchedule = () => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
