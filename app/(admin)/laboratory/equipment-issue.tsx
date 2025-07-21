@@ -257,7 +257,7 @@ const EquipmentIssue = () => {
                 style={styles.input}
                 value={comment}
                 onChangeText={setComment}
-                placeholder="Add comment"
+                placeholder="Write comment..."
                 placeholderTextColor="#b0b0b0"
               />
 

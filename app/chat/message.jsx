@@ -89,21 +89,38 @@ const Message = () => {
 
             {/* Group Menu */}
             <View style={styles.rightActions}>
-              <Menu>
-                <MenuTrigger>
-                  <View style={styles.dropdownTrigger}>
-                    <Ionicon name="ellipsis-vertical" size={20} color="#000" />
-                  </View>
-                </MenuTrigger>
-                <MenuOptions>
-                  <MenuOption onSelect={handleGroupDetails}>
-                    <Text style={styles.menuOption}>Group Details</Text>
-                  </MenuOption>
-                  <MenuOption onSelect={handleEditGroup}>
-                    <Text style={styles.menuOption}>Edit Group</Text>
-                  </MenuOption>
-                </MenuOptions>
-              </Menu>
+              {currentUserType === "Student" ? (
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={handleGroupDetails}
+                >
+                  <Ionicon
+                    name="information-circle-outline"
+                    size={25}
+                    color="#000"
+                  />
+                </TouchableOpacity>
+              ) : (
+                <Menu>
+                  <MenuTrigger>
+                    <View style={styles.dropdownTrigger}>
+                      <Ionicon
+                        name="ellipsis-vertical"
+                        size={20}
+                        color="#000"
+                      />
+                    </View>
+                  </MenuTrigger>
+                  <MenuOptions>
+                    <MenuOption onSelect={handleGroupDetails}>
+                      <Text style={styles.menuOption}>Group Details</Text>
+                    </MenuOption>
+                    <MenuOption onSelect={handleEditGroup}>
+                      <Text style={styles.menuOption}>Edit Group</Text>
+                    </MenuOption>
+                  </MenuOptions>
+                </Menu>
+              )}
             </View>
           </View>
         ),
@@ -147,24 +164,24 @@ const Message = () => {
   }, [groupId]);
 
   const onSendMessage = async (text) => {
-    setMessages((prevMessages) => [
-      ...prevMessages,
-      {
-        _id: (prevMessages.length + 1).toString(),
-        text,
-        createdAt: new Date(),
-        user: {
-          _id: currentIdNumber,
-          name: `${user.firstName} ${user.lastName}`,
-          avatar: user.avatar
-            ? user.avatar.startsWith("http")
-              ? user.avatar
-              : `${API_URL}${user.avatar}`
-            : undefined,
-        },
-        system: false,
+    const newMessage = {
+      _id: Date.now().toString(), // Use timestamp for unique ID
+      text,
+      createdAt: new Date(),
+      user: {
+        _id: currentIdNumber,
+        name: `${user.firstName} ${user.lastName}`,
+        avatar: user.avatar
+          ? user.avatar.startsWith("http")
+            ? user.avatar
+            : `${API_URL}${user.avatar}`
+          : undefined,
       },
-    ]);
+      system: false,
+    };
+
+    // Add the new message to the end of the array (bottom)
+    setMessages((prevMessages) => [...prevMessages, newMessage]);
 
     try {
       await axios.post(`${API_URL}/messages/group/${groupId}/newMessage`, {
@@ -180,7 +197,7 @@ const Message = () => {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <Chat
         messages={messages}
         setMessages={onSendMessage}
@@ -274,6 +291,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     color: "#333",
+  },
+  actionButton: {
+    padding: 8,
+    borderRadius: 50,
   },
 });
 

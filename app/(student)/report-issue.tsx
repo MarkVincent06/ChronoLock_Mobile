@@ -159,6 +159,7 @@ const ReportIssue = () => {
 
       <Picker
         selectedValue={selectedEquipment}
+        dropdownIconColor="#888"
         onValueChange={(itemValue: string) => setSelectedEquipment(itemValue)}
         style={styles.input}
       >
@@ -175,6 +176,7 @@ const ReportIssue = () => {
       <TextInput
         style={styles.input}
         placeholder="Issue Title"
+        placeholderTextColor="#b2b2b2"
         value={title}
         onChangeText={setTitle}
       />
@@ -182,6 +184,7 @@ const ReportIssue = () => {
       <TextInput
         style={[styles.input, styles.textArea]}
         placeholder="Issue Description"
+        placeholderTextColor="#b2b2b2"
         value={description}
         onChangeText={setDescription}
         multiline
@@ -191,6 +194,7 @@ const ReportIssue = () => {
         selectedValue={priority}
         onValueChange={(itemValue) => setPriority(itemValue)}
         style={styles.input}
+        dropdownIconColor="#888"
       >
         <Picker.Item label="Select Priority" value="Select Priority" />
         <Picker.Item label="Low" value="Low" />
@@ -294,13 +298,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   input: {
-    height: 40,
-    borderColor: "gray",
-    borderWidth: 1,
-    borderRadius: 5,
+    height: 55,
     marginBottom: 15,
     paddingHorizontal: 10,
     backgroundColor: "#fff",
+    color: "#000",
+    elevation: 5,
   },
   textArea: {
     height: 100,

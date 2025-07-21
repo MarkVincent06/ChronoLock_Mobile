@@ -10,7 +10,7 @@ import {
   RefreshControl,
 } from "react-native";
 import axios from "axios";
-import Ionicons from "react-native-vector-icons/Ionicons";
+import Ion from "react-native-vector-icons/Ionicons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import API_URL from "@/config/ngrok-api";
 import { useUserContext } from "@/context/UserContext";
@@ -28,6 +28,9 @@ interface AttendanceRecord {
   time: string;
   attendanceID: string;
 }
+
+// Type assertion to fix TypeScript compatibility issues
+const Ionicons = Ion as any;
 
 const StudentAttendance = () => {
   const router = useRouter();
@@ -178,6 +181,7 @@ const StudentAttendance = () => {
       <TextInput
         style={styles.searchInput}
         placeholder="Search date..."
+        placeholderTextColor="#b2b2b2"
         value={searchQuery}
         onChangeText={handleSearch}
       />

@@ -10,9 +10,12 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
-import Icon from "react-native-vector-icons/FontAwesome";
+import FontAwesome from "react-native-vector-icons/FontAwesome";
 import API_URL from "@/config/ngrok-api";
 import usePullToRefresh from "@/hooks/usePullToRefresh";
+
+// Type assertion to fix TypeScript compatibility issues
+const Icon = FontAwesome as any;
 
 const LaboratorySchedule = () => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);

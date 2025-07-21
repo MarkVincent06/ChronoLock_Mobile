@@ -123,8 +123,7 @@ const EditGroupChat = () => {
       }
 
       Alert.alert("Success", "Group details updated!");
-      // router.push("/chat");
-      router.back();
+      router.push("/chat");
     } catch (error) {
       console.error("Error updating group:", error);
       Alert.alert("Error", "Could not update group details.");

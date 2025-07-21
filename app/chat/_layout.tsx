@@ -48,7 +48,7 @@ const ChatLayout = () => {
           name="student-chat"
           options={{
             title: "Chats",
-            headerShown: false,
+            headerShown: true,
           }}
         />
 

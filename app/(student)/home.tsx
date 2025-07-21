@@ -83,9 +83,9 @@ const Home = () => {
             setAcademicTerm(`SY ${schoolYear} | ${semester}`);
           } catch (error) {
             if (axios.isAxiosError(error)) {
-              console.error("Failed to fetch academic term:", error.message);
+              console.log("Failed to fetch academic term:", log.message);
             } else {
-              console.error("Failed to fetch academic term:", error);
+              console.log("Failed to fetch academic term:", error);
             }
           }
         };

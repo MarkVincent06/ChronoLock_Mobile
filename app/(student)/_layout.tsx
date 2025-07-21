@@ -12,8 +12,7 @@ import { Tabs, Redirect } from "expo-router";
 import { useRouter } from "expo-router";
 import API_URL from "../../config/ngrok-api";
 
-import Icon from "react-native-vector-icons/Ionicons";
-import Octicons from "react-native-vector-icons/Octicons";
+import Ionicon from "react-native-vector-icons/Ionicons";
 import chronolockLogo from "../../assets/images/chronolock-logo2a.png";
 import { useUserContext } from "@/context/UserContext";
 
@@ -24,12 +23,17 @@ interface TabIconProps {
   focused: boolean;
 }
 
+const Icon = Ionicon as any;
+
 const TabIcon: React.FC<TabIconProps> = ({ icon, color, name, focused }) => {
   return (
     <View style={styles.iconContainer}>
       <Icon name={icon} size={24} color={color} />
       <Text
-        style={[styles.iconText, focused && { fontSize: 13, color: color }]}
+        style={[
+          styles.iconText,
+          focused && { fontSize: 13, color: color, fontWeight: "bold" },
+        ]}
       >
         {name}
       </Text>
@@ -207,6 +211,9 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: "center",
     justifyContent: "center",
+    minWidth: 100,
+    paddingHorizontal: 10,
+    marginTop: 8,
   },
   icon: {
     width: 24,

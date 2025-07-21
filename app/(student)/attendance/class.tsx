@@ -113,6 +113,7 @@ const ClassList = () => {
       <TextInput
         style={styles.searchBar}
         placeholder="Search by course name"
+        placeholderTextColor="#b2b2b2"
         value={searchQuery}
         onChangeText={handleSearch}
       />

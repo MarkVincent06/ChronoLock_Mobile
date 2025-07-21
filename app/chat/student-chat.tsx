@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,19 +11,17 @@ import {
   Modal,
   Alert,
 } from "react-native";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import IonIcons from "react-native-vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import axios from "axios";
 import API_URL from "../../config/ngrok-api";
 import { useFocusEffect } from "@react-navigation/native";
 import { useUserContext } from "../../context/UserContext";
-
-const Tab = createBottomTabNavigator();
-
+import { useNavigation } from "@react-navigation/native";
 interface Group {
   group_id: number;
   group_name: string;
+  group_key: string;
   avatar?: string;
   sender?: string;
   latest_message?: string;
@@ -31,7 +29,7 @@ interface Group {
 }
 
 // Type assertion to fix TypeScript compatibility issues
-const Icon = IonIcons as any;
+const IonIcon = IonIcons as any;
 
 const GroupList = ({
   fetchGroupsApi,
@@ -127,7 +125,7 @@ const GroupList = ({
             onGroupDetails(item.group_id, item.group_name, item.avatar || "")
           }
         >
-          <Icon name="information-circle-outline" size={24} color="#555" />
+          <IonIcon name="information-circle-outline" size={24} color="#555" />
         </TouchableOpacity>
       )}
     </TouchableOpacity>
@@ -161,6 +159,10 @@ const GroupList = ({
 const MyChats = () => {
   const router = useRouter();
   const { user } = useUserContext();
+  const navigation = useNavigation();
+  useEffect(() => {
+    navigation.setOptions({ title: "My Chats" });
+  }, [navigation]);
 
   const fetchMyGroups = async () => {
     const response = await axios.get<Group[]>(
@@ -169,7 +171,12 @@ const MyChats = () => {
     return response.data;
   };
 
-  const openChat = async (groupId: number, groupName: string) => {
+  const openChat = async (
+    groupId: string | number,
+    groupName: string,
+    groupKey: string,
+    groupAvatar: string
+  ) => {
     try {
       await axios.post(
         `${API_URL}/messages/group/${groupId}/markMessageAsSeen`
@@ -179,6 +186,8 @@ const MyChats = () => {
         params: {
           group_id: groupId,
           group_name: groupName,
+          group_key: groupKey,
+          group_avatar: groupAvatar,
         },
       });
     } catch (error) {
@@ -187,7 +196,12 @@ const MyChats = () => {
   };
 
   const handleGroupPress = (group: Group) => {
-    openChat(group.group_id, group.group_name);
+    openChat(
+      group.group_id,
+      group.group_name,
+      group.group_key,
+      group.avatar || ""
+    );
   };
 
   const handleGroupDetails = (
@@ -224,6 +238,10 @@ const JoinChats = () => {
   const [groupKey, setGroupKey] = useState("");
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [loading, setLoading] = useState(false);
+  const navigation = useNavigation();
+  useEffect(() => {
+    navigation.setOptions({ title: "Join Chats" });
+  }, [navigation]);
 
   const fetchAvailableGroups = async () => {
     const response = await axios.get<Group[]>(
@@ -255,7 +273,7 @@ const JoinChats = () => {
 
       if (response.data.success) {
         // Post a system message
-        const joinMessage = `${user?.firstName} ${user?.lastName} has joined the group ${selectedGroup?.group_name}. Welcome!`;
+        const joinMessage = `${user?.firstName} ${user?.lastName} has joined the group. Welcome!`;
         await axios.post(
           `${API_URL}/messages/group/${selectedGroup?.group_id}/newSystemMessage`,
           {
@@ -274,6 +292,8 @@ const JoinChats = () => {
             params: {
               group_id: selectedGroup?.group_id,
               group_name: selectedGroup?.group_name,
+              group_key: selectedGroup?.group_key,
+              group_avatar: selectedGroup?.avatar || "",
             },
           });
         } catch (innerError) {
@@ -354,37 +374,71 @@ const JoinChats = () => {
 };
 
 const StudentGroupChat = () => {
-  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<"My Chats" | "Join Chats">(
+    "My Chats"
+  );
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    navigation.setOptions({ title: activeTab });
+  }, [activeTab, navigation]);
 
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ color, size }) => {
-          let iconName: string = "information-circle-outline";
-          if (route.name === "My Chats") {
-            iconName = "chatbubbles-outline";
-          } else if (route.name === "Join Chats") {
-            iconName = "add-circle-outline";
-          }
-          return <Icon name={iconName} size={size} color={color} />;
-        },
-        headerLeft: () => (
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Icon name="arrow-back" size={24} color="#000" />
-          </TouchableOpacity>
-        ),
-        headerTitleStyle: {
-          fontWeight: "bold",
-          fontSize: 20,
-        },
-      })}
-    >
-      <Tab.Screen name="My Chats" component={MyChats} />
-      <Tab.Screen name="Join Chats" component={JoinChats} />
-    </Tab.Navigator>
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+      <View style={styles.toggleContainer}>
+        <TouchableOpacity
+          style={[
+            styles.toggleButton,
+            activeTab === "My Chats" && styles.toggleButtonActive,
+          ]}
+          onPress={() => setActiveTab("My Chats")}
+        >
+          <View style={styles.toggleButtonContent}>
+            <IonIcon
+              name="chatbubbles-outline"
+              size={18}
+              color={activeTab === "My Chats" ? "#fff" : "#333"}
+              style={{ marginRight: 6 }}
+            />
+            <Text
+              style={[
+                styles.toggleButtonText,
+                activeTab === "My Chats" && styles.toggleButtonTextActive,
+              ]}
+            >
+              My Chats
+            </Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.toggleButton,
+            activeTab === "Join Chats" && styles.toggleButtonActive,
+          ]}
+          onPress={() => setActiveTab("Join Chats")}
+        >
+          <View style={styles.toggleButtonContent}>
+            <IonIcon
+              name="add-circle-outline"
+              size={18}
+              color={activeTab === "Join Chats" ? "#fff" : "#333"}
+              style={{ marginRight: 6 }}
+            />
+            <Text
+              style={[
+                styles.toggleButtonText,
+                activeTab === "Join Chats" && styles.toggleButtonTextActive,
+              ]}
+            >
+              Join Chats
+            </Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+      <View style={{ flex: 1 }}>
+        {activeTab === "My Chats" ? <MyChats /> : <JoinChats />}
+      </View>
+    </View>
   );
 };
 
@@ -486,6 +540,37 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: "#fff",
     fontWeight: "bold",
+  },
+  toggleContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 10,
+    marginHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: "#f0f0f0",
+    alignItems: "center",
+  },
+  toggleButtonActive: {
+    backgroundColor: "#007BFF",
+  },
+  toggleButtonText: {
+    color: "#333",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  toggleButtonTextActive: {
+    color: "#fff",
+  },
+  toggleButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
 

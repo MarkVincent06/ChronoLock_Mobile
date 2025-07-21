@@ -166,6 +166,7 @@ const EquipmentIssue = () => {
         selectedValue={statusFilter}
         onValueChange={(itemValue) => setStatusFilter(itemValue)}
         style={styles.picker}
+        dropdownIconColor="#888"
       >
         <Picker.Item label="All" value="All" />
         <Picker.Item label="Pending" value="Pending" />
@@ -244,6 +245,7 @@ const EquipmentIssue = () => {
                 selectedValue={status}
                 onValueChange={(itemValue) => setStatus(itemValue)}
                 style={styles.picker}
+                dropdownIconColor="#888"
               >
                 <Picker.Item label="Pending" value="Pending" />
                 <Picker.Item label="Fixing" value="Fixing" />
@@ -256,7 +258,8 @@ const EquipmentIssue = () => {
                 style={styles.input}
                 value={comment}
                 onChangeText={setComment}
-                placeholder="Add comment"
+                placeholder="Write comment..."
+                placeholderTextColor="#2b2b2b"
               />
 
               {/* Button to update the issue status */}
@@ -310,9 +313,8 @@ const styles = StyleSheet.create({
   picker: {
     marginVertical: 10,
     backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 10,
     elevation: 3,
+    color: "#000",
   },
   issueItem: {
     padding: 15,
