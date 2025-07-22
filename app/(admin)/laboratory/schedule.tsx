@@ -8,10 +8,12 @@ import {
   Modal,
   FlatList,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { useRouter } from "expo-router";
 import Ionicon from "react-native-vector-icons/FontAwesome";
 import API_URL from "@/config/ngrok-api";
+import usePullToRefresh from "@/hooks/usePullToRefresh";
 
 const Icon = Ionicon as any;
 
@@ -72,84 +74,86 @@ const LaboratorySchedule = () => {
     return `${hoursFormatted}:${minutesString} ${ampm}`;
   };
 
-  useEffect(() => {
-    const fetchSchedules = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(`${API_URL}/schedules/`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-
-        if (data.success && Array.isArray(data.data)) {
-          // Filter and group schedules based on the start and end dates
-          const filteredSchedules: { [key: string]: { events: any[] } } = {};
-
-          data.data.forEach((schedule: any) => {
-            const {
-              startDate,
-              endDate,
-              courseCode,
-              courseName,
-              startTime,
-              endTime,
-              instFirstName,
-              instLastName,
-              day,
-            } = schedule;
-
-            let currentDate = new Date(startDate);
-            currentDate.setHours(currentDate.getHours() + 8);
-            const lastDate = new Date(endDate);
-
-            while (currentDate <= lastDate) {
-              if (currentDate.getDay() === getDayOfWeek(day)) {
-                const dateString = currentDate.toISOString().split("T")[0];
-                if (!filteredSchedules[dateString]) {
-                  filteredSchedules[dateString] = { events: [] };
-                }
-                filteredSchedules[dateString].events.push({
-                  courseCode,
-                  courseName,
-                  startTime,
-                  endTime,
-                  instructor: `${instFirstName} ${instLastName}`,
-                  day,
-                  startDate,
-                  endDate,
-                });
-              }
-              currentDate.setDate(currentDate.getDate() + 1);
-            }
-          });
-
-          // Convert filteredSchedules into an array of schedules
-          const formattedSchedules = Object.keys(filteredSchedules).map(
-            (date) => ({
-              date,
-              events: filteredSchedules[date].events,
-            })
-          );
-
-          setScheduleData(formattedSchedules);
-        } else {
-          console.error(
-            "Invalid or empty data received:",
-            data.message || data
-          );
-          setScheduleData([]);
-        }
-      } catch (error) {
-        console.error(
-          "Error fetching schedules:",
-          error instanceof Error ? error.message : error
-        );
-      } finally {
-        setLoading(false);
+  const fetchSchedules = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/schedules/`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    };
+      const data = await response.json();
 
+      if (data.success && Array.isArray(data.data)) {
+        // Filter and group schedules based on the start and end dates
+        const filteredSchedules: { [key: string]: { events: any[] } } = {};
+
+        data.data.forEach((schedule: any) => {
+          const {
+            startDate,
+            endDate,
+            courseCode,
+            courseName,
+            startTime,
+            endTime,
+            instFirstName,
+            instLastName,
+            day,
+          } = schedule;
+
+          let currentDate = new Date(startDate);
+          currentDate.setHours(currentDate.getHours() + 8);
+          const lastDate = new Date(endDate);
+
+          while (currentDate <= lastDate) {
+            if (currentDate.getDay() === getDayOfWeek(day)) {
+              const dateString = currentDate.toISOString().split("T")[0];
+              if (!filteredSchedules[dateString]) {
+                filteredSchedules[dateString] = { events: [] };
+              }
+              filteredSchedules[dateString].events.push({
+                courseCode,
+                courseName,
+                startTime,
+                endTime,
+                instructor: `${instFirstName} ${instLastName}`,
+                day,
+                startDate,
+                endDate,
+              });
+            }
+            currentDate.setDate(currentDate.getDate() + 1);
+          }
+        });
+
+        // Convert filteredSchedules into an array of schedules
+        const formattedSchedules = Object.keys(filteredSchedules).map(
+          (date) => ({
+            date,
+            events: filteredSchedules[date].events,
+          })
+        );
+
+        setScheduleData(formattedSchedules);
+      } else {
+        console.error("Invalid or empty data received:", data.message || data);
+        setScheduleData([]);
+      }
+    } catch (error) {
+      console.error(
+        "Error fetching schedules:",
+        error instanceof Error ? error.message : error
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchData = async () => {
+    await fetchSchedules();
+  };
+  const { refreshing, onRefresh } = usePullToRefresh(fetchData);
+
+  useEffect(() => {
     fetchSchedules();
   }, []);
 
@@ -382,7 +386,13 @@ const LaboratorySchedule = () => {
           </Text>
         ))}
       </View>
-      <ScrollView>{generateMonthView()}</ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        {generateMonthView()}
+      </ScrollView>
 
       <Modal
         animationType="slide"

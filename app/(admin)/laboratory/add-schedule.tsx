@@ -15,8 +15,21 @@ import Ionicon from "react-native-vector-icons/FontAwesome";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import type { DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import axios from "axios";
+import API_URL from "@/config/ngrok-api";
 
 const Icon = Ionicon as any;
+
+interface UserType {
+  id: number;
+  accountName: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  idNumber: string;
+  userType: string;
+  avatar: string;
+}
 
 const AddSchedule = () => {
   const router = useRouter();
@@ -70,34 +83,27 @@ const AddSchedule = () => {
   });
   const [modalVisible, setModalVisible] = React.useState(false);
   const [searchText, setSearchText] = React.useState("");
-  const dummyInstructors = [
-    {
-      idNumber: "2024001",
-      userType: "Faculty",
-      firstName: "Alice",
-      lastName: "Smith",
-      avatar: "https://randomuser.me/api/portraits/women/1.jpg",
-    },
-    {
-      idNumber: "2024002",
-      userType: "Lab-in-Charge",
-      firstName: "Bob",
-      lastName: "Johnson",
-      avatar: "https://randomuser.me/api/portraits/men/2.jpg",
-    },
-    {
-      idNumber: "2024003",
-      userType: "Technician",
-      firstName: "Carol",
-      lastName: "Williams",
-      avatar: "https://randomuser.me/api/portraits/women/3.jpg",
-    },
-  ];
-  const filteredInstructors = dummyInstructors.filter(
-    (inst) =>
-      inst.idNumber.includes(searchText) ||
-      inst.firstName.toLowerCase().includes(searchText.toLowerCase()) ||
-      inst.lastName.toLowerCase().includes(searchText.toLowerCase())
+  const [users, setUsers] = React.useState<UserType[]>([]);
+  const [page, setPage] = React.useState(0);
+  const USERS_PER_PAGE = 10;
+  const [loading, setLoading] = React.useState(false);
+  React.useEffect(() => {
+    if (modalVisible) {
+      axios.get(`${API_URL}/users/fetchUsersByType`).then((res) => {
+        setUsers(res.data);
+        setPage(0);
+      });
+    }
+  }, [modalVisible]);
+  const filteredUsers: UserType[] = users.filter(
+    (user) =>
+      user.idNumber?.toLowerCase().includes(searchText.toLowerCase()) ||
+      user.firstName?.toLowerCase().includes(searchText.toLowerCase()) ||
+      user.lastName?.toLowerCase().includes(searchText.toLowerCase())
+  );
+  const pagedUsers: UserType[] = filteredUsers.slice(
+    page * USERS_PER_PAGE,
+    (page + 1) * USERS_PER_PAGE
   );
 
   const handleDateTimeChange = (
@@ -123,7 +129,7 @@ const AddSchedule = () => {
     }
   };
 
-  const handleCreateSchedule = () => {
+  const handleCreateSchedule = async () => {
     // List of required fields (excluding idNumber, instructorFirstName, instructorLastName)
     const requiredFields = [
       "courseCode",
@@ -149,8 +155,51 @@ const AddSchedule = () => {
       alert("Please fill in all required fields.");
       return;
     }
-    console.log("Schedule Data:", formData);
-    alert("Schedule created! (Check console for data)");
+    setLoading(true);
+    try {
+      const body = {
+        ...formData,
+        scheduleStatus: formData.scheduleStatus || "unscheduled",
+        scheduleType: formData.scheduleType || "regularSchedule",
+      };
+      const response = await axios.post(`${API_URL}/schedules/`, body);
+      if (response.status === 201 && response.data.success) {
+        alert("Schedule successfully created!");
+        setFormData({
+          courseCode: "",
+          courseName: "",
+          userID: "",
+          instFirstName: "",
+          instLastName: "",
+          program: "",
+          section: "",
+          year: "",
+          semester: "",
+          schoolYear: "",
+          startTime: "",
+          endTime: "",
+          startDate: "",
+          endDate: "",
+          day: "",
+          scheduleStatus: "",
+          scheduleType: "",
+        });
+      } else {
+        alert(response.data.message || "Failed to create schedule.");
+      }
+    } catch (error: any) {
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        alert(`Error: ${error.response.data.message}`);
+      } else {
+        alert("An error occurred while creating the schedule.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -226,41 +275,100 @@ const AddSchedule = () => {
                 style={styles.modalSearchInput}
                 value={searchText}
                 onChangeText={setSearchText}
-                placeholder="Search Id number..."
+                placeholder="Search users..."
                 placeholderTextColor="#b2b2b2"
               />
+              {/* Pagination Controls */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 8,
+                }}
+              >
+                <TouchableOpacity
+                  onPress={() => setPage((p) => Math.max(0, p - 1))}
+                  disabled={page === 0}
+                >
+                  <Icon
+                    name="chevron-left"
+                    size={24}
+                    color={page === 0 ? "#ccc" : "#007bff"}
+                  />
+                </TouchableOpacity>
+                <Text style={{ fontSize: 15, color: "#333" }}>
+                  Page {page + 1} /{" "}
+                  {Math.max(
+                    1,
+                    Math.ceil(filteredUsers.length / USERS_PER_PAGE)
+                  )}
+                </Text>
+                <TouchableOpacity
+                  onPress={() =>
+                    setPage((p) =>
+                      p + 1 < Math.ceil(filteredUsers.length / USERS_PER_PAGE)
+                        ? p + 1
+                        : p
+                    )
+                  }
+                  disabled={
+                    page + 1 >= Math.ceil(filteredUsers.length / USERS_PER_PAGE)
+                  }
+                >
+                  <Icon
+                    name="chevron-right"
+                    size={24}
+                    color={
+                      page + 1 >=
+                      Math.ceil(filteredUsers.length / USERS_PER_PAGE)
+                        ? "#ccc"
+                        : "#007bff"
+                    }
+                  />
+                </TouchableOpacity>
+              </View>
               {/* List */}
               <FlatList
-                data={filteredInstructors}
-                keyExtractor={(item) => item.idNumber}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.instructorItem}
-                    onPress={() => {
-                      setFormData({
-                        ...formData,
-                        userID: item.idNumber,
-                        instFirstName: item.firstName,
-                        instLastName: item.lastName,
-                      });
-                      setModalVisible(false);
-                    }}
-                  >
-                    <Image
-                      source={{ uri: item.avatar }}
-                      style={styles.instructorAvatar}
-                    />
-                    <View style={styles.instructorInfo}>
-                      <Text style={styles.instructorIdType}>
-                        {item.idNumber} - {item.userType}
-                      </Text>
-                      <Text style={styles.instructorName}>
-                        {item.firstName} {item.lastName}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                )}
-                style={{ flexGrow: 0, maxHeight: 250 }}
+                data={pagedUsers}
+                keyExtractor={(item: UserType) => item.idNumber}
+                renderItem={({ item }: { item: UserType }) => {
+                  let avatarSource: any =
+                    item.avatar && item.avatar !== ""
+                      ? item.avatar.startsWith("http") ||
+                        item.avatar.startsWith("file")
+                        ? { uri: item.avatar }
+                        : { uri: `${API_URL}${item.avatar}` }
+                      : require("@/assets/images/default_avatar.png");
+                  return (
+                    <TouchableOpacity
+                      style={styles.instructorItem}
+                      onPress={() => {
+                        setFormData({
+                          ...formData,
+                          userID: item.idNumber,
+                          instFirstName: item.firstName,
+                          instLastName: item.lastName,
+                        });
+                        setModalVisible(false);
+                      }}
+                    >
+                      <Image
+                        source={avatarSource}
+                        style={styles.instructorAvatar}
+                      />
+                      <View style={styles.instructorInfo}>
+                        <Text style={styles.instructorIdType}>
+                          {item.idNumber} - {item.userType}
+                        </Text>
+                        <Text style={styles.instructorName}>
+                          {item.firstName} {item.lastName}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                }}
+                style={{ maxHeight: 250 }}
               />
             </View>
           </View>
@@ -523,8 +631,11 @@ const AddSchedule = () => {
       <TouchableOpacity
         style={styles.createButton}
         onPress={handleCreateSchedule}
+        disabled={loading}
       >
-        <Text style={styles.createButtonText}>Create Schedule</Text>
+        <Text style={styles.createButtonText}>
+          {loading ? "Creating..." : "Create Schedule"}
+        </Text>
       </TouchableOpacity>
     </View>
   );
