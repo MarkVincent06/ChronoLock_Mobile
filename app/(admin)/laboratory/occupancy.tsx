@@ -1,8 +1,10 @@
 import React from "react";
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import { AnimatedCircularProgress } from "react-native-circular-progress";
-import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import Ionicon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useRouter } from "expo-router";
+
+const Icon = Ionicon as any;
 
 type LabStatusType = "available" | "occupied" | "under_maintenance" | "closed";
 

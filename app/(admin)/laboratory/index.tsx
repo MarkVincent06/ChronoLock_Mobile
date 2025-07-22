@@ -72,11 +72,11 @@ const LaboratoryIndex = () => {
               color="#007BFF"
               style={styles.icon}
             />
-            <Text style={styles.buttonText}>Schedule</Text>
+            <Text style={styles.buttonText}>ERP Schedule</Text>
           </View>
           <Text style={styles.description}>
-            Monitor ERP laboratory schedules to ensure efficient session
-            planning and availability.
+            Monitor and Manage ERP laboratory schedules to ensure efficient
+            session planning and availability.
           </Text>
         </TouchableOpacity>
 

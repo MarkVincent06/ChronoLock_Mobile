@@ -1,3 +1,3 @@
-const API_URL = "https://b43437d4f286.ngrok-free.app";
+const API_URL = "https://bc765810fb43.ngrok-free.app";
 
 export default API_URL;

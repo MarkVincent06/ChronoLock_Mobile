@@ -10,8 +10,10 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
-import Icon from "react-native-vector-icons/FontAwesome";
+import Ionicon from "react-native-vector-icons/FontAwesome";
 import API_URL from "@/config/ngrok-api";
+
+const Icon = Ionicon as any;
 
 const LaboratorySchedule = () => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -321,8 +323,36 @@ const LaboratorySchedule = () => {
         >
           <Icon name="arrow-left" size={20} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.header}>ERP Schedule Monitoring</Text>
+        <Text style={styles.header}>ERP Schedule</Text>
       </View>
+
+      <View style={{ flexDirection: "row", marginBottom: 10 }}>
+        <TouchableOpacity
+          style={[
+            styles.appointedScheduleButton,
+            { flex: 0.6, marginRight: 6 },
+          ]}
+          onPress={() => router.push("/laboratory/appointed-schedule")}
+        >
+          <Icon
+            name="calendar"
+            size={18}
+            color="#fff"
+            style={{ marginRight: 8 }}
+          />
+          <Text style={styles.appointedScheduleButtonText}>
+            Appointed Schedule
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.addScheduleButton, { flex: 0.4 }]}
+          onPress={() => router.push("/laboratory/add-schedule")}
+        >
+          <Icon name="plus" size={16} color="#fff" style={{ marginRight: 8 }} />
+          <Text style={styles.addScheduleButtonText}>Add Schedule</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.navigation}>
         <TouchableOpacity onPress={handlePrevMonth} style={styles.arrow}>
           <Icon name="chevron-left" size={20} color="#000" />
@@ -444,7 +474,7 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 10,
+    marginVertical: 5,
   },
   backArrow: {
     padding: 10,
@@ -454,6 +484,32 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     flex: 1,
+  },
+  appointedScheduleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+    backgroundColor: "#007bff",
+    borderRadius: 5,
+    justifyContent: "center",
+  },
+  appointedScheduleButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  addScheduleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+    backgroundColor: "#28a745",
+    borderRadius: 5,
+    justifyContent: "center",
+  },
+  addScheduleButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
   },
   navigation: {
     flexDirection: "row",
