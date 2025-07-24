@@ -43,6 +43,12 @@ const LaboratoryLayout = () => {
           }}
         />
         <Stack.Screen
+          name="edit-schedule"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
           name="appointed-schedule"
           options={{
             headerShown: false,
