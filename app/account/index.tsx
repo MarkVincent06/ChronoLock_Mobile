@@ -163,7 +163,8 @@ const AccountSettings = () => {
               await AsyncStorage.removeItem("user");
               setUser(null);
               Alert.alert("Account Deleted", "Your account has been deleted.");
-              router.replace("/(auth)/login");
+              router.dismissAll();
+              router.push("/(auth)/login");
             } catch (error) {
               console.error("Error deleting account:", error);
               Alert.alert("Error", "Failed to delete account.");

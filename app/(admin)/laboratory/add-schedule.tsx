@@ -184,6 +184,9 @@ const AddSchedule = () => {
           scheduleStatus: "",
           scheduleType: "",
         });
+
+        router.dismissAll();
+        router.push("/laboratory/schedule");
       } else {
         alert(response.data.message || "Failed to create schedule.");
       }

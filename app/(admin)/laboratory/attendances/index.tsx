@@ -35,7 +35,7 @@ const AttendanceIndex = () => {
           {/* Student */}
           <TouchableOpacity
             style={styles.button}
-            onPress={() => router.push("laboratory/attendances/student")}
+            onPress={() => router.push("/laboratory/attendances/student")}
           >
             <View style={styles.iconAndText}>
               <MaterialCommunityIcons
@@ -55,7 +55,7 @@ const AttendanceIndex = () => {
           {/* Instructor */}
           <TouchableOpacity
             style={styles.button}
-            onPress={() => router.push("laboratory/attendances/instructor")}
+            onPress={() => router.push("/laboratory/attendances/instructor")}
           >
             <View style={styles.iconAndText}>
               <MaterialCommunityIcons

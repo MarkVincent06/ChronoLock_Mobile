@@ -1,7 +1,9 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import Ionicons from "react-native-vector-icons/Ionicons";
+import Ion from "react-native-vector-icons/Ionicons";
+
+const Ionicons = Ion as any;
 
 const AccessIndex = () => {
   const router = useRouter();

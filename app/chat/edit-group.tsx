@@ -123,6 +123,7 @@ const EditGroupChat = () => {
       }
 
       Alert.alert("Success", "Group details updated!");
+      router.dismissAll();
       router.push("/chat");
     } catch (error) {
       console.error("Error updating group:", error);
@@ -158,6 +159,7 @@ const EditGroupChat = () => {
             try {
               await axios.delete(`${API_URL}/groups/deleteGroup/${group_id}`);
               Alert.alert("Success", "Group deleted successfully.");
+              router.dismissAll();
               router.push("/chat");
             } catch (error) {
               console.error("Error deleting group:", error);

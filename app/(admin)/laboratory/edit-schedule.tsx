@@ -198,6 +198,8 @@ const EditSchedule = () => {
       .then((res) => {
         if (res.data && res.data.success) {
           alert("Schedule updated successfully!");
+
+          router.dismissAll();
           router.push("/laboratory/appointed-schedule");
         } else {
           alert(res.data.message || "Failed to update schedule.");

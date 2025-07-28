@@ -103,7 +103,8 @@ const CreateGroupChat = () => {
       );
 
       Alert.alert("Success", "Group chat created!");
-      router.replace("/chat");
+      router.dismissAll();
+      router.push("/chat");
     } catch (error) {
       console.error("Error creating group:", error);
       Alert.alert("Error", "Could not create group chat.");

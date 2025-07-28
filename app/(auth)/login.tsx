@@ -141,16 +141,16 @@ const Login: React.FC = () => {
           setIsNavigated(true); // Set to true to prevent additional navigation
           // Navigate based on userType
           if (userData.userType === "Faculty") {
-            router.push("/home");
+            router.replace("/home");
           } else if (userData.userType === "Student") {
-            router.push("/(student)/home");
+            router.replace("/(student)/home");
           } else if (userData.userType === "Admin") {
-            router.push("/(admin)/dashboard");
+            router.replace("/(admin)/dashboard");
           } else if (
             userData.userType === "Lab-in-Charge" ||
             userData.userType === "Technician"
           ) {
-            router.push("/(lab-in-charge)/home");
+            router.replace("/(lab-in-charge)/home");
           }
         }
       } else {
@@ -234,16 +234,16 @@ const Login: React.FC = () => {
           setIsNavigated(true); // Set to true to prevent additional navigation
           // Navigate based on userType
           if (userData.userType === "Faculty") {
-            router.push("/home");
+            router.replace("/home");
           } else if (userData.userType === "Student") {
-            router.push("/(student)/home");
+            router.replace("/(student)/home");
           } else if (userData.userType === "Admin") {
-            router.push("/(admin)/dashboard");
+            router.replace("/(admin)/dashboard");
           } else if (
             userData.userType === "Lab-in-Charge" ||
             userData.userType === "Technician"
           ) {
-            router.push("/(lab-in-charge)/home");
+            router.replace("/(lab-in-charge)/home");
           }
         }
       } else {

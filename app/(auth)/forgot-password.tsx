@@ -89,7 +89,8 @@ const ForgotPassword = () => {
         setInfoMessage("Password reset successfully. Redirecting to login...");
         setInfoType("success");
         setTimeout(() => {
-          router.replace("/login");
+          router.dismissAll();
+          router.push("/login");
         }, 1500);
       } else {
         setInfoMessage("Error resetting password.");
@@ -116,7 +117,7 @@ const ForgotPassword = () => {
     <SafeAreaView style={styles.container}>
       <TouchableOpacity
         style={styles.backButton}
-        onPress={() => router.push("/login")}
+        onPress={() => router.replace("/login")}
       >
         <Ionicons name="arrow-back" size={24} color="#000" />
       </TouchableOpacity>
