@@ -137,7 +137,8 @@ const AccountSettings = () => {
       setUser(null);
 
       Alert.alert("Success", "You have been logged out.");
-      router.replace("/(auth)/login");
+      router.dismissAll();
+      router.push("/(auth)/login");
     } catch (error) {
       console.error(error);
       Alert.alert("Error", "Failed to log out.");

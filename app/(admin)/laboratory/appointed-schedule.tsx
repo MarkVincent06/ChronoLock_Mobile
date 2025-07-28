@@ -265,6 +265,20 @@ const AppointedSchedule = () => {
                 </Text>
                 <View style={styles.buttonRow}>
                   <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={() =>
+                      console.log("Delete scheduleID:", item.scheduleID)
+                    }
+                  >
+                    <MaterialIconComponent
+                      name="delete"
+                      size={18}
+                      color="#fff"
+                      style={{ marginRight: 6 }}
+                    />
+                    <Text style={styles.deleteButtonText}>Delete Schedule</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
                     style={styles.editButton}
                     onPress={() =>
                       router.push({
@@ -280,20 +294,6 @@ const AppointedSchedule = () => {
                       style={{ marginRight: 6 }}
                     />
                     <Text style={styles.editButtonText}>Edit Schedule</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.deleteButton}
-                    onPress={() =>
-                      console.log("Delete scheduleID:", item.scheduleID)
-                    }
-                  >
-                    <MaterialIconComponent
-                      name="delete"
-                      size={18}
-                      color="#fff"
-                      style={{ marginRight: 6 }}
-                    />
-                    <Text style={styles.deleteButtonText}>Delete Schedule</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -376,7 +376,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     flexDirection: "row",
     alignItems: "center",
-    marginRight: 8,
   },
   editButtonText: {
     color: "#fff",
@@ -390,6 +389,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     flexDirection: "row",
     alignItems: "center",
+    marginRight: 8,
   },
   deleteButtonText: {
     color: "#fff",
