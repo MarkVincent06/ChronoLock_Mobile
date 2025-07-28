@@ -4,6 +4,7 @@ import {
   View,
   TouchableOpacity,
   FlatList,
+  Alert,
 } from "react-native";
 import React from "react";
 import { useRouter } from "expo-router";
@@ -22,6 +23,7 @@ const AppointedSchedule = () => {
   const [scheduleType, setScheduleType] = React.useState("regularSchedule");
   const [schedules, setSchedules] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
 
   const formatTime = (timeString: string) => {
     // Manually parse the time string as local time by creating a Date object
@@ -136,6 +138,57 @@ const AppointedSchedule = () => {
     // For other days, sort by start time ascending
     return parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime);
   });
+
+  // Delete schedule function
+  const handleDeleteSchedule = (scheduleID: number) => {
+    if (deleting) return;
+    Alert.alert(
+      "Delete Schedule",
+      "Are you sure you want to delete this schedule? This will also delete all class lists and students enrolled into it. This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            setDeleting(true);
+            axios
+              .delete(`${API_URL}/schedules/${scheduleID}`)
+              .then((res) => {
+                if (res.data && res.data.success) {
+                  Alert.alert(
+                    "Success",
+                    "Schedule has been deleted successfully.",
+                    [
+                      {
+                        text: "OK",
+                        onPress: () => {
+                          router.dismissAll();
+                          router.push("/laboratory/appointed-schedule");
+                        },
+                      },
+                    ]
+                  );
+                } else {
+                  Alert.alert(
+                    "Error",
+                    res.data.message || "Failed to delete schedule."
+                  );
+                }
+              })
+              .catch((err) => {
+                Alert.alert(
+                  "Error",
+                  err.response?.data?.message ||
+                    "An error occurred while deleting the schedule."
+                );
+              })
+              .finally(() => setDeleting(false));
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -266,9 +319,7 @@ const AppointedSchedule = () => {
                 <View style={styles.buttonRow}>
                   <TouchableOpacity
                     style={styles.deleteButton}
-                    onPress={() =>
-                      console.log("Delete scheduleID:", item.scheduleID)
-                    }
+                    onPress={() => handleDeleteSchedule(item.scheduleID)}
                   >
                     <MaterialIconComponent
                       name="delete"
