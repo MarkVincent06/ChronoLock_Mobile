@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, View, ScrollView, Image } from "react-native";
+import {
+  StyleSheet,
+  View,
+  ScrollView,
+  Image,
+  RefreshControl,
+} from "react-native";
 import { Card, Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useUserContext } from "@/context/UserContext";
+import usePullToRefresh from "@/hooks/usePullToRefresh";
 import axios from "axios";
 import API_URL from "@/config/ngrok-api";
 
@@ -39,85 +46,83 @@ const Home = () => {
     return `${hoursFormatted}:${minutesString} ${ampm}`;
   };
 
+  // Fetch functions moved to component scope
+  const fetchChatsHandled = async () => {
+    try {
+      if (user?.idNumber) {
+        const response = await axios.get(
+          `${API_URL}/groups/fetchFilteredGroups/${user.idNumber}`
+        );
+        setTotalChats(response.data.length); // Count the total groups (chats)
+      }
+    } catch (error) {
+      console.log("Failed to fetch chats handled:", error);
+    }
+  };
+
+  const fetchAcademicTerm = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/schedules/academic-term`);
+      const { schoolYear, semester } = response.data.data;
+      setAcademicTerm(`SY ${schoolYear} | ${semester}`);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.log("Failed to fetch academic term:", error.message);
+      } else {
+        console.log("Failed to fetch academic term:", error);
+      }
+    }
+  };
+
+  const fetchSectionsHandled = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(
+        `${API_URL}/schedules/user-classes/${user?.idNumber}`
+      );
+      const sectionsCount = response.data.data.length;
+      setSectionsHandled(sectionsCount);
+    } catch (error) {
+      console.log("Failed to fetch sections handled:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchTotalStudents = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(
+        `${API_URL}/student-masterlists/faculty/${user?.idNumber}/total-students`
+      );
+      setTotalStudents(response.data.totalStudents);
+    } catch (error) {
+      console.log("Failed to fetch total students handled:", error);
+    }
+  };
+
+  const fetchTodaySchedule = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(
+        `${API_URL}/schedules/user-classes/today/${user?.idNumber}`
+      );
+      setTodayScheduleCount(response.data.data.length);
+      setTodaySchedule(
+        response.data.data.length > 0 ? response.data.data : null
+      );
+    } catch (error) {
+      console.log("Failed to fetch sections handled:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (
       (user?.idNumber && user.userType === "Lab-in-Charge") ||
       (user?.idNumber && user.userType === "Technician")
     ) {
-      const fetchChatsHandled = async () => {
-        try {
-          if (user?.idNumber) {
-            const response = await axios.get(
-              `${API_URL}/groups/fetchFilteredGroups/${user.idNumber}`
-            );
-            setTotalChats(response.data.length); // Count the total groups (chats)
-          }
-        } catch (error) {
-          console.log("Failed to fetch chats handled:", error);
-        }
-      };
-
-      const fetchAcademicTerm = async () => {
-        try {
-          const response = await axios.get(
-            `${API_URL}/schedules/academic-term`
-          );
-          const { schoolYear, semester } = response.data.data;
-          setAcademicTerm(`SY ${schoolYear} | ${semester}`);
-        } catch (error) {
-          if (axios.isAxiosError(error)) {
-            console.log("Failed to fetch academic term:", error.message);
-          } else {
-            console.log("Failed to fetch academic term:", error);
-          }
-        }
-      };
-
-      const fetchSectionsHandled = async () => {
-        try {
-          setIsLoading(true);
-          const response = await axios.get(
-            `${API_URL}/schedules/user-classes/${user?.idNumber}`
-          );
-          const sectionsCount = response.data.data.length;
-          setSectionsHandled(sectionsCount);
-        } catch (error) {
-          console.log("Failed to fetch sections handled:", error);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      const fetchTotalStudents = async () => {
-        try {
-          setIsLoading(true);
-          const response = await axios.get(
-            `${API_URL}/student-masterlists/faculty/${user?.idNumber}/total-students`
-          );
-          setTotalStudents(response.data.totalStudents);
-        } catch (error) {
-          console.log("Failed to fetch total students handled:", error);
-        }
-      };
-
-      const fetchTodaySchedule = async () => {
-        try {
-          setIsLoading(true);
-          const response = await axios.get(
-            `${API_URL}/schedules/user-classes/today/${user?.idNumber}`
-          );
-
-          setTodayScheduleCount(response.data.data.length);
-          setTodaySchedule(
-            response.data.data.length > 0 ? response.data.data : null
-          );
-        } catch (error) {
-          console.log("Failed to fetch sections handled:", error);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
       if (user?.idNumber) {
         fetchAcademicTerm();
         fetchChatsHandled();
@@ -127,6 +132,21 @@ const Home = () => {
       }
     }
   }, [user?.idNumber]);
+
+  // Refetch all dashboard data
+  const fetchData = async () => {
+    if (user?.idNumber) {
+      await Promise.all([
+        fetchAcademicTerm(),
+        fetchChatsHandled(),
+        fetchSectionsHandled(),
+        fetchTotalStudents(),
+        fetchTodaySchedule(),
+      ]);
+    }
+  };
+
+  const { refreshing, onRefresh } = usePullToRefresh(fetchData);
 
   // Card data
   type IconName =
@@ -173,7 +193,12 @@ const Home = () => {
   ];
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
       {/* Welcome Card */}
       <Card style={styles.welcomeCard}>
         <Card.Content style={styles.cardContent}>

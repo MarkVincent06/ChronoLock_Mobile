@@ -19,100 +19,58 @@ const AccessControl = () => {
   const { user } = useUserContext();
   const [connectionStatus, setConnectionStatus] = useState("Idle");
   const [isLoading, setIsLoading] = useState(false);
-  const [privilegeStatus, setPrivilegeStatus] = useState("");
-  const [buttonColor, setButtonColor] = useState("#6c757d"); // Default grey
+  const [buttonColor, setButtonColor] = useState("#28a745"); // Green
   const animatedValue = useRef(new Animated.Value(0)).current;
 
-  const RASPBERRY_PI_URL = "http://192.168.215.17:5000";
+  // ESP32 endpoint (update IP as needed)
+  const ESP32_URL = "http://10.173.66.110:5000";
   const USER_ID_NUMBER = user?.idNumber;
-
-  // Fetch the privilege status from the backend
-  const fetchPrivilegeStatus = async () => {
-    try {
-      const response = await axios.get(
-        `${API_URL}/remote-access/fetchAccessAccountByIdNumber/${USER_ID_NUMBER}`
-      );
-
-      const data = response.data.data[0];
-      if (data) {
-        setPrivilegeStatus(data.privilege_status);
-        updateButtonAppearance(data.privilege_status);
-      } else {
-        setPrivilegeStatus("Unknown");
-        setButtonColor("#6c757d");
-      }
-    } catch (error) {
-      console.error("Error fetching privilege status:", error);
-      Alert.alert("Error", "Failed to fetch privilege status.");
-    }
-  };
-
-  // Update button appearance based on privilege status
-  const updateButtonAppearance = (status: string) => {
-    if (status === "Granted") {
-      setButtonColor("#28a745"); // Green
-    } else if (status === "Revoked") {
-      setButtonColor("#dc3545"); // Danger (Red)
-    } else if (status === "Pending") {
-      setButtonColor("#ffc107"); // Yellow
-    } else {
-      setButtonColor("#6c757d"); // Default grey
-    }
-  };
 
   // Send command to unlock the door
   const sendCommand = async (command: number) => {
-    if (privilegeStatus === "Granted") {
-      setIsLoading(true);
-      setConnectionStatus("Sending command...");
+    setIsLoading(true);
+    setConnectionStatus("Sending command...");
+    try {
+      const currentDate = new Date();
+      const formattedDate = `${currentDate.getFullYear()}-${String(
+        currentDate.getMonth() + 1
+      ).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`;
 
-      try {
-        // Log the access attempt
-        const currentDate = new Date();
-        const logResponse = await axios.post(
-          `${API_URL}/remote-access/insertAccessLog`,
-          {
-            idNumber: USER_ID_NUMBER,
-            action: `User with ID number ${USER_ID_NUMBER} has attempted to unlock the ERP Laboratory.`,
-            date: currentDate.toLocaleDateString(),
-            time: currentDate.toLocaleTimeString(),
-          }
-        );
+      const formattedTime = `${String(currentDate.getHours()).padStart(
+        2,
+        "0"
+      )}:${String(currentDate.getMinutes()).padStart(2, "0")}:${String(
+        currentDate.getSeconds()
+      ).padStart(2, "0")}`;
 
-        if (logResponse.status === 200) {
-          console.log("Access log inserted successfully.");
-        } else {
-          console.error("Failed to insert access log.");
-        }
+      await axios.post(`${API_URL}/remote-access/insertAccessLog`, {
+        idNumber: USER_ID_NUMBER,
+        action: `Admin has attempted to unlock the ERP Laboratory.`,
+        date: formattedDate, // YYYY-MM-DD format
+        time: formattedTime, // HH:MM:SS format (24-hour)
+      });
 
-        // Send unlock command to Raspberry Pi
-        const response = await axios.post(`${RASPBERRY_PI_URL}/control`, {
-          command, // 1 for unlock
-        });
+      // Just use console.log for now
+      console.log("Command sent:", command);
+      setConnectionStatus("Door unlocked successfully!");
 
-        if (response.status === 200) {
-          Alert.alert("Success", "Door unlocked successfully!");
-          setConnectionStatus("Door unlocked successfully!");
-        } else {
-          throw new Error("Unexpected response from server");
-        }
-      } catch (error) {
-        console.error("Error sending command:", error);
-        Alert.alert("Failed to send command", "An error occurred.");
-        setConnectionStatus("Failed to send command.");
-      } finally {
-        setIsLoading(false);
-      }
-    } else if (privilegeStatus === "Revoked") {
-      Alert.alert(
-        "Access Denied",
-        "Your privilege status has been revoked. Please contact the administrator."
-      );
-    } else if (privilegeStatus === "Pending") {
-      Alert.alert(
-        "Access Pending",
-        "Your access is pending approval. Please contact the administrator."
-      );
+      // // Send unlock command to ESP32
+      // const response = await axios.post(`${ESP32_URL}/control`, {
+      //   command, // 1 for unlock
+      // });
+
+      // if (response.status === 200) {
+      //   Alert.alert("Success", "Door unlocked successfully!");
+      //   setConnectionStatus("Door unlocked successfully!");
+      // } else {
+      //   throw new Error("Unexpected response from ESP32");
+      // }
+    } catch (error) {
+      console.error("Error sending command:", error);
+      Alert.alert("Failed to send command", "An error occurred.");
+      setConnectionStatus("Failed to send command.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -137,11 +95,6 @@ const AccessControl = () => {
     outputRange: ["#28a745", "#1e90ff"],
   });
 
-  // Fetch privilege status on component mount
-  useEffect(() => {
-    fetchPrivilegeStatus();
-  }, []);
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Remote Unlock</Text>
@@ -159,6 +112,7 @@ const AccessControl = () => {
         <TouchableOpacity
           onPress={() => sendCommand(1)}
           style={[styles.innerButton, { backgroundColor: buttonColor }]}
+          disabled={isLoading}
         >
           <Icon name="lock-open" size={50} color="#fff" />
         </TouchableOpacity>

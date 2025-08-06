@@ -17,8 +17,10 @@ import {
 } from "react-native-popup-menu";
 import axios from "axios";
 import { useRouter } from "expo-router";
-import Icon from "react-native-vector-icons/FontAwesome";
+import FontAwesome from "react-native-vector-icons/FontAwesome";
 import API_URL from "@/config/ngrok-api";
+
+const Icon = FontAwesome as any;
 
 interface Account {
   id: number;

@@ -8,7 +8,7 @@ import {
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "expo-router";
-import Icon from "react-native-vector-icons/FontAwesome";
+import FontAwesome from "react-native-vector-icons/FontAwesome";
 import API_URL from "@/config/ngrok-api";
 
 interface AccessLog {
@@ -18,6 +18,9 @@ interface AccessLog {
   date: string;
   time: string;
 }
+
+// Type assertion to fix TypeScript compatibility issues
+const Icon = FontAwesome as any;
 
 const AccessLogs = () => {
   const router = useRouter();
@@ -63,6 +66,7 @@ const AccessLogs = () => {
         `${API_URL}/remote-access/fetchAccessLogs`
       );
       setLogs(response.data.data);
+
       setLoading(false);
     } catch (error) {
       console.error("Error fetching logs:", error);
@@ -95,10 +99,11 @@ const AccessLogs = () => {
         {logs.map((log, index) => (
           <View key={log.id} style={styles.card}>
             <Text style={styles.cardTitle}>Log #{logs.length - index}</Text>
-            <Text style={styles.cardText}>ID Number: {log.idNumber}</Text>
-            <Text style={styles.cardText}>Action: {log.action}</Text>
-            <Text style={styles.cardText}>Date: {formatDate(log.date)}</Text>
-            <Text style={styles.cardText}>Time: {formatTime(log.time)}</Text>
+            <Text style={styles.id}>ID: {log.idNumber}</Text>
+            <Text style={styles.action}>{log.action}</Text>
+            <Text style={styles.dateTime}>
+              {formatDate(log.date)} | {formatTime(log.time)}
+            </Text>
           </View>
         ))}
       </ScrollView>
@@ -141,9 +146,18 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10,
   },
-  cardText: {
+  id: {
+    fontSize: 15,
+    marginBottom: 5,
+    color: "#1A73E8",
+  },
+  action: {
     fontSize: 16,
     marginBottom: 5,
+  },
+  dateTime: {
+    fontSize: 14,
+    color: "#666",
   },
 });
 

@@ -42,7 +42,7 @@ const ClassList = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   const fetchClasses = useCallback(async () => {
-    if (user?.idNumber && user.userType === "Faculty") {
+    if (user?.idNumber && user.userType === "Lab-in-Charge") {
       try {
         const response = await axios.get(
           `${API_URL}/schedules/user-classes/${user?.idNumber}`
