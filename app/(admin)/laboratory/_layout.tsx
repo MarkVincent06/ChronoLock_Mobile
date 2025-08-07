@@ -12,6 +12,12 @@ const LaboratoryLayout = () => {
             headerShown: false,
           }}
         />
+        <Stack.Screen
+          name="occupancy"
+          options={{
+            headerShown: false,
+          }}
+        />
         {/* <Stack.Screen
           name="class-list"
           options={{

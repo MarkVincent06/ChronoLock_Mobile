@@ -19,6 +19,27 @@ const LaboratoryIndex = () => {
       <Text style={styles.title}>ERP Laboratory Management</Text>
 
       <View style={[styles.buttonContainer, { marginBottom: 25 }]}>
+        {/* Lab Occupancy */}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => router.push("/laboratory/occupancy")}
+        >
+          <View style={styles.iconAndText}>
+            <Ionicons
+              name="people-outline"
+              size={20}
+              color="#007BFF"
+              style={styles.icon}
+            />
+            <Text style={styles.buttonText}>Lab Occupancy</Text>
+          </View>
+          <Text style={styles.description}>
+            Monitor lab availability and occupancy status, view current user
+            count, and check active class schedules with instructor and course
+            details.
+          </Text>
+        </TouchableOpacity>
+
         {/* Class List */}
         {/* <TouchableOpacity
           style={styles.button}

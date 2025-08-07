@@ -24,8 +24,8 @@ export default function Onboarding() {
       <View style={styles.textContainer}>
         <Text style={styles.mainText}>Welcome to ChronoLock</Text>
         <Text style={styles.subText}>
-          Effortless control over your laboratory access with the power of
-          Bluetooth technology.
+          Effortless control over your laboratory access with the power of wifi
+          technology.
         </Text>
       </View>
 
