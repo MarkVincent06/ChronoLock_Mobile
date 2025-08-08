@@ -56,8 +56,8 @@ const LaboratoryIndex = () => {
             <Text style={styles.buttonText}>Class Record</Text>
           </View>
           <Text style={styles.description}>
-            Update and monitor your classes, providing a comprehensive overview
-            of schedules and activities.
+            Monitor and update your class lists, giving more flexibility and
+            control regarding how the classes are handled.
           </Text>
         </TouchableOpacity>
 
