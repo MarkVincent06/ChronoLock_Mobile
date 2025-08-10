@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   FlatList,
   Alert,
+  RefreshControl,
 } from "react-native";
 import React from "react";
 import { useRouter } from "expo-router";
@@ -13,6 +14,7 @@ import { Picker } from "@react-native-picker/picker";
 import axios from "axios";
 import API_URL from "@/config/ngrok-api";
 import MaterialIcon from "react-native-vector-icons/MaterialIcons";
+import usePullToRefresh from "@/hooks/usePullToRefresh";
 
 const Icon = Ionicon as any;
 const MaterialIconComponent = MaterialIcon as any;
@@ -47,27 +49,33 @@ const AppointedSchedule = () => {
     return `${hoursFormatted}:${minutesString} ${ampm}`;
   };
 
-  React.useEffect(() => {
-    const fetchSchedules = async () => {
-      setLoading(true);
-      try {
-        const res = await axios.get(`${API_URL}/schedules/`);
-        if (res.data && res.data.success && Array.isArray(res.data.data)) {
-          setSchedules(res.data.data);
-        } else {
-          setSchedules([]);
-          alert(res.data.message || "No schedules found.");
-        }
-      } catch (error: any) {
+  const fetchSchedules = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API_URL}/schedules/`);
+      if (res.data && res.data.success && Array.isArray(res.data.data)) {
+        setSchedules(res.data.data);
+      } else {
         setSchedules([]);
-        alert(
-          error.response?.data?.message ||
-            "An error occurred while fetching schedules."
-        );
-      } finally {
-        setLoading(false);
+        alert(res.data.message || "No schedules found.");
       }
-    };
+    } catch (error: any) {
+      setSchedules([]);
+      alert(
+        error.response?.data?.message ||
+          "An error occurred while fetching schedules."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchData = async () => {
+    await fetchSchedules();
+  };
+  const { refreshing, onRefresh } = usePullToRefresh(fetchData);
+
+  React.useEffect(() => {
     fetchSchedules();
   }, []);
 
@@ -272,6 +280,9 @@ const AppointedSchedule = () => {
           data={sortedSchedules}
           keyExtractor={(item) => String(item.scheduleID)}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
           ListEmptyComponent={
             <View style={{ alignItems: "center", marginTop: 40 }}>
               <Text style={{ color: "#888", fontSize: 16 }}>
@@ -281,72 +292,100 @@ const AppointedSchedule = () => {
           }
           renderItem={({ item }) => (
             <View style={styles.scheduleItemContainer}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.scheduleLabel}>
-                  Prog, Yr & Section:{" "}
-                  <Text style={styles.scheduleValue}>
-                    {item.program} {item.year}-{item.section}
-                  </Text>
+              <View style={styles.topRow}>
+                <Text style={styles.title} numberOfLines={1}>
+                  {item.courseCode} · {item.courseName}
                 </Text>
-                <Text style={styles.scheduleLabel}>
-                  Course:{" "}
-                  <Text style={styles.scheduleValue}>
-                    {item.courseCode} - {item.courseName}
-                  </Text>
-                </Text>
-                <Text style={styles.scheduleLabel}>
-                  Status:{" "}
-                  <Text
-                    style={[
-                      styles.scheduleValue,
-                      item.scheduleStatus === "With Class"
-                        ? { color: "green" }
-                        : { color: "red" },
-                    ]}
-                  >
+                <View
+                  style={[
+                    styles.statusBadge,
+                    item.scheduleStatus === "With Class"
+                      ? styles.statusWithClass
+                      : styles.statusNoClass,
+                  ]}
+                >
+                  <Text style={styles.statusBadgeText}>
                     {item.scheduleStatus}
                   </Text>
-                </Text>
-                <Text style={styles.scheduleLabel}>
-                  Time:{" "}
-                  <Text style={styles.scheduleValue}>
+                </View>
+              </View>
+
+              <View style={styles.metaChipsRow}>
+                <View style={styles.chip}>
+                  <MaterialIconComponent
+                    name="school"
+                    size={12}
+                    color="#555"
+                    style={{ marginRight: 4 }}
+                  />
+                  <Text style={styles.chipText}>
+                    {item.program} {item.year}-{item.section}
+                  </Text>
+                </View>
+                <View style={styles.chip}>
+                  <MaterialIconComponent
+                    name="event"
+                    size={12}
+                    color="#555"
+                    style={{ marginRight: 4 }}
+                  />
+                  <Text style={styles.chipText}>{item.day}</Text>
+                </View>
+                <View style={styles.chip}>
+                  <MaterialIconComponent
+                    name="schedule"
+                    size={12}
+                    color="#555"
+                    style={{ marginRight: 4 }}
+                  />
+                  <Text style={styles.chipText}>
                     {formatTime(item.startTime)} - {formatTime(item.endTime)}
                   </Text>
-                </Text>
-                <Text style={styles.scheduleLabel}>
-                  Day: <Text style={styles.scheduleValue}>{item.day}</Text>
-                </Text>
-                <View style={styles.buttonRow}>
-                  <TouchableOpacity
-                    style={styles.deleteButton}
-                    onPress={() => handleDeleteSchedule(item.scheduleID)}
-                  >
-                    <MaterialIconComponent
-                      name="delete"
-                      size={18}
-                      color="#fff"
-                      style={{ marginRight: 6 }}
-                    />
-                    <Text style={styles.deleteButtonText}>Delete Schedule</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.editButton}
-                    onPress={() =>
-                      router.push({
-                        pathname: "/laboratory/edit-schedule",
-                        params: { scheduleID: item.scheduleID },
-                      })
-                    }
-                  >
-                    <Icon
-                      name="pencil"
-                      size={16}
-                      color="#fff"
-                      style={{ marginRight: 6 }}
-                    />
-                    <Text style={styles.editButtonText}>Edit Schedule</Text>
-                  </TouchableOpacity>
                 </View>
+              </View>
+
+              <View style={styles.instructorRow}>
+                <MaterialIconComponent
+                  name="person"
+                  size={14}
+                  color="#555"
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={styles.instructor} numberOfLines={1}>
+                  {item.instFirstName} {item.instLastName}
+                </Text>
+              </View>
+
+              <View style={styles.buttonRow}>
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={() => handleDeleteSchedule(item.scheduleID)}
+                >
+                  <MaterialIconComponent
+                    name="delete"
+                    size={16}
+                    color="#fff"
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text style={styles.deleteButtonText}>Delete</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/laboratory/edit-schedule",
+                      params: { scheduleID: item.scheduleID },
+                    })
+                  }
+                >
+                  <Icon
+                    name="pencil"
+                    size={14}
+                    color="#fff"
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text style={styles.editButtonText}>Edit</Text>
+                </TouchableOpacity>
               </View>
             </View>
           )}
@@ -391,29 +430,74 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   scheduleItemContainer: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    backgroundColor: "#f9f9f9",
+    backgroundColor: "#fff",
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#e0e0e0",
-    padding: 16,
-    marginBottom: 14,
+    borderColor: "#e7e7e7",
+    padding: 12,
+    marginBottom: 12,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 1,
+    elevation: 1,
   },
-  scheduleLabel: {
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  title: {
+    flex: 1,
     fontSize: 14,
-    color: "#333",
-    marginBottom: 2,
-    fontWeight: "600",
+    fontWeight: "700",
+    color: "#222",
+    marginRight: 10,
   },
-  scheduleValue: {
-    fontWeight: "400",
+  statusBadge: {
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+  },
+  statusWithClass: {
+    backgroundColor: "#e7f7ef",
+  },
+  statusNoClass: {
+    backgroundColor: "#fde8e8",
+  },
+  statusBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#2e7d32",
+  },
+  metaChipsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: 8,
+  },
+  chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#e5e5e5",
+    borderRadius: 14,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: "#f9fafb",
+  },
+  chipText: {
+    fontSize: 11,
     color: "#444",
+  },
+  instructorRow: {
+    marginTop: 8,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  instructor: {
+    fontSize: 12,
+    color: "#666",
   },
   buttonRow: {
     flexDirection: "row",
@@ -431,7 +515,7 @@ const styles = StyleSheet.create({
   editButtonText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 13,
+    fontSize: 12,
   },
   deleteButton: {
     backgroundColor: "#e53935",
@@ -445,6 +529,6 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 13,
+    fontSize: 12,
   },
 });
