@@ -25,7 +25,7 @@ const LaboratoryLayout = () => {
           }}
         />
         <Stack.Screen
-          name="attendance-folder"
+          name="section-folder"
           options={{
             headerShown: false,
           }}

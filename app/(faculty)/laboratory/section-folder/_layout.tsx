@@ -7,7 +7,13 @@ const AttendanceLayout = () => {
     <>
       <Stack>
         <Stack.Screen
-          name="class"
+          name="section"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="student-list"
           options={{
             headerShown: false,
           }}

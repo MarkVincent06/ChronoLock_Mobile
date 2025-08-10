@@ -61,23 +61,23 @@ const LaboratoryIndex = () => {
           </Text>
         </TouchableOpacity>
 
-        {/* Attendance */}
+        {/* Sections Handled */}
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push("/laboratory/attendance-folder/class")}
+          onPress={() => router.push("/laboratory/section-folder/section")}
         >
           <View style={styles.iconAndText}>
             <Ionicons
-              name="calendar-outline"
-              size={20}
+              name="clipboard-outline"
+              size={18}
               color="#007BFF"
               style={styles.icon}
             />
-            <Text style={styles.buttonText}>Class Attendance</Text>
+            <Text style={styles.buttonText}>Sections Handled</Text>
           </View>
           <Text style={styles.description}>
-            Update and monitor attendance records of your students, and generate
-            detailed reports.
+            View students in your sections, update their enrollment status,
+            monitor attendance records, and manage student remarks.
           </Text>
         </TouchableOpacity>
 

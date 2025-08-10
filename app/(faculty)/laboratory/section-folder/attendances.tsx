@@ -44,7 +44,10 @@ const Ionicons = Ion as any;
 const ClassAttendance = () => {
   const router = useRouter();
   const { scheduleID } = useLocalSearchParams<{ scheduleID: string }>();
-  const { courseName } = useLocalSearchParams<{ courseName: string }>();
+  const { section: sectionString } = useLocalSearchParams<{
+    section: string;
+  }>();
+  const section = sectionString ? JSON.parse(sectionString) : null;
   const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
   const [filteredData, setFilteredData] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -424,8 +427,13 @@ const ClassAttendance = () => {
         <Text style={styles.headerTitle}>My Class Attendance</Text>
       </View>
 
-      {/* Display Course Name */}
-      {courseName && <Text style={styles.courseName}>{courseName}</Text>}
+      {/* Display Section Details */}
+      {section && (
+        <Text style={styles.section}>
+          {section.program} {section.year}
+          {section.section} - {section.courseName}
+        </Text>
+      )}
 
       <View style={styles.searchContainer}>
         <TextInput
@@ -603,6 +611,11 @@ const styles = StyleSheet.create({
     color: "#333",
     textAlign: "center",
     flex: 1,
+  },
+  section: {
+    fontSize: 16,
+    color: "#555",
+    textAlign: "center",
   },
   courseName: {
     fontSize: 16,
