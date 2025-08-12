@@ -11,9 +11,11 @@ import {
   RefreshControl,
 } from "react-native";
 import { useRouter } from "expo-router";
-import Icon from "react-native-vector-icons/FontAwesome";
+import IonIcon from "react-native-vector-icons/FontAwesome";
 import API_URL from "@/config/ngrok-api";
 import usePullToRefresh from "@/hooks/usePullToRefresh";
+// Type assertion to fix TypeScript compatibility issues
+const Icon = IonIcon as any;
 
 const LaboratorySchedule = () => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -322,6 +324,21 @@ const LaboratorySchedule = () => {
         <Text style={styles.header}>ERP Laboratory Schedule</Text>
       </View>
 
+      <View style={{ marginBottom: 10 }}>
+        <TouchableOpacity
+          style={styles.myScheduleButton}
+          onPress={() => router.push("/laboratory/assigned-schedule")}
+        >
+          <Icon
+            name="calendar"
+            size={18}
+            color="#fff"
+            style={{ marginRight: 8 }}
+          />
+          <Text style={styles.myScheduleButtonText}>My Schedule</Text>
+        </TouchableOpacity>
+      </View>
+
       <ScrollView
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -459,6 +476,19 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     flex: 1,
+  },
+  myScheduleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+    backgroundColor: "#007bff",
+    borderRadius: 5,
+    justifyContent: "center",
+  },
+  myScheduleButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
   },
   navigation: {
     flexDirection: "row",
