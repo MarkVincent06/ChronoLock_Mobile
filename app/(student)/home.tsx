@@ -70,6 +70,35 @@ const Home = () => {
     return `${hoursFormatted}:${minutesString} ${ampm}`;
   };
 
+  const parseTimeToMinutes = (time: string) => {
+    if (!time) return 0;
+    const [h, m] = time.split(":").map(Number);
+    return h * 60 + m;
+  };
+
+  const getScheduleStatus = (startTime: string, endTime: string) => {
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    const start = parseTimeToMinutes(startTime);
+    const end = parseTimeToMinutes(endTime);
+
+    if (nowMinutes < start) return "Upcoming";
+    if (nowMinutes >= start && nowMinutes <= end) return "Ongoing";
+    return "Ended";
+  };
+
+  const getBadgeStyle = (status: string) => {
+    switch (status) {
+      case "Ongoing":
+        return styles.statusBadgeOngoing;
+      case "Upcoming":
+        return styles.statusBadgeUpcoming;
+      case "Ended":
+      default:
+        return styles.statusBadgeEnded;
+    }
+  };
+
   // Function to fetch all necessary data
   const fetchData = async () => {
     try {
@@ -224,6 +253,18 @@ const Home = () => {
             todaySchedule.map((schedule, index) => (
               <View key={index}>
                 <View style={styles.scheduleItem}>
+                  {/* Status Badge */}
+                  {(() => {
+                    const status = getScheduleStatus(
+                      schedule.startTime,
+                      schedule.endTime
+                    );
+                    return (
+                      <View style={[styles.statusBadge, getBadgeStyle(status)]}>
+                        <Text style={styles.statusBadgeText}>{status}</Text>
+                      </View>
+                    );
+                  })()}
                   <Text style={styles.scheduleIndex}>{index + 1}.</Text>
                   <Image
                     source={
@@ -404,6 +445,29 @@ const styles = StyleSheet.create({
   scheduleItem: {
     flexDirection: "row",
     marginBottom: 16,
+    position: "relative",
+  },
+  statusBadge: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+  },
+  statusBadgeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  statusBadgeOngoing: {
+    backgroundColor: "#10B981", // green
+  },
+  statusBadgeUpcoming: {
+    backgroundColor: "#3B82F6", // blue
+  },
+  statusBadgeEnded: {
+    backgroundColor: "#6B7280", // gray
   },
   scheduleIndex: {
     fontSize: 16,

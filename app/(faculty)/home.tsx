@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, View, ScrollView, Image } from "react-native";
+import {
+  StyleSheet,
+  View,
+  ScrollView,
+  Image,
+  RefreshControl,
+} from "react-native";
 import { Card, Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useUserContext } from "@/context/UserContext";
@@ -39,6 +45,76 @@ const Home = () => {
 
     return `${hoursFormatted}:${minutesString} ${ampm}`;
   };
+
+  const parseTimeToMinutes = (time: string) => {
+    if (!time) return 0;
+    const [h, m] = time.split(":").map(Number);
+    return h * 60 + m;
+  };
+
+  const getScheduleStatus = (startTime: string, endTime: string) => {
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    const start = parseTimeToMinutes(startTime);
+    const end = parseTimeToMinutes(endTime);
+
+    if (nowMinutes < start) return "Upcoming";
+    if (nowMinutes >= start && nowMinutes <= end) return "Ongoing";
+    return "Ended";
+  };
+
+  const getBadgeStyle = (status: string) => {
+    switch (status) {
+      case "Ongoing":
+        return styles.statusBadgeOngoing;
+      case "Upcoming":
+        return styles.statusBadgeUpcoming;
+      case "Ended":
+      default:
+        return styles.statusBadgeEnded;
+    }
+  };
+
+  // Unified refetch function for pull-to-refresh
+  const fetchAll = async () => {
+    if (!(user?.idNumber && user.userType === "Faculty")) return;
+    try {
+      // academic term
+      const termResp = await axios.get(`${API_URL}/schedules/academic-term`);
+      if (termResp.data?.data) {
+        const { schoolYear, semester } = termResp.data.data;
+        setAcademicTerm(`SY ${schoolYear} | ${semester}`);
+      }
+      // chats handled
+      const chatsResp = await axios.get(
+        `${API_URL}/groups/fetchFilteredGroups/${user.idNumber}`
+      );
+      setTotalChats(chatsResp.data?.length || 0);
+      // sections handled
+      const sectResp = await axios.get(
+        `${API_URL}/schedules/user-classes/${user.idNumber}`
+      );
+      setSectionsHandled(sectResp.data?.data?.length || 0);
+      // total students
+      const studResp = await axios.get(
+        `${API_URL}/student-masterlists/faculty/${user.idNumber}/total-students`
+      );
+      setTotalStudents(studResp.data?.totalStudents || 0);
+      // today's schedule
+      const todayResp = await axios.get(
+        `${API_URL}/schedules/user-classes/today/${user.idNumber}`
+      );
+      const list = todayResp.data?.data || [];
+      setTodayScheduleCount(list.length || 0);
+      setTodaySchedule(list.length > 0 ? list : []);
+    } catch (err) {
+      // keep silent; individual errors are already logged in effect
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const { refreshing, onRefresh } = usePullToRefresh(fetchAll);
 
   useEffect(() => {
     if (user?.idNumber && user.userType === "Faculty") {
@@ -172,7 +248,12 @@ const Home = () => {
   ];
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
       {/* Welcome Card */}
       <Card style={styles.welcomeCard}>
         <Card.Content style={styles.cardContent}>
@@ -218,6 +299,18 @@ const Home = () => {
             todaySchedule.map((schedule, index) => (
               <View key={index}>
                 <View style={styles.scheduleItem}>
+                  {/* Status Badge */}
+                  {(() => {
+                    const status = getScheduleStatus(
+                      schedule.startTime,
+                      schedule.endTime
+                    );
+                    return (
+                      <View style={[styles.statusBadge, getBadgeStyle(status)]}>
+                        <Text style={styles.statusBadgeText}>{status}</Text>
+                      </View>
+                    );
+                  })()}
                   <Text style={styles.scheduleIndex}>{index + 1}.</Text>
                   <Image
                     source={
@@ -349,6 +442,29 @@ const styles = StyleSheet.create({
   scheduleItem: {
     flexDirection: "row",
     marginBottom: 16,
+    position: "relative",
+  },
+  statusBadge: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+  },
+  statusBadgeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  statusBadgeOngoing: {
+    backgroundColor: "#10B981", // green
+  },
+  statusBadgeUpcoming: {
+    backgroundColor: "#3B82F6", // blue
+  },
+  statusBadgeEnded: {
+    backgroundColor: "#6B7280", // gray
   },
   scheduleIndex: {
     fontSize: 16,

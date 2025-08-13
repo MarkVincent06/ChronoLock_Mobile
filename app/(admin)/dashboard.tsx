@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { Card, Divider } from "react-native-paper";
 import { LineChart } from "react-native-chart-kit";
@@ -13,6 +14,7 @@ import FontAwesome from "react-native-vector-icons/FontAwesome";
 import axios from "axios";
 import API_URL from "@/config/ngrok-api";
 import { useUserContext } from "@/context/UserContext";
+import usePullToRefresh from "@/hooks/usePullToRefresh";
 
 interface User {
   id: number;
@@ -50,83 +52,6 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     if (user?.idNumber && user.userType === "Admin") {
-      // Fetch users
-      const fetchUsers = async () => {
-        try {
-          const response = await axios.get<User[]>(
-            `${API_URL}/users/fetchUsers`
-          );
-          const users = response.data;
-
-          // Calculate totals based on userType
-          const total = users.length;
-          const faculty = users.filter(
-            (user) => user.userType === "Faculty"
-          ).length;
-          const students = users.filter(
-            (user) => user.userType === "Student"
-          ).length;
-
-          setTotalUsers(total);
-          setTotalFaculty(faculty);
-          setTotalStudents(students);
-        } catch (error) {
-          console.error("Error fetching users:", error);
-        }
-      };
-
-      // Fetch total groups
-      const fetchGroups = async () => {
-        try {
-          const response = await axios.get(`${API_URL}/groups/fetchAllgroups`);
-          setTotalGroups(response.data.length);
-        } catch (error) {
-          console.error("Error fetching groups:", error);
-        }
-      };
-
-      // Fetch recent logs
-      const fetchLogs = async () => {
-        try {
-          const response = await axios.get<{ logs: Log[] }>(
-            `${API_URL}/users/fetchUserLogs`
-          );
-          setRecentLogs(response.data.logs);
-        } catch (error) {
-          console.error("Error fetching logs:", error);
-        }
-      };
-
-      // Fetch attendance trends
-      const fetchAttendanceTrends = async () => {
-        try {
-          const response = await axios.get(
-            `${API_URL}/attendances/admin/attendance-trends`
-          );
-          const trends = response.data;
-
-          const formatDate = (isoString: string | number | Date) => {
-            const date = new Date(isoString);
-            return `${date.getMonth() + 1}/${date.getDate()}`; // MM/DD format
-          };
-
-          const labels = trends.map(
-            (item: { date: string | number | Date }, index: number) =>
-              index % 2 === 0 ? formatDate(item.date) : " " // Avoid empty string as label
-          );
-
-          const data = trends.map((item: { count: any }) => item.count);
-
-          setAttendanceTrends({
-            labels,
-            datasets: [{ data }],
-          });
-        } catch (error) {
-          console.error("Error fetching attendance trends:", error);
-        } finally {
-          setLoadingAttendance(false);
-        }
-      };
       fetchUsers();
       fetchGroups();
       fetchLogs();
@@ -134,8 +59,87 @@ const AdminDashboard = () => {
     }
   }, []);
 
+  const fetchUsers = async () => {
+    try {
+      const response = await axios.get<User[]>(`${API_URL}/users/fetchUsers`);
+      const users = response.data;
+      const total = users.length;
+      const faculty = users.filter(
+        (user) => user.userType === "Faculty"
+      ).length;
+      const students = users.filter(
+        (user) => user.userType === "Student"
+      ).length;
+      setTotalUsers(total);
+      setTotalFaculty(faculty);
+      setTotalStudents(students);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
+  };
+
+  const fetchGroups = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/groups/fetchAllgroups`);
+      setTotalGroups(response.data.length);
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+    }
+  };
+
+  const fetchLogs = async () => {
+    try {
+      const response = await axios.get<{ logs: Log[] }>(
+        `${API_URL}/users/fetchUserLogs`
+      );
+      setRecentLogs(response.data.logs);
+    } catch (error) {
+      console.error("Error fetching logs:", error);
+    }
+  };
+
+  const fetchAttendanceTrends = async () => {
+    try {
+      setLoadingAttendance(true);
+      const response = await axios.get(
+        `${API_URL}/attendances/admin/attendance-trends`
+      );
+      const trends = response.data;
+      const formatDate = (isoString: string | number | Date) => {
+        const date = new Date(isoString);
+        return `${date.getMonth() + 1}/${date.getDate()}`;
+      };
+      const labels = trends.map(
+        (item: { date: string | number | Date }, index: number) =>
+          index % 2 === 0 ? formatDate(item.date) : " "
+      );
+      const data = trends.map((item: { count: any }) => item.count);
+      setAttendanceTrends({ labels, datasets: [{ data }] });
+    } catch (error) {
+      console.error("Error fetching attendance trends:", error);
+    } finally {
+      setLoadingAttendance(false);
+    }
+  };
+
+  const fetchAll = async () => {
+    await Promise.all([
+      fetchUsers(),
+      fetchGroups(),
+      fetchLogs(),
+      fetchAttendanceTrends(),
+    ]);
+  };
+
+  const { refreshing, onRefresh } = usePullToRefresh(fetchAll);
+
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
       <Text style={styles.header}>Admin Dashboard</Text>
 
       {/* Summary Cards */}
