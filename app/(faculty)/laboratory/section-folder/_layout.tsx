@@ -24,6 +24,12 @@ const AttendanceLayout = () => {
             headerShown: false,
           }}
         />
+        <Stack.Screen
+          name="record-attendance"
+          options={{
+            headerShown: false,
+          }}
+        />
       </Stack>
     </>
   );

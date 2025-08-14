@@ -265,32 +265,6 @@ const AccessControl = () => {
     outputRange: ["#10B981", "#06B6D4"],
   });
 
-  const getStatusColor = () => {
-    switch (privilegeStatus) {
-      case "Granted":
-        return "#10B981";
-      case "Revoked":
-        return "#EF4444";
-      case "Pending":
-        return "#F59E0B";
-      default:
-        return "#6B7280";
-    }
-  };
-
-  const getStatusIcon = () => {
-    switch (privilegeStatus) {
-      case "Granted":
-        return "check-circle";
-      case "Revoked":
-        return "close-circle";
-      case "Pending":
-        return "clock";
-      default:
-        return "help-circle";
-    }
-  };
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <LinearGradient

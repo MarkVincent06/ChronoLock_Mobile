@@ -76,8 +76,9 @@ const LaboratoryIndex = () => {
             <Text style={styles.buttonText}>Sections Handled</Text>
           </View>
           <Text style={styles.description}>
-            View students in your sections, update their enrollment status,
-            monitor attendance records, and manage student remarks.
+            View and manage the sections you handle, organize student lists,
+            take attendance in real-time, and review or update attendance
+            records.
           </Text>
         </TouchableOpacity>
 

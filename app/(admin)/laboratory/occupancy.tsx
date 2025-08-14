@@ -206,7 +206,7 @@ const LaboratoryOccupancy: React.FC = () => {
       return "Class starting soon";
     }
     if (hasActiveSchedule && status === "Occupied" && currentUsers > 0) {
-      return "Classes is in session";
+      return "Class is in session";
     }
     return "";
   };

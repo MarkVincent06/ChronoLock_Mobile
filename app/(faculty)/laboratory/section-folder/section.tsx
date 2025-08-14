@@ -58,8 +58,10 @@ const ClassList = () => {
         const response = await axios.get(
           `${API_URL}/schedules/user-classes/${user?.idNumber}`
         );
-        setClasses(response.data.data);
-        setFilteredClasses(response.data.data);
+        const data: ClassItem[] = response.data.data;
+        setClasses(data);
+        // Always prioritize ongoing classes on fresh data
+        setFilteredClasses(sortByOngoingFirst(data));
       } catch (error) {
         if (axios.isAxiosError(error)) {
           console.error("Failed to fetch classes:", error.message);
@@ -74,8 +76,55 @@ const ClassList = () => {
 
   useEffect(() => {
     setLoading(true);
-    fetchClasses().finally(() => setLoading(false));
+    fetchClasses()
+      .then(() => {
+        // After initial fetch, ensure ongoing classes are prioritized
+        setFilteredClasses((prev) =>
+          prev.length ? sortByOngoingFirst(prev) : prev
+        );
+      })
+      .finally(() => setLoading(false));
   }, [fetchClasses]);
+
+  // Determine if a class is ongoing based on current day and time
+  const isClassOngoing = (item: ClassItem): boolean => {
+    if (!item?.day || !item?.startTime || !item?.endTime) return false;
+    const days = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+    const now = new Date();
+    const currentDayName = days[now.getDay()];
+    if ((item.day || "").toLowerCase() !== currentDayName.toLowerCase()) {
+      return false;
+    }
+    const toMinutes = (t: string) => {
+      const [hh, mm] = t.split(":");
+      const hours = parseInt(hh, 10);
+      const minutes = parseInt(mm || "0", 10);
+      return hours * 60 + minutes;
+    };
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    const start = toMinutes(item.startTime);
+    const end = toMinutes(item.endTime);
+    return nowMinutes >= start && nowMinutes <= end;
+  };
+
+  const sortByOngoingFirst = (list: ClassItem[]): ClassItem[] => {
+    const withFlag = list.map(
+      (c) => ({ ...c, __ongoing: isClassOngoing(c) } as any)
+    );
+    withFlag.sort((a: any, b: any) => {
+      if (a.__ongoing === b.__ongoing) return 0;
+      return a.__ongoing ? -1 : 1;
+    });
+    return withFlag.map(({ __ongoing, ...rest }: any) => rest as ClassItem);
+  };
 
   const formatTime = (timeString: string) => {
     const [hours, minutes] = timeString.split(":").map(Number);
@@ -100,7 +149,7 @@ const ClassList = () => {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     if (query.trim() === "") {
-      setFilteredClasses(classes);
+      setFilteredClasses(sortByOngoingFirst(classes));
     } else {
       const filtered = classes.filter(
         (item) =>
@@ -108,7 +157,7 @@ const ClassList = () => {
           item.courseCode.toLowerCase().includes(query.toLowerCase()) ||
           item.program.toLowerCase().includes(query.toLowerCase())
       );
-      setFilteredClasses(filtered);
+      setFilteredClasses(sortByOngoingFirst(filtered));
     }
   };
 
@@ -142,7 +191,7 @@ const ClassList = () => {
     router.push({
       pathname: "/laboratory/section-folder/attendances",
       params: {
-        scheduleID: item.scheduleID.toString(),
+        scheduleID: item.scheduleID,
         section: JSON.stringify(section),
       },
     });
@@ -159,7 +208,25 @@ const ClassList = () => {
     router.push({
       pathname: "/laboratory/section-folder/student-list",
       params: {
-        classID: item.classID.toString(),
+        classID: item.classID,
+        section: JSON.stringify(section),
+      },
+    });
+  };
+
+  const handleTakeAttendance = (item: ClassItem) => {
+    const section = {
+      courseName: item.courseName,
+      program: item.program,
+      year: item.year,
+      section: item.section,
+    };
+
+    router.push({
+      pathname: "/laboratory/section-folder/record-attendance",
+      params: {
+        scheduleID: item.scheduleID.toString(),
+        classID: item.classID,
         section: JSON.stringify(section),
       },
     });
@@ -244,6 +311,21 @@ const ClassList = () => {
             <View style={styles.classContent}>
               <Text style={styles.courseName}>{item.courseName}</Text>
 
+              {isClassOngoing(item) && (
+                <View style={styles.ongoingBanner}>
+                  <Text style={styles.ongoingText}>Class is ongoing</Text>
+                  <TouchableOpacity
+                    style={styles.ongoingButton}
+                    onPress={() => handleTakeAttendance(item)}
+                  >
+                    <Ionicons name="checkmark-circle" size={16} color="#fff" />
+                    <Text style={styles.ongoingButtonText}>
+                      Take Attendance
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
               <View style={styles.detailRow}>
                 <Ionicons name="calendar-outline" size={16} color="#666" />
                 <Text style={styles.detailText}>
@@ -274,11 +356,7 @@ const ClassList = () => {
                 style={[styles.actionButton, styles.attendanceButton]}
                 onPress={() => handleAttendance(item)}
               >
-                <Ionicons
-                  name="checkmark-circle-outline"
-                  size={20}
-                  color="#fff"
-                />
+                <Ionicons name="document-text-outline" size={20} color="#fff" />
                 <Text style={styles.actionButtonText}>Attendance</Text>
               </TouchableOpacity>
 
@@ -456,6 +534,38 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
     overflow: "hidden",
+  },
+  ongoingBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#FEF3C7",
+    borderColor: "#F59E0B",
+    borderWidth: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    marginBottom: 12,
+  },
+  ongoingText: {
+    color: "#92400E",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  ongoingButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#10B981",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
+  ongoingButtonText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "700",
+    marginLeft: 6,
   },
   classHeader: {
     backgroundColor: "#4caf50",
