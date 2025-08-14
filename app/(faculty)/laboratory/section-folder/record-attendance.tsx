@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -42,6 +42,7 @@ const RecordAttendance = () => {
   const [filteredStudents, setFilteredStudents] = useState<StudentRow[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const pageSize = 10;
+  const listRef = useRef<FlatList<any>>(null);
 
   const handleSearch = (text: string) => {
     setSearchQuery(text);
@@ -175,6 +176,12 @@ const RecordAttendance = () => {
     return filtered.slice(start, start + pageSize);
   }, [filtered, currentPage]);
 
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top of list when paginating
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -217,6 +224,7 @@ const RecordAttendance = () => {
       ) : (
         <>
           <FlatList
+            ref={listRef}
             data={pageData}
             keyExtractor={(item) => item.userID}
             renderItem={({ item }) => (
@@ -296,7 +304,7 @@ const RecordAttendance = () => {
           {/* Pagination */}
           <View style={styles.paginationContainer}>
             <TouchableOpacity
-              onPress={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              onPress={() => goToPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
               style={[
                 styles.pageButton,
@@ -309,7 +317,7 @@ const RecordAttendance = () => {
               Page {currentPage} of {totalPages}
             </Text>
             <TouchableOpacity
-              onPress={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              onPress={() => goToPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
               style={[
                 styles.pageButton,
