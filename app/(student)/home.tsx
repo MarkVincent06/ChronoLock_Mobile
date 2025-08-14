@@ -112,7 +112,7 @@ const Home = () => {
             setAcademicTerm(`SY ${schoolYear} | ${semester}`);
           } catch (error) {
             if (axios.isAxiosError(error)) {
-              console.log("Failed to fetch academic term:", log.message);
+              console.log("Failed to fetch academic term:", error);
             } else {
               console.log("Failed to fetch academic term:", error);
             }

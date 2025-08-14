@@ -15,7 +15,7 @@ import FontAwesome from "react-native-vector-icons/MaterialCommunityIcons";
 import { useUserContext } from "@/context/UserContext";
 import { useRouter } from "expo-router";
 import API_URL from "@/config/ngrok-api";
-
+import ESP32_URL from "@/config/esp32-api";
 // Type assertion to fix TypeScript compatibility issues
 const Icon = FontAwesome as any;
 
@@ -31,9 +31,6 @@ const AccessControl = () => {
   const animatedValue = useRef(new Animated.Value(0)).current;
   const pulseAnimation = useRef(new Animated.Value(1)).current;
   const fadeAnimation = useRef(new Animated.Value(0)).current;
-
-  // ESP32 endpoint (update IP as needed)
-  const ESP32_URL = "http://10.173.66.110:5000";
   const USER_ID_NUMBER = user?.idNumber;
 
   // Fetch the privilege status from the backend
@@ -300,14 +297,8 @@ const AccessControl = () => {
         colors={["#F8FAFC", "#F1F5F9", "#E2E8F0"]}
         style={styles.container}
       >
-        {/* Header with back button */}
+        {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Icon name="arrow-left" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
           <Text style={styles.headerTitle}>Remote Access</Text>
           <View style={styles.headerSpacer} />
         </View>
@@ -405,21 +396,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#E2E8F0",
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#374151",
-    justifyContent: "center",
-    alignItems: "center",
   },
   headerTitle: {
     fontSize: 20,

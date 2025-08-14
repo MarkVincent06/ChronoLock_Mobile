@@ -15,7 +15,7 @@ import FontAwesome from "react-native-vector-icons/MaterialCommunityIcons";
 import { useUserContext } from "@/context/UserContext";
 import { useRouter } from "expo-router";
 import API_URL from "@/config/ngrok-api";
-
+import ESP32_URL from "@/config/esp32-api";
 // Type assertion to fix TypeScript compatibility issues
 const Icon = FontAwesome as any;
 
@@ -31,9 +31,6 @@ const AccessControl = () => {
   const animatedValue = useRef(new Animated.Value(0)).current;
   const pulseAnimation = useRef(new Animated.Value(1)).current;
   const fadeAnimation = useRef(new Animated.Value(0)).current;
-
-  // ESP32 endpoint (update IP as needed)
-  const ESP32_URL = "http://10.173.66.110:5000";
   const USER_ID_NUMBER = user?.idNumber;
 
   // Fetch the privilege status from the backend

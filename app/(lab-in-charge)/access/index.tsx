@@ -35,25 +35,6 @@ const AccessIndex = () => {
 
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push("/access/access-control")}
-        >
-          <View style={styles.iconAndText}>
-            <Ionicons
-              name="shield-checkmark-outline"
-              size={20}
-              color="#007BFF"
-              style={styles.icon}
-            />
-            <Text style={styles.buttonText}>Manage Access Control</Text>
-          </View>
-          <Text style={styles.description}>
-            Manage user access by granting or revoking permissions to ensure
-            secure and authorized entry to the facility.
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.button}
           onPress={() => router.push("/access/access-logs")}
         >
           <View style={styles.iconAndText}>

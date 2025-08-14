@@ -5,16 +5,11 @@ import {
   TextInput,
   View,
   TouchableOpacity,
-  ScrollView,
   ActivityIndicator,
+  Image,
+  FlatList,
   Alert,
 } from "react-native";
-import {
-  Menu,
-  MenuTrigger,
-  MenuOptions,
-  MenuOption,
-} from "react-native-popup-menu";
 import axios from "axios";
 import { useRouter } from "expo-router";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
@@ -24,6 +19,9 @@ interface Account {
   id: number;
   idNumber: string;
   privilege_status: string;
+  name: string;
+  userType: string;
+  avatar: string;
 }
 
 // Type assertion to fix TypeScript compatibility issues
@@ -43,8 +41,9 @@ const AccessControl = () => {
       const response = await axios.get(
         `${API_URL}/remote-access/fetchAccounts`
       );
-      setAccounts(response.data.data);
-      setFilteredAccounts(response.data.data);
+      const data: Account[] = response.data.data || [];
+      setAccounts(data);
+      setFilteredAccounts(data);
     } catch (error) {
       console.error("Error fetching accounts:", error);
     } finally {
@@ -56,17 +55,39 @@ const AccessControl = () => {
     fetchAccounts();
   }, []);
 
-  // Handle search input changes
+  // Handle search input changes (idNumber, name, userType, privilege_status)
   const handleSearch = (text: string) => {
     setSearchTerm(text);
-    const filtered = accounts.filter((account) =>
-      account.idNumber.toLowerCase().includes(text.toLowerCase())
+    const t = text.toLowerCase();
+    const filtered = accounts.filter(
+      (a) =>
+        (a.idNumber || "").toLowerCase().includes(t) ||
+        (a.name || "").toLowerCase().includes(t) ||
+        (a.userType || "").toLowerCase().includes(t) ||
+        (a.privilege_status || "").toLowerCase().includes(t)
     );
     setFilteredAccounts(filtered);
   };
 
-  // Function to handle privilege updates (Grant/Revoke)
-  const handlePrivilegeUpdate = async (idNumber: string, action: string) => {
+  // Badge styles based on status
+  const getBadgeStyle = (status: string) => {
+    switch (status) {
+      case "Granted":
+        return styles.badgeGranted;
+      case "Revoked":
+        return styles.badgeRevoked;
+      case "Pending":
+        return styles.badgePending;
+      default:
+        return styles.badgeDefault;
+    }
+  };
+
+  // Update privilege handler
+  const handlePrivilegeUpdate = async (
+    idNumber: string,
+    action: "Grant" | "Revoke"
+  ) => {
     const newStatus = action === "Grant" ? "Granted" : "Revoked";
     try {
       const response = await axios.post(
@@ -76,12 +97,11 @@ const AccessControl = () => {
           privilege_status: newStatus,
         }
       );
-
-      if (response.data.success) {
+      if (response.data?.success) {
         Alert.alert("Success", `Privilege successfully ${action}ed.`);
-        fetchAccounts(); // Refresh the account list
+        fetchAccounts();
       } else {
-        throw new Error(response.data.message || "Update failed.");
+        throw new Error(response.data?.message || "Update failed.");
       }
     } catch (error) {
       console.error("Error updating privilege:", error);
@@ -89,97 +109,103 @@ const AccessControl = () => {
     }
   };
 
-  // Function to determine the text color based on privilege status
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Granted":
-        return "green";
-      case "Revoked":
-        return "red";
-      case "Pending":
-        return "#e6c300";
-      default:
-        return "black";
-    }
+  const renderItem = ({ item }: { item: Account }) => {
+    const avatarSource = item.avatar
+      ? item.avatar.startsWith("http") || item.avatar.startsWith("file")
+        ? { uri: item.avatar }
+        : { uri: `${API_URL}${item.avatar}` }
+      : require("@/assets/images/default_avatar.png");
+
+    return (
+      <View style={styles.card}>
+        <View style={styles.cardTopRow}>
+          <Image source={avatarSource} style={styles.avatar} />
+          <View style={styles.cardContent}>
+            <Text style={styles.name} numberOfLines={1}>
+              {item.name || "Unknown"}
+            </Text>
+            <Text style={styles.metaText} numberOfLines={1}>
+              {item.idNumber} · {item.userType || "N/A"}
+            </Text>
+          </View>
+          <View style={[styles.badge, getBadgeStyle(item.privilege_status)]}>
+            <Text style={styles.badgeText}>{item.privilege_status}</Text>
+          </View>
+        </View>
+
+        {/* Actions */}
+        <View style={styles.actionsRow}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() =>
+              Alert.alert(
+                "Update Privilege",
+                `Choose action for ${item.idNumber}`,
+                [
+                  {
+                    text: "Grant",
+                    onPress: () =>
+                      handlePrivilegeUpdate(item.idNumber, "Grant"),
+                  },
+                  {
+                    text: "Revoke",
+                    onPress: () =>
+                      handlePrivilegeUpdate(item.idNumber, "Revoke"),
+                  },
+                  { text: "Cancel", style: "cancel" },
+                ]
+              )
+            }
+          >
+            <Icon
+              name="cog"
+              size={14}
+              color="#fff"
+              style={{ marginRight: 6 }}
+            />
+            <Text style={styles.actionButtonText}>Actions</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
   };
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.headerContainer}>
         <TouchableOpacity onPress={router.back}>
           <Icon name="arrow-left" size={20} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.header}>Manage Access Control</Text>
+        <Text style={styles.header}>Remote Access Accounts</Text>
       </View>
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search id number..."
-        value={searchTerm}
-        onChangeText={setSearchTerm}
-        placeholderTextColor="#b0b0b0"
-      />
+
+      {/* Search */}
+      <View style={styles.searchContainer}>
+        <Icon name="search" size={16} color="#888" style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search by ID, name, type, or status..."
+          value={searchTerm}
+          onChangeText={handleSearch}
+          placeholderTextColor="#b0b0b0"
+        />
+      </View>
+
       {loading ? (
         <ActivityIndicator size="large" color="#007bff" />
       ) : (
-        <View style={styles.table}>
-          {/* Table Header */}
-          <View style={styles.tableRow}>
-            <Text style={styles.tableHeader}>#</Text>
-            <Text style={styles.tableHeader}>Id Number</Text>
-            <Text style={styles.tableHeader}>Privilege Status</Text>
-            <Text style={styles.tableHeader}>Actions</Text>
-          </View>
-
-          {/* Table Data */}
-          <ScrollView style={styles.scrollContainer}>
-            {filteredAccounts.map((account, index) => (
-              <View key={account.id} style={styles.tableRow}>
-                <Text style={styles.tableCell}>{index + 1}</Text>
-                <Text style={styles.tableCell}>{account.idNumber}</Text>
-                <Text
-                  style={[
-                    styles.tableCell,
-                    { color: getStatusColor(account.privilege_status) },
-                  ]}
-                >
-                  {account.privilege_status}
-                </Text>
-                <Menu>
-                  <MenuTrigger>
-                    <View style={styles.triggerButton}>
-                      <Text style={styles.triggerButtonText}>Actions</Text>
-                    </View>
-                  </MenuTrigger>
-                  <MenuOptions
-                    customStyles={{
-                      optionsContainer: {
-                        backgroundColor: "#fff",
-                        padding: 5,
-                        borderRadius: 5,
-                        elevation: 5,
-                      },
-                    }}
-                  >
-                    <MenuOption
-                      onSelect={() =>
-                        handlePrivilegeUpdate(account.idNumber, "Grant")
-                      }
-                    >
-                      <Text style={styles.menuOption}>Grant</Text>
-                    </MenuOption>
-                    <MenuOption
-                      onSelect={() =>
-                        handlePrivilegeUpdate(account.idNumber, "Revoke")
-                      }
-                    >
-                      <Text style={styles.menuOption}>Revoke</Text>
-                    </MenuOption>
-                  </MenuOptions>
-                </Menu>
-              </View>
-            ))}
-          </ScrollView>
-        </View>
+        <FlatList
+          data={filteredAccounts}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={renderItem}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          ListEmptyComponent={
+            <View style={{ alignItems: "center", marginTop: 40 }}>
+              <Text style={{ color: "#888" }}>No accounts found.</Text>
+            </View>
+          }
+        />
       )}
     </View>
   );
@@ -197,59 +223,105 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   header: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "bold",
-    marginLeft: 15,
+    marginLeft: 35,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 16,
+    backgroundColor: "#fff",
+  },
+  searchIcon: {
+    marginRight: 8,
   },
   searchInput: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 20,
-    fontSize: 16,
-  },
-  table: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-  },
-  scrollContainer: {
-    maxHeight: 450,
-  },
-  tableRow: {
-    flexDirection: "row",
-    padding: 12,
-    borderBottomWidth: 1,
-    borderColor: "#ccc",
-  },
-  tableHeader: {
     flex: 1,
-    fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  tableCell: {
-    flex: 1,
-    fontSize: 16,
-    textAlign: "center",
-  },
-  triggerButton: {
-    backgroundColor: "#007bff",
-    borderRadius: 5,
     paddingVertical: 8,
-    paddingHorizontal: 12,
-    alignItems: "center",
-    justifyContent: "center",
+    fontSize: 16,
+    color: "#333",
   },
-  triggerButtonText: {
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#e7e7e7",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 1,
+    elevation: 1,
+  },
+  cardTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginRight: 10,
+    backgroundColor: "#eee",
+  },
+  cardContent: {
+    flex: 1,
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#222",
+  },
+  metaText: {
+    fontSize: 13,
+    color: "#666",
+    marginTop: 2,
+  },
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#fff",
+  },
+  badgeGranted: {
+    backgroundColor: "#10B981",
+  },
+  badgeRevoked: {
+    backgroundColor: "#EF4444",
+  },
+  badgePending: {
+    backgroundColor: "#F59E0B",
+  },
+  badgeDefault: {
+    backgroundColor: "#6B7280",
+  },
+  actionsRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginTop: 10,
+  },
+  actionButton: {
+    backgroundColor: "#007bff",
+    borderRadius: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  actionButtonText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 14,
-  },
-  menuOption: {
-    padding: 8,
-    fontSize: 16,
+    fontSize: 12,
   },
 });
 

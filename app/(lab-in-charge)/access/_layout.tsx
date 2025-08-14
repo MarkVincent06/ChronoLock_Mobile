@@ -19,12 +19,6 @@ const AccessLayout = () => {
           }}
         />
         <Stack.Screen
-          name="access-control"
-          options={{
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
           name="access-logs"
           options={{
             headerShown: false,

@@ -44,11 +44,11 @@ const AccessIndex = () => {
               color="#007BFF"
               style={styles.icon}
             />
-            <Text style={styles.buttonText}>Manage Access Control</Text>
+            <Text style={styles.buttonText}>Remote Access Accounts</Text>
           </View>
           <Text style={styles.description}>
-            Manage user access by granting or revoking permissions to ensure
-            secure and authorized entry to the facility.
+            Manage user's remote access accounts by granting or revoking
+            permissions to ensure secure and authorized entry to the facility.
           </Text>
         </TouchableOpacity>
 
