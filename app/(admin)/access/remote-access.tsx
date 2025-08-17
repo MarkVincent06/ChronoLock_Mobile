@@ -29,6 +29,11 @@ const AccessControl = () => {
   const pulseAnimation = useRef(new Animated.Value(1)).current;
   const fadeAnimation = useRef(new Animated.Value(0)).current;
   const USER_ID_NUMBER = user?.idNumber;
+  const [isCooldown, setIsCooldown] = useState(false);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
+  const cooldownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null
+  );
 
   // Send command to ESP32
   const sendCommand = async () => {
@@ -38,7 +43,6 @@ const AccessControl = () => {
       });
 
       if (response.status === 200) {
-        Alert.alert("Success", "Door unlocked successfully!");
         setConnectionStatus("Door unlocked successfully!");
       } else {
         throw new Error("Unexpected response from ESP32");
@@ -47,6 +51,28 @@ const AccessControl = () => {
       Alert.alert("Error", "Failed to unlock door: " + error.message);
       setConnectionStatus("Unlock failed");
     }
+  };
+
+  const startCooldown = (seconds: number) => {
+    if (cooldownIntervalRef.current) {
+      clearInterval(cooldownIntervalRef.current);
+      cooldownIntervalRef.current = null;
+    }
+    setIsCooldown(true);
+    setCooldownRemaining(seconds);
+    cooldownIntervalRef.current = setInterval(() => {
+      setCooldownRemaining((prev) => {
+        if (prev <= 1) {
+          if (cooldownIntervalRef.current) {
+            clearInterval(cooldownIntervalRef.current);
+            cooldownIntervalRef.current = null;
+          }
+          setIsCooldown(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
   // Send command to unlock the door
@@ -81,6 +107,7 @@ const AccessControl = () => {
       setConnectionStatus("Failed to unlock the door.");
     } finally {
       setIsLoading(false);
+      startCooldown(5);
     }
   };
 
@@ -91,6 +118,14 @@ const AccessControl = () => {
       duration: 800,
       useNativeDriver: true,
     }).start();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (cooldownIntervalRef.current) {
+        clearInterval(cooldownIntervalRef.current);
+      }
+    };
   }, []);
 
   // Animate button border and pulse effect
@@ -167,7 +202,11 @@ const AccessControl = () => {
               style={[
                 styles.unlockButtonContainer,
                 {
-                  borderColor: isLoading ? borderColorAnimation : buttonColor,
+                  borderColor: isLoading
+                    ? borderColorAnimation
+                    : isCooldown
+                    ? "#9CA3AF"
+                    : buttonColor,
                   transform: [{ scale: pulseAnimation }],
                 },
               ]}
@@ -176,10 +215,10 @@ const AccessControl = () => {
                 onPress={unlockDoor}
                 style={[
                   styles.unlockButton,
-                  { backgroundColor: buttonColor },
+                  { backgroundColor: isCooldown ? "#9CA3AF" : buttonColor },
                   isLoading && styles.loadingButton,
                 ]}
-                disabled={isLoading}
+                disabled={isLoading || isCooldown}
               >
                 {isLoading ? (
                   <Animated.View
@@ -205,7 +244,13 @@ const AccessControl = () => {
               </TouchableOpacity>
             </Animated.View>
 
-            <Text style={styles.unlockButtonText}>Tap to Unlock</Text>
+            <Text style={styles.unlockButtonText}>
+              {isLoading
+                ? "Unlocking..."
+                : isCooldown
+                ? `Please wait ${cooldownRemaining}s`
+                : "Tap to Unlock"}
+            </Text>
           </View>
 
           {/* Status Message */}

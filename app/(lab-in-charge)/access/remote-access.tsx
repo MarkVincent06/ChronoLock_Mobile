@@ -32,6 +32,11 @@ const AccessControl = () => {
   const pulseAnimation = useRef(new Animated.Value(1)).current;
   const fadeAnimation = useRef(new Animated.Value(0)).current;
   const USER_ID_NUMBER = user?.idNumber;
+  const [isCooldown, setIsCooldown] = useState(false);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
+  const cooldownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null
+  );
 
   // Fetch the privilege status from the backend
   const fetchPrivilegeStatus = async () => {
@@ -75,7 +80,6 @@ const AccessControl = () => {
       });
 
       if (response.status === 200) {
-        Alert.alert("Success", "Door unlocked successfully!");
         setConnectionStatus("Door unlocked successfully!");
       } else {
         throw new Error("Unexpected response from ESP32");
@@ -84,6 +88,28 @@ const AccessControl = () => {
       Alert.alert("Error", "Failed to unlock door: " + error.message);
       setConnectionStatus("Unlock failed");
     }
+  };
+
+  const startCooldown = (seconds: number) => {
+    if (cooldownIntervalRef.current) {
+      clearInterval(cooldownIntervalRef.current);
+      cooldownIntervalRef.current = null;
+    }
+    setIsCooldown(true);
+    setCooldownRemaining(seconds);
+    cooldownIntervalRef.current = setInterval(() => {
+      setCooldownRemaining((prev) => {
+        if (prev <= 1) {
+          if (cooldownIntervalRef.current) {
+            clearInterval(cooldownIntervalRef.current);
+            cooldownIntervalRef.current = null;
+          }
+          setIsCooldown(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
   // Attempt to unlock the door
@@ -140,9 +166,6 @@ const AccessControl = () => {
                     );
 
                     if (occupancyResponse.data.success) {
-                      // Remove this line later
-                      setConnectionStatus("Door unlocked successfully!");
-
                       console.log(
                         "Attendance note:",
                         attendanceResponse.data.message
@@ -151,7 +174,7 @@ const AccessControl = () => {
                         "Lab occupancy note:",
                         occupancyResponse.data.message
                       );
-                      // sendCommand();
+                      sendCommand();
                     }
                   } catch (occupancyError) {
                     console.error(
@@ -167,26 +190,19 @@ const AccessControl = () => {
                   attendanceError.response?.status === 400 &&
                   attendanceError.response?.data?.message
                 ) {
-                  // Remove this line later
-                  setConnectionStatus("Door unlocked successfully!");
-
                   console.log(
                     "Attendance note:",
                     attendanceError.response.data.message
                   );
-                  // sendCommand();
+                  sendCommand();
                 } else {
                   console.error("Error recording attendance:", attendanceError);
                 }
               }
             } else if (scheduleResponse.data.isScheduled === false) {
               // THIS IS FOR LAB IN CHARGE WHERE HE/SHE CAN OPEN THE LAB ANYTIME
-
-              // Remove this line later
-              setConnectionStatus("Door unlocked successfully!");
-
               console.log("Door unlocked by lab-in-charge");
-              // sendCommand();
+              sendCommand();
             }
           }
         } catch (scheduleError) {
@@ -199,6 +215,7 @@ const AccessControl = () => {
         setConnectionStatus("Failed to unlock the door.");
       } finally {
         setIsLoading(false);
+        startCooldown(5);
       }
     } else if (privilegeStatus === "Revoked") {
       Alert.alert(
@@ -223,6 +240,14 @@ const AccessControl = () => {
       duration: 800,
       useNativeDriver: true,
     }).start();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (cooldownIntervalRef.current) {
+        clearInterval(cooldownIntervalRef.current);
+      }
+    };
   }, []);
 
   // Animate button border and pulse effect
@@ -301,7 +326,11 @@ const AccessControl = () => {
               style={[
                 styles.unlockButtonContainer,
                 {
-                  borderColor: isLoading ? borderColorAnimation : buttonColor,
+                  borderColor: isLoading
+                    ? borderColorAnimation
+                    : isCooldown
+                    ? "#9CA3AF"
+                    : buttonColor,
                   transform: [{ scale: pulseAnimation }],
                 },
               ]}
@@ -310,10 +339,10 @@ const AccessControl = () => {
                 onPress={unlockDoor}
                 style={[
                   styles.unlockButton,
-                  { backgroundColor: buttonColor },
+                  { backgroundColor: isCooldown ? "#9CA3AF" : buttonColor },
                   isLoading && styles.loadingButton,
                 ]}
-                disabled={isLoading}
+                disabled={isLoading || isCooldown}
               >
                 {isLoading ? (
                   <Animated.View
@@ -340,7 +369,11 @@ const AccessControl = () => {
             </Animated.View>
 
             <Text style={styles.unlockButtonText}>
-              {privilegeStatus === "Granted"
+              {isLoading
+                ? "Unlocking..."
+                : isCooldown
+                ? `Please wait ${cooldownRemaining}s`
+                : privilegeStatus === "Granted"
                 ? "Tap to Unlock"
                 : "Access Restricted"}
             </Text>
