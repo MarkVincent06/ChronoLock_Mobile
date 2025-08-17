@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -44,6 +44,7 @@ const StudentList = () => {
   const [students, setStudents] = useState<EnrolledStudent[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const pageSize = 10;
+  const listRef = useRef<FlatList<any>>(null);
 
   const [isStatusModalVisible, setIsStatusModalVisible] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
@@ -242,6 +243,11 @@ const StudentList = () => {
     startIndex + pageSize
   );
 
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+  };
+
   const handleUpdatePress = (studentID: string) => {
     const target = students.find((s) => s.studentID === studentID);
     const current = target?.status ?? "Regular";
@@ -434,6 +440,7 @@ const StudentList = () => {
       </View>
 
       <FlatList
+        ref={listRef}
         data={currentPageData}
         keyExtractor={(item) => item.studentID}
         renderItem={renderStudentItem}
@@ -460,7 +467,7 @@ const StudentList = () => {
               styles.paginationButton,
               currentPage === 1 && styles.paginationButtonDisabled,
             ]}
-            onPress={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            onPress={() => goToPage(Math.max(1, currentPage - 1))}
             disabled={currentPage === 1}
           >
             <Ionicons name="chevron-back-outline" size={18} color="#fff" />
@@ -474,7 +481,7 @@ const StudentList = () => {
               styles.paginationButton,
               currentPage === totalPages && styles.paginationButtonDisabled,
             ]}
-            onPress={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            onPress={() => goToPage(Math.min(totalPages, currentPage + 1))}
             disabled={currentPage === totalPages}
           >
             <Text style={styles.paginationText}>Next</Text>

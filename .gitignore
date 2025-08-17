@@ -12,6 +12,8 @@ web-build/
 /android
 /ios
 
+config/*
+
 
 
 
