@@ -5,6 +5,7 @@ import {
   ScrollView,
   Image,
   RefreshControl,
+  TouchableOpacity,
 } from "react-native";
 import { Card, Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -12,8 +13,10 @@ import { useUserContext } from "@/context/UserContext";
 import axios from "axios";
 import API_URL from "@/config/ngrok-api";
 import usePullToRefresh from "@/hooks/usePullToRefresh";
+import { useRouter } from "expo-router";
 
 const Home = () => {
+  const router = useRouter();
   const { user } = useUserContext();
   const [isLoading, setIsLoading] = useState(true);
   const [academicTerm, setAcademicTerm] = useState<string | null>(null);
@@ -23,6 +26,7 @@ const Home = () => {
   const [totalStudents, setTotalStudents] = useState(0);
   const [todayScheduleCount, setTodayScheduleCount] = useState(0);
   const [todaySchedule, setTodaySchedule] = useState<any[]>([]);
+  const [ongoingSchedule, setOngoingSchedule] = useState<any | null>(null);
 
   const formatTime = (timeString: string) => {
     // Manually parse the time string as local time by creating a Date object
@@ -193,12 +197,35 @@ const Home = () => {
         }
       };
 
+      const fetchOngoingSchedule = async () => {
+        try {
+          const response = await axios.get(
+            `${API_URL}/schedules/ongoing/today`
+          );
+          if (response.data && response.data.success) {
+            setOngoingSchedule(response.data.data);
+          } else {
+            setOngoingSchedule(null);
+          }
+        } catch (error: any) {
+          if (axios.isAxiosError(error) && error.response?.status === 404) {
+            setOngoingSchedule(null);
+          } else {
+            console.log(
+              "Failed to fetch ongoing schedule:",
+              error?.message || error
+            );
+          }
+        }
+      };
+
       if (user?.idNumber) {
         fetchAcademicTerm();
         fetchChatsHandled();
         fetchSectionsHandled();
         fetchTotalStudents();
         fetchTodaySchedule();
+        fetchOngoingSchedule();
       }
     }
   }, [user?.idNumber]);
@@ -341,6 +368,44 @@ const Home = () => {
                       {formatTime(schedule.startTime)} -{" "}
                       {formatTime(schedule.endTime)}
                     </Text>
+
+                    {ongoingSchedule &&
+                      ongoingSchedule.scheduleID === schedule.scheduleID && (
+                        <View style={styles.ongoingActionsRow}>
+                          <View style={styles.sectionPill}>
+                            <Text style={styles.sectionPillText}>
+                              {`${ongoingSchedule.program} ${ongoingSchedule.year}${ongoingSchedule.section}`}
+                            </Text>
+                          </View>
+                          <TouchableOpacity
+                            style={styles.takeAttendanceButton}
+                            onPress={() => {
+                              const sectionInfo = {
+                                courseName: ongoingSchedule.courseName,
+                                program: ongoingSchedule.program,
+                                year: ongoingSchedule.year,
+                                section: ongoingSchedule.section,
+                              };
+
+                              router.push({
+                                pathname:
+                                  "/(faculty)/laboratory/section-folder/record-attendance",
+                                params: {
+                                  scheduleID: `${schedule.scheduleID}`,
+                                  classID: `${
+                                    schedule.classID ?? ongoingSchedule.classID
+                                  }`,
+                                  section: JSON.stringify(sectionInfo),
+                                },
+                              });
+                            }}
+                          >
+                            <Text style={styles.takeAttendanceButtonText}>
+                              Take Attendance
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
                   </View>
                 </View>
                 {index < todaySchedule.length - 1 && (
@@ -443,6 +508,37 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     marginBottom: 16,
     position: "relative",
+  },
+  ongoingActionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 8,
+    gap: 8,
+  },
+  sectionPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: "#E5E7EB",
+  },
+  sectionPillText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#111827",
+  },
+  takeAttendanceButton: {
+    backgroundColor: "#10B981",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  takeAttendanceButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   statusBadge: {
     position: "absolute",

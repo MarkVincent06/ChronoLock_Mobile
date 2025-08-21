@@ -250,7 +250,7 @@ const ClassList = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => router.push("/(faculty)/laboratory")}
           style={styles.backButton}
         >
           <Ionicons name="arrow-back" size={24} color="#333" />
