@@ -391,18 +391,28 @@ const LaboratorySchedule = () => {
               data={getEventsForDate(selectedDate)}
               keyExtractor={(item, index) => index.toString()}
               renderItem={({ item }) => (
-                <View style={styles.modalEventCard}>
-                  <Text style={styles.modalEventText}>
-                    {item.courseCode}: {item.courseName}
+                <View style={styles.scheduleItemContainerModal}>
+                  <Text style={styles.scheduleLabelModal}>
+                    Course:{" "}
+                    <Text style={styles.scheduleValueModal}>
+                      {item.courseCode} - {item.courseName}
+                    </Text>
                   </Text>
-                  <Text style={styles.modalEventText}>
-                    {formatTime(item.startTime)} - {formatTime(item.endTime)}
+                  <Text style={styles.scheduleLabelModal}>
+                    Time:{" "}
+                    <Text style={styles.scheduleValueModal}>
+                      {formatTime(item.startTime)} - {formatTime(item.endTime)}
+                    </Text>
                   </Text>
-                  <Text style={styles.modalEventText}>
-                    Instructor: {item.instructor}
+                  <Text style={styles.scheduleLabelModal}>
+                    Instructor:{" "}
+                    <Text style={styles.scheduleValueModal}>
+                      {item.instructor}
+                    </Text>
                   </Text>
                 </View>
               )}
+              style={{ marginBottom: 10 }}
             />
           ) : (
             <View style={styles.noEventsContainer}>
@@ -636,5 +646,23 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#f5f5f5",
+  },
+  scheduleItemContainerModal: {
+    backgroundColor: "#f9f9f9",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    padding: 14,
+    marginBottom: 12,
+  },
+  scheduleLabelModal: {
+    fontSize: 14,
+    color: "#333",
+    marginBottom: 2,
+    fontWeight: "600",
+  },
+  scheduleValueModal: {
+    fontWeight: "400",
+    color: "#444",
   },
 });

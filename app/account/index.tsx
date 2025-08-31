@@ -26,6 +26,7 @@ import { signOut } from "firebase/auth";
 const AccountSettings = () => {
   const router = useRouter();
   const { user, setUser } = useUserContext();
+  const EMAIL_DOMAIN = "@my.cspc.edu.ph";
   const [formData, setFormData] = useState({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
@@ -133,7 +134,6 @@ const AccountSettings = () => {
       await GoogleSignin.signOut(); // Sign out from Google
       await signOut(auth); // Sign out from Firebase
       await AsyncStorage.removeItem("user");
-      // await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
       setUser(null);
 
       Alert.alert("Success", "You have been logged out.");
@@ -246,15 +246,32 @@ const AccountSettings = () => {
             />
 
             <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={[
-                styles.input,
-                !isEditing && { backgroundColor: "#f0f0f0" },
-              ]}
-              value={formData.email}
-              onChangeText={(value) => handleInputChange("email", value)}
-              editable={isEditing}
-            />
+            <View style={styles.emailRow}>
+              <TextInput
+                style={[
+                  styles.input,
+                  styles.emailLocalInput,
+                  !isEditing && { backgroundColor: "#f0f0f0" },
+                ]}
+                value={
+                  formData.email?.includes("@")
+                    ? formData.email.split("@")[0]
+                    : formData.email
+                }
+                onChangeText={(value) =>
+                  handleInputChange(
+                    "email",
+                    `${value.replace(/@.*/, "")}${EMAIL_DOMAIN}`
+                  )
+                }
+                editable={isEditing}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
+              <View style={styles.domainBadge}>
+                <Text style={styles.domainText}>{EMAIL_DOMAIN}</Text>
+              </View>
+            </View>
           </View>
 
           <TouchableOpacity
@@ -334,6 +351,27 @@ const styles = StyleSheet.create({
     padding: 10,
     fontSize: 16,
     marginBottom: 15,
+  },
+  emailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  emailLocalInput: {
+    flex: 1,
+    marginRight: 8,
+    marginBottom: 0,
+  },
+  domainBadge: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: "#f0f0f0",
+  },
+  domainText: {
+    fontSize: 16,
+    color: "#555",
   },
   button: {
     padding: 15,

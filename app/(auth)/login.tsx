@@ -106,36 +106,6 @@ const Login: React.FC = () => {
 
         setUser(mappedUser);
 
-        // Get the user's location after successful login
-        // const { status } = await Location.requestForegroundPermissionsAsync();
-        // if (status === "granted") {
-        //   const location = await Location.getCurrentPositionAsync({
-        //     accuracy: Location.Accuracy.High,
-        //   });
-
-        //   // Update user context with location
-        //   setUser((prevUser) =>
-        //     prevUser ? { ...prevUser, location } : prevUser
-        //   );
-
-        //   // Start background location tracking
-        //   await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
-        //     accuracy: Location.Accuracy.High,
-        //     timeInterval: 10000, // Fetch location every 10 seconds
-        //     foregroundService: {
-        //       notificationTitle: "ChronoLock is tracking your location",
-        //       notificationBody:
-        //         "Your location is being used in the background.",
-        //       notificationColor: "#1A73E8",
-        //     },
-        //   });
-        // } else {
-        //   Alert.alert(
-        //     "Permission Denied",
-        //     "Background location access is required for this feature. Please enable it in your device's settings."
-        //   );
-        // }
-
         // Only navigate if not already navigated
         if (!isNavigated) {
           setIsNavigated(true); // Set to true to prevent additional navigation
@@ -182,6 +152,14 @@ const Login: React.FC = () => {
       const userInfo = await GoogleSignin.signIn();
       const { idToken, user: googleUser } = userInfo;
 
+      // Restrict to school domain
+      if (!googleUser.email.endsWith("@my.cspc.edu.ph")) {
+        alert("Only valid CSPC accounts are allowed.");
+        await GoogleSignin.signOut(); // force logout if not allowed
+        setLoading(false);
+        return;
+      }
+
       const response = await axios.post(
         `${API_URL}/auth/googleSignIn`,
         { email: googleUser.email },
@@ -206,28 +184,6 @@ const Login: React.FC = () => {
         };
 
         setUser(mappedUser);
-
-        // Get the user's location after successful login
-        // const { status } = await Location.requestForegroundPermissionsAsync();
-        // if (status === "granted") {
-        //   const location = await Location.getCurrentPositionAsync({
-        //     accuracy: Location.Accuracy.High,
-        //   });
-
-        //   // Update user context with location
-        //   setUser((prevUser) =>
-        //     prevUser ? { ...prevUser, location } : prevUser
-        //   );
-
-        //   // Start background location tracking
-        //   await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
-        //     accuracy: Location.Accuracy.High,
-        //     distanceInterval: 10, // Minimum distance in meters between updates
-        //     deferredUpdatesInterval: 1000, // Time interval in milliseconds
-        //   });
-        // } else {
-        //   alert("Location permission is required to use this feature.");
-        // }
 
         // Only navigate if not already navigated
         if (!isNavigated) {
