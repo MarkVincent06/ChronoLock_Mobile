@@ -13,6 +13,8 @@ import {
 } from "react-native";
 import axios from "axios";
 import { Picker } from "@react-native-picker/picker";
+import FontAwesome from "react-native-vector-icons/FontAwesome";
+import { router } from "expo-router";
 import { format, toZonedTime } from "date-fns-tz";
 import { useUserContext } from "@/context/UserContext";
 import usePullToRefresh from "@/hooks/usePullToRefresh";
@@ -61,6 +63,7 @@ const fetchUserIssues = async (
 
 const ReportIssue = () => {
   const { user } = useUserContext();
+  const Icon = FontAwesome as any;
   const [equipmentList, setEquipmentList] = useState<
     { id: string; name: string }[]
   >([]);
@@ -152,7 +155,16 @@ const ReportIssue = () => {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-      <Text style={styles.header}>Report an Equipment Issue</Text>
+      <View style={styles.headerContainer}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Icon name="chevron-left" size={20} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.header}>Report an Equipment Issue</Text>
+        <View style={{ width: 20 }} />
+      </View>
       <Text style={styles.description}>
         Please provide details about the issue to help us resolve it quickly.
       </Text>
@@ -286,11 +298,22 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: "#f8f8f8",
   },
-  header: {
-    fontSize: 24,
-    fontWeight: "bold",
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 10,
+  },
+  header: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 0,
     color: "#333",
+    textAlign: "center",
+    flex: 1,
+  },
+  backButton: {
+    padding: 6,
   },
   description: {
     fontSize: 14,

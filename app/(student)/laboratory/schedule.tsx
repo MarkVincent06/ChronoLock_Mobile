@@ -11,6 +11,7 @@ import {
   RefreshControl,
 } from "react-native";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
+import { router } from "expo-router";
 import API_URL from "@/config/ngrok-api";
 import usePullToRefresh from "@/hooks/usePullToRefresh";
 import { useUserContext } from "@/context/UserContext";
@@ -317,7 +318,14 @@ const LaboratorySchedule = () => {
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Icon name="chevron-left" size={20} color="#333" />
+        </TouchableOpacity>
         <Text style={styles.header}>ERP Laboratory Schedule</Text>
+        <View style={{ width: 20 }} />
       </View>
 
       <ScrollView
@@ -460,11 +468,14 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   header: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "bold",
     textAlign: "center",
     marginBottom: 10,
     flex: 1,
+  },
+  backButton: {
+    padding: 6,
   },
   navigation: {
     flexDirection: "row",

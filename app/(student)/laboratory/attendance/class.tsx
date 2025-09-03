@@ -15,6 +15,7 @@ import API_URL from "@/config/ngrok-api";
 import { useUserContext } from "@/context/UserContext";
 import usePullToRefresh from "@/hooks/usePullToRefresh";
 import { router } from "expo-router";
+import FontAwesome from "react-native-vector-icons/FontAwesome";
 
 interface ClassItem {
   scheduleID: number;
@@ -32,6 +33,7 @@ interface ClassItem {
 }
 
 const ClassList = () => {
+  const Icon = FontAwesome as any;
   const { user } = useUserContext();
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [filteredClasses, setFilteredClasses] = useState<ClassItem[]>([]);
@@ -106,7 +108,16 @@ const ClassList = () => {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <Text style={styles.header}>My Classes</Text>
+      <View style={styles.headerRow}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Icon name="chevron-left" size={20} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.header}>My Classes</Text>
+        <View style={{ width: 20 }} />
+      </View>
       <Text style={styles.subText}>Select a class to view your attendance</Text>
 
       {/* Search Bar */}
@@ -126,11 +137,13 @@ const ClassList = () => {
           <TouchableOpacity
             style={styles.classItem}
             onPress={() =>
-              router.push(
-                `/attendance/attendance-view?scheduleID=${
-                  item.scheduleID
-                }&courseName=${encodeURIComponent(item.courseName)}`
-              )
+              router.push({
+                pathname: "/laboratory/attendance/attendance-view",
+                params: {
+                  scheduleID: item.scheduleID.toString(),
+                  courseName: item.courseName,
+                },
+              })
             }
           >
             <View style={styles.classHeader}>
@@ -182,12 +195,21 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: "#f9f9f9",
   },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   header: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "bold",
     marginBottom: 8,
     color: "#333",
     textAlign: "center",
+    flex: 1,
+  },
+  backButton: {
+    padding: 6,
   },
   subText: {
     fontSize: 16,

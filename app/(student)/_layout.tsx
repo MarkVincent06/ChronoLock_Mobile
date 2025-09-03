@@ -154,15 +154,15 @@ const TabsLayout = () => {
         />
 
         <Tabs.Screen
-          name="attendance"
+          name="course"
           options={{
-            title: "Attendance",
+            title: "Course",
             headerShown: true,
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
-                icon="checkmark-circle-outline"
+                icon="book-outline"
                 color={color}
-                name="Attendance"
+                name="Course"
                 focused={focused}
               />
             ),
@@ -170,31 +170,15 @@ const TabsLayout = () => {
         />
 
         <Tabs.Screen
-          name="schedule"
+          name="laboratory"
           options={{
-            title: "Schedule",
+            title: "Laboratory",
             headerShown: true,
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
-                icon="calendar-outline"
+                icon="desktop-outline"
                 color={color}
-                name="Schedule"
-                focused={focused}
-              />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
-          name="report-issue"
-          options={{
-            title: "Report Issue",
-            headerShown: true,
-            tabBarIcon: ({ color, focused }) => (
-              <TabIcon
-                icon="bug-outline"
-                color={color}
-                name="Report Issue"
+                name="Laboratory"
                 focused={focused}
               />
             ),
