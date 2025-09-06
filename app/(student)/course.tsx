@@ -7,6 +7,7 @@ import {
   Image,
   ActivityIndicator,
   RefreshControl,
+  TextInput,
 } from "react-native";
 import React, { useState, useEffect, useCallback } from "react";
 import { useUserContext } from "@/context/UserContext";
@@ -40,11 +41,29 @@ interface EnrolledCourse {
   avatar: string;
 }
 
+interface AvailableCourse {
+  classID: number;
+  scheduleID: number;
+  instructorName: string;
+  instructorAvatar: string;
+  courseName: string;
+  courseCode: string;
+  program: string;
+  yearSection: string;
+  day: string;
+  time: string;
+}
+
 const StudentCourse = () => {
   const { user } = useUserContext();
   const [activeTab, setActiveTab] = useState<"courses" | "enroll">("courses");
   const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
+  const [availableCourses, setAvailableCourses] = useState<AvailableCourse[]>(
+    []
+  );
   const [loading, setLoading] = useState(false);
+  const [enrollLoading, setEnrollLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const Icon = FontAwesome as any;
 
   const headerTitle =
@@ -68,13 +87,35 @@ const StudentCourse = () => {
     }
   }, [user?.idNumber]);
 
+  const fetchAvailableCourses = useCallback(async () => {
+    if (!user?.idNumber) return;
+
+    setEnrollLoading(true);
+    try {
+      const response = await axios.get(
+        `${API_URL}/class-list/available/${user.idNumber}`
+      );
+      if (response.data.success) {
+        setAvailableCourses(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching available courses:", error);
+    } finally {
+      setEnrollLoading(false);
+    }
+  }, [user?.idNumber]);
+
   const { refreshing, onRefresh } = usePullToRefresh(fetchEnrolledCourses);
+  const { refreshing: enrollRefreshing, onRefresh: onEnrollRefresh } =
+    usePullToRefresh(fetchAvailableCourses);
 
   useEffect(() => {
     if (activeTab === "courses") {
       fetchEnrolledCourses();
+    } else if (activeTab === "enroll") {
+      fetchAvailableCourses();
     }
-  }, [activeTab, fetchEnrolledCourses]);
+  }, [activeTab, fetchEnrolledCourses, fetchAvailableCourses]);
 
   const formatTime = (timeString: string) => {
     const [hours, minutes] = timeString.split(":").map(Number);
@@ -95,6 +136,39 @@ const StudentCourse = () => {
 
     return `${hoursFormatted}:${minutesString} ${ampm}`;
   };
+
+  const formatTimeRange = (timeRange: string) => {
+    const [startTime, endTime] = timeRange.split(" - ");
+    return `${formatTime(startTime)} - ${formatTime(endTime)}`;
+  };
+
+  const handleEnrollCourse = (classID: number, scheduleID: number) => {
+    console.log("classID:", classID, "scheduleID:", scheduleID);
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const filteredEnrolledCourses = enrolledCourses.filter((course) => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      course.courseName.toLowerCase().includes(searchLower) ||
+      course.courseCode.toLowerCase().includes(searchLower) ||
+      `${course.instFirstName} ${course.instLastName}`
+        .toLowerCase()
+        .includes(searchLower)
+    );
+  });
+
+  const filteredAvailableCourses = availableCourses.filter((course) => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      course.courseName.toLowerCase().includes(searchLower) ||
+      course.courseCode.toLowerCase().includes(searchLower) ||
+      course.instructorName.toLowerCase().includes(searchLower)
+    );
+  });
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -137,7 +211,6 @@ const StudentCourse = () => {
           <Text style={styles.course}>
             {item.courseCode} - {item.courseName}
           </Text>
-          {/* <Text style={styles.courseCode}>{item.courseCode}</Text> */}
         </View>
         <View
           style={[
@@ -177,6 +250,70 @@ const StudentCourse = () => {
           </Text>
         </View>
       </View>
+    </View>
+  );
+
+  const renderAvailableCourseCard = ({
+    item,
+    index,
+  }: {
+    item: AvailableCourse;
+    index: number;
+  }) => (
+    <View style={styles.courseCard}>
+      <View style={styles.cardHeader}>
+        <View style={styles.avatarContainer}>
+          <Image
+            source={
+              item.instructorAvatar
+                ? {
+                    uri: item.instructorAvatar.startsWith("http")
+                      ? item.instructorAvatar
+                      : `${API_URL}${item.instructorAvatar}`,
+                  }
+                : require("@/assets/images/default_avatar.png")
+            }
+            style={styles.avatar}
+          />
+        </View>
+        <View style={styles.courseInfo}>
+          <Text style={styles.courseNumber}>#{index + 1}</Text>
+          <Text style={styles.course}>
+            {item.courseCode} - {item.courseName}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.cardDetails}>
+        <View style={styles.detailRow}>
+          <Icon name="user" size={14} color="#666" />
+          <Text style={styles.detailText}>{item.instructorName}</Text>
+        </View>
+
+        <View style={styles.detailRow}>
+          <Icon name="clock-o" size={14} color="#666" />
+          <Text style={styles.detailText}>{formatTimeRange(item.time)}</Text>
+        </View>
+
+        <View style={styles.detailRow}>
+          <Icon name="calendar" size={14} color="#666" />
+          <Text style={styles.detailText}>{item.day}</Text>
+        </View>
+
+        <View style={styles.detailRow}>
+          <Icon name="graduation-cap" size={14} color="#666" />
+          <Text style={styles.detailText}>
+            {item.program} - {item.yearSection}
+          </Text>
+        </View>
+      </View>
+
+      <TouchableOpacity
+        style={styles.enrollButton}
+        onPress={() => handleEnrollCourse(item.classID, item.scheduleID)}
+      >
+        <Text style={styles.enrollButtonText}>Enroll Course</Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -235,6 +372,18 @@ const StudentCourse = () => {
         </TouchableOpacity>
       </View>
 
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchBar}
+          placeholder="Search courses and instructors..."
+          placeholderTextColor="#999"
+          value={searchQuery}
+          onChangeText={handleSearch}
+        />
+        <Icon name="search" size={20} color="#999" style={styles.searchIcon} />
+      </View>
+
       {/* Body Content */}
       <View style={styles.bodyContainer}>
         {activeTab === "courses" ? (
@@ -245,7 +394,7 @@ const StudentCourse = () => {
             </View>
           ) : (
             <FlatList
-              data={enrolledCourses}
+              data={filteredEnrolledCourses}
               keyExtractor={(item) => item.scheduleID.toString()}
               renderItem={renderCourseCard}
               refreshControl={
@@ -255,7 +404,9 @@ const StudentCourse = () => {
                 <View style={styles.emptyContainer}>
                   <Icon name="book" size={48} color="#ccc" />
                   <Text style={styles.emptyText}>
-                    No enrolled courses found
+                    {searchQuery
+                      ? "No courses found matching your search"
+                      : "No enrolled courses found"}
                   </Text>
                 </View>
               }
@@ -263,8 +414,35 @@ const StudentCourse = () => {
               contentContainerStyle={styles.flatListContent}
             />
           )
+        ) : enrollLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#007bff" />
+            <Text style={styles.loadingText}>Loading available courses...</Text>
+          </View>
         ) : (
-          <Text style={styles.bodyText}>Enroll course</Text>
+          <FlatList
+            data={filteredAvailableCourses}
+            keyExtractor={(item) => `${item.classID}-${item.scheduleID}`}
+            renderItem={renderAvailableCourseCard}
+            refreshControl={
+              <RefreshControl
+                refreshing={enrollRefreshing}
+                onRefresh={onEnrollRefresh}
+              />
+            }
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Icon name="plus-circle" size={48} color="#ccc" />
+                <Text style={styles.emptyText}>
+                  {searchQuery
+                    ? "No courses found matching your search"
+                    : "No available courses found"}
+                </Text>
+              </View>
+            }
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.flatListContent}
+          />
         )}
       </View>
     </View>
@@ -278,12 +456,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f8f8f8",
     padding: 20,
+    paddingTop: 10,
   },
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 20,
+    marginBottom: 10,
   },
   header: {
     fontSize: 20,
@@ -309,7 +488,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 12,
+    paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 6,
     gap: 8,
@@ -421,5 +600,39 @@ const styles = StyleSheet.create({
     color: "#999",
     marginTop: 12,
     textAlign: "center",
+  },
+  enrollButton: {
+    backgroundColor: "#007bff",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginTop: 12,
+    alignItems: "center",
+  },
+  enrollButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  searchContainer: {
+    position: "relative",
+    marginBottom: 20,
+  },
+  searchBar: {
+    height: 45,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    paddingHorizontal: 45,
+    paddingVertical: 12,
+    backgroundColor: "#fff",
+    fontSize: 16,
+    paddingLeft: 40,
+    color: "#333",
+  },
+  searchIcon: {
+    position: "absolute",
+    left: 15,
+    top: 12,
   },
 });
