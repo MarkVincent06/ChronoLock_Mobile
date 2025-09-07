@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   RefreshControl,
   TextInput,
+  Modal,
+  Alert,
 } from "react-native";
 import React, { useState, useEffect, useCallback } from "react";
 import { useUserContext } from "@/context/UserContext";
@@ -64,6 +66,12 @@ const StudentCourse = () => {
   const [loading, setLoading] = useState(false);
   const [enrollLoading, setEnrollLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [enrollModalVisible, setEnrollModalVisible] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<AvailableCourse | null>(
+    null
+  );
+  const [enrollmentKey, setEnrollmentKey] = useState("");
+  const [enrolling, setEnrolling] = useState(false);
   const Icon = FontAwesome as any;
 
   const headerTitle =
@@ -142,8 +150,77 @@ const StudentCourse = () => {
     return `${formatTime(startTime)} - ${formatTime(endTime)}`;
   };
 
-  const handleEnrollCourse = (classID: number, scheduleID: number) => {
-    console.log("classID:", classID, "scheduleID:", scheduleID);
+  const handleEnrollCourse = (course: AvailableCourse) => {
+    setSelectedCourse(course);
+    setEnrollmentKey("");
+    setEnrollModalVisible(true);
+  };
+
+  const handleEnrollmentSubmit = async () => {
+    if (!selectedCourse || !enrollmentKey.trim()) {
+      Alert.alert("Error", "Please enter an enrollment key.");
+      return;
+    }
+
+    if (!user?.idNumber) {
+      Alert.alert("Error", "User information not found.");
+      return;
+    }
+
+    setEnrolling(true);
+    try {
+      const response = await axios.post(
+        `${API_URL}/student-masterlists/enroll`,
+        {
+          userID: user.idNumber,
+          classID: selectedCourse.classID,
+          enrollmentKey: enrollmentKey.trim(),
+        }
+      );
+
+      if (response.data.success) {
+        Alert.alert("Success", response.data.message, [
+          {
+            text: "OK",
+            onPress: () => {
+              setEnrollModalVisible(false);
+              setEnrollmentKey("");
+              setSelectedCourse(null);
+              // Refetch available courses after successful enrollment
+              fetchAvailableCourses();
+            },
+          },
+        ]);
+      }
+    } catch (error: any) {
+      console.log("Enrollment error:", error);
+
+      let errorMessage = "An error occurred while enrolling.";
+
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.status === 400) {
+        errorMessage = "Missing required information.";
+      } else if (error.response?.status === 401) {
+        errorMessage = "Invalid enrollment key.";
+      } else if (error.response?.status === 404) {
+        errorMessage = "Class not found.";
+      } else if (error.response?.status === 409) {
+        errorMessage = "You are already enrolled in this course.";
+      } else if (error.response?.status === 500) {
+        errorMessage = "Server error. Please try again later.";
+      }
+
+      Alert.alert("Enrollment Failed", errorMessage);
+    } finally {
+      setEnrolling(false);
+    }
+  };
+
+  const closeEnrollModal = () => {
+    setEnrollModalVisible(false);
+    setEnrollmentKey("");
+    setSelectedCourse(null);
   };
 
   const handleSearch = (query: string) => {
@@ -310,7 +387,7 @@ const StudentCourse = () => {
 
       <TouchableOpacity
         style={styles.enrollButton}
-        onPress={() => handleEnrollCourse(item.classID, item.scheduleID)}
+        onPress={() => handleEnrollCourse(item)}
       >
         <Text style={styles.enrollButtonText}>Enroll Course</Text>
       </TouchableOpacity>
@@ -445,6 +522,75 @@ const StudentCourse = () => {
           />
         )}
       </View>
+
+      {/* Enrollment Modal */}
+      <Modal
+        visible={enrollModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={closeEnrollModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Enroll in Course</Text>
+              <TouchableOpacity
+                onPress={closeEnrollModal}
+                style={styles.modalCloseButton}
+              >
+                <Icon name="times" size={20} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            {selectedCourse && (
+              <View style={styles.modalCourseInfo}>
+                <Text style={styles.courseInfoTitle}>
+                  {selectedCourse.courseCode} - {selectedCourse.courseName}
+                </Text>
+                <Text style={styles.courseInfoInstructor}>
+                  Instructor: {selectedCourse.instructorName}
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Enrollment Key</Text>
+              <TextInput
+                style={styles.enrollmentInput}
+                placeholder="Enter enrollment key"
+                placeholderTextColor="#999"
+                value={enrollmentKey}
+                onChangeText={setEnrollmentKey}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                secureTextEntry={false}
+              />
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={closeEnrollModal}
+                disabled={enrolling}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.submitButton]}
+                onPress={handleEnrollmentSubmit}
+                disabled={enrolling}
+              >
+                {enrolling ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.submitButtonText}>Enroll</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -634,5 +780,101 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 15,
     top: 12,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+    width: "90%",
+    maxWidth: 400,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  modalCloseButton: {
+    padding: 5,
+  },
+  modalCourseInfo: {
+    backgroundColor: "#f8f9fa",
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  courseInfoTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 5,
+  },
+  courseInfoInstructor: {
+    fontSize: 14,
+    color: "#666",
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 8,
+  },
+  enrollmentInput: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    fontSize: 16,
+    backgroundColor: "#fff",
+    color: "#333",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  cancelButton: {
+    backgroundColor: "#f8f9fa",
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  submitButton: {
+    backgroundColor: "#007bff",
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
+  },
+  submitButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#fff",
   },
 });
