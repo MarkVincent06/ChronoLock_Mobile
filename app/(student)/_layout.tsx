@@ -5,6 +5,7 @@ import {
   Image,
   ImageSourcePropType,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useEffect, useState } from "react";
@@ -15,6 +16,10 @@ import API_URL from "../../config/ngrok-api";
 import Ionicon from "react-native-vector-icons/Ionicons";
 import chronolockLogo from "../../assets/images/chronolock-logo2a.png";
 import { useUserContext } from "@/context/UserContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { auth } from "../../config/firebase";
+import { signOut } from "firebase/auth";
 
 interface TabIconProps {
   icon: string;
@@ -41,11 +46,31 @@ const TabIcon: React.FC<TabIconProps> = ({ icon, color, name, focused }) => {
   );
 };
 const CustomHeader = () => {
-  const { user } = useUserContext();
+  const { user, setUser } = useUserContext();
   const router = useRouter();
 
   const [time, setTime] = useState("");
   const [date, setDate] = useState("");
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleGoogleLogout = async () => {
+    setIsLoading(true);
+    try {
+      await GoogleSignin.signOut(); // Sign out from Google
+      await signOut(auth); // Sign out from Firebase
+      await AsyncStorage.removeItem("user");
+      setUser(null);
+
+      Alert.alert("Success", "You have been logged out.");
+      router.replace("/(auth)/login");
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Failed to log out.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -108,10 +133,10 @@ const CustomHeader = () => {
 
         {/* Account Button */}
         <TouchableOpacity
-          onPress={() => {
-            router.push("/account");
-          }}
+          onPress={() => setMenuVisible((v: boolean) => !v)}
           style={styles.accountButton}
+          accessibilityLabel="Open profile menu"
+          accessibilityRole="button"
         >
           <Image
             source={avatarSource}
@@ -119,6 +144,55 @@ const CustomHeader = () => {
             resizeMode="cover"
           />
         </TouchableOpacity>
+
+        {/* Dropdown Menu */}
+        {menuVisible && (
+          <View style={styles.menuContainer}>
+            <View style={styles.menuArrow} />
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                setMenuVisible(false);
+                Alert.alert("Notifications", "This feature is coming soon.");
+              }}
+            >
+              <Icon name="notifications-outline" size={18} color="#333" />
+              <Text style={styles.menuItemText}>Notifications</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                setMenuVisible(false);
+                router.push("/account");
+              }}
+            >
+              <Icon name="settings-outline" size={18} color="#333" />
+              <Text style={styles.menuItemText}>Settings</Text>
+            </TouchableOpacity>
+            <View style={styles.menuDivider} />
+            <TouchableOpacity
+              style={[styles.menuItem, styles.menuDanger]}
+              onPress={() => {
+                setMenuVisible(false);
+                Alert.alert("Logout", "Are you sure you want to logout?", [
+                  { text: "Cancel", style: "cancel" },
+                  {
+                    text: "Logout",
+                    style: "destructive",
+                    onPress: () => {
+                      handleGoogleLogout();
+                    },
+                  },
+                ]);
+              }}
+            >
+              <Icon name="log-out-outline" size={18} color="#d32f2f" />
+              <Text style={[styles.menuItemText, { color: "#d32f2f" }]}>
+                Logout
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -265,5 +339,56 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     tintColor: "#000",
+  },
+  menuContainer: {
+    position: "absolute",
+    top: 60,
+    right: 10,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    paddingVertical: 8,
+    width: 200,
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    borderWidth: 1,
+    borderColor: "#eee",
+  },
+  menuArrow: {
+    position: "absolute",
+    top: -8,
+    right: 16,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 8,
+    borderRightWidth: 8,
+    borderBottomWidth: 8,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    borderBottomColor: "#fff",
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    gap: 10,
+  },
+  menuItemText: {
+    fontSize: 14,
+    color: "#333",
+    flex: 1,
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: "#eee",
+    marginVertical: 4,
+  },
+  menuDanger: {
+    backgroundColor: "#fff5f5",
+    borderTopWidth: 1,
+    borderTopColor: "#fde0e0",
   },
 });
