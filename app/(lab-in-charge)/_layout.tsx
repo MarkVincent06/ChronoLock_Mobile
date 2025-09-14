@@ -197,7 +197,7 @@ const CustomHeader = () => {
               style={styles.menuItem}
               onPress={() => {
                 setMenuVisible(false);
-                Alert.alert("Notifications", "This feature is coming soon.");
+                router.push("/notifications");
               }}
             >
               <Icon name="notifications-outline" size={18} color="#333" />
