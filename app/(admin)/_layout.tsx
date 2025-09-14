@@ -11,6 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Tabs } from "expo-router";
 import { useRouter } from "expo-router";
 import API_URL from "../../config/ngrok-api";
+import axios from "axios";
 import chronolockLogo from "@/assets/images/chronolock-logo2a.png";
 import { useUserContext } from "@/context/UserContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -63,6 +64,47 @@ const CustomHeader = () => {
   const handleGoogleLogout = async () => {
     setIsLoading(true);
     try {
+      // First, fetch and delete all notification tokens for this user
+      if (user?.idNumber) {
+        try {
+          // Fetch user's notification tokens
+          const tokensResponse = await axios.get(
+            `${API_URL}/notifications/tokens/${user.idNumber}`
+          );
+
+          if (
+            tokensResponse.data.success &&
+            tokensResponse.data.data.length > 0
+          ) {
+            // Delete each token
+            const deletePromises = tokensResponse.data.data.map(
+              async (tokenData: any) => {
+                try {
+                  await axios.delete(
+                    `${API_URL}/notifications/tokens/${user.idNumber}/${tokenData.token}`
+                  );
+                  console.log(`Deleted token: ${tokenData.token}`);
+                } catch (deleteError) {
+                  console.error(
+                    `Failed to delete token ${tokenData.token}:`,
+                    deleteError
+                  );
+                }
+              }
+            );
+
+            // Wait for all token deletions to complete
+            await Promise.all(deletePromises);
+            console.log("All notification tokens deleted successfully");
+          } else {
+            console.log("No notification tokens found for user");
+          }
+        } catch (tokenError) {
+          console.error("Error managing notification tokens:", tokenError);
+          // Continue with logout even if token deletion fails
+        }
+      }
+
       await GoogleSignin.signOut(); // Sign out from Google
       await signOut(auth); // Sign out from Firebase
       await AsyncStorage.removeItem("user");

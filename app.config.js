@@ -65,7 +65,7 @@ export default {
       [
         "expo-notifications",
         {
-          icon: "./assets/iconsnotification-icon.png",
+          icon: "./assets/icons/notification-icon.png",
           color: "#1A73E8",
           defaultChannel: "default",
           enableBackgroundRemoteNotifications: true,
