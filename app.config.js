@@ -62,6 +62,15 @@ export default {
           isAndroidForegroundServiceEnabled: true,
         },
       ],
+      [
+        "expo-notifications",
+        {
+          icon: "./assets/iconsnotification-icon.png",
+          color: "#1A73E8",
+          defaultChannel: "default",
+          enableBackgroundRemoteNotifications: true,
+        },
+      ],
     ],
     experiments: {
       typedRoutes: true,

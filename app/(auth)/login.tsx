@@ -25,12 +25,15 @@ import {
 } from "firebase/auth";
 import { auth } from "../../config/firebase";
 import { useUserContext } from "../../context/UserContext";
-import * as Location from "expo-location";
-import { BACKGROUND_LOCATION_TASK } from "@/tasks/backgroundLocationTask";
 import API_URL from "../../config/ngrok-api";
 import { useRouter } from "expo-router";
 import eye from "../../assets/icons/eye.png";
 import eyeHide from "../../assets/icons/eye-hide.png";
+import {
+  requestNotificationPermissions,
+  getExpoPushToken,
+  sendTokenToBackend,
+} from "../../services/notificationService";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState<string>("");
@@ -42,6 +45,36 @@ const Login: React.FC = () => {
   const { setUser } = useUserContext();
   const router = useRouter();
   const [isNavigated, setIsNavigated] = useState(false);
+
+  const setupNotifications = async (userId: string) => {
+    try {
+      console.log("Setting up notifications...");
+
+      // Request notification permissions
+      const hasPermission = await requestNotificationPermissions();
+      if (!hasPermission) {
+        console.log("Notification permission denied");
+        return;
+      }
+
+      // Get the Expo push token
+      const token = await getExpoPushToken();
+      if (!token) {
+        console.log("Failed to get push token");
+        return;
+      }
+
+      // Send token to backend
+      const success = await sendTokenToBackend(token, userId);
+      if (success) {
+        console.log("Notification token registered successfully");
+      } else {
+        console.log("Failed to register notification token");
+      }
+    } catch (error) {
+      console.error("Error setting up notifications:", error);
+    }
+  };
 
   useFocusEffect(
     React.useCallback(() => {
@@ -105,6 +138,9 @@ const Login: React.FC = () => {
         };
 
         setUser(mappedUser);
+
+        // Setup notifications after successful login
+        setupNotifications(userData.idNumber);
 
         // Only navigate if not already navigated
         if (!isNavigated) {
@@ -184,6 +220,9 @@ const Login: React.FC = () => {
         };
 
         setUser(mappedUser);
+
+        // Setup notifications after successful Google sign-in
+        setupNotifications(userData.idNumber);
 
         // Only navigate if not already navigated
         if (!isNavigated) {
