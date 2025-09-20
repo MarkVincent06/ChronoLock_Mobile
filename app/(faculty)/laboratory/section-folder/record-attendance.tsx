@@ -15,6 +15,8 @@ import Ion from "react-native-vector-icons/Ionicons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import API_URL from "@/config/ngrok-api";
 import usePullToRefresh from "@/hooks/usePullToRefresh";
+import { useUserContext } from "@/context/UserContext";
+
 // Type assertion to fix TypeScript compatibility issues
 const Ionicons = Ion as any;
 
@@ -27,8 +29,14 @@ interface StudentRow {
   attendanceTime: string | null; // e.g., "07:15:00" | null
 }
 
+interface ScheduleData {
+  courseName: string;
+  instructorName: string;
+}
+
 const RecordAttendance = () => {
   const router = useRouter();
+  const { user } = useUserContext();
   const { scheduleID } = useLocalSearchParams<{ scheduleID: string }>();
   const { classID } = useLocalSearchParams<{ classID: string }>();
   const { section: sectionString } = useLocalSearchParams<{
@@ -37,6 +45,7 @@ const RecordAttendance = () => {
   const section = sectionString ? JSON.parse(sectionString) : null;
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [scheduleData, setScheduleData] = useState<ScheduleData | null>(null);
 
   const [students, setStudents] = useState<StudentRow[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<StudentRow[]>([]);
@@ -47,6 +56,32 @@ const RecordAttendance = () => {
   const handleSearch = (text: string) => {
     setSearchQuery(text);
     setCurrentPage(1);
+  };
+
+  const fetchScheduleData = async () => {
+    if (!scheduleID) return;
+    try {
+      const response = await axios.get(`${API_URL}/schedules/${scheduleID}`);
+      const data = response.data?.data;
+      if (data) {
+        setScheduleData({
+          courseName: data.courseName || "Unknown Course",
+          instructorName:
+            data.instructorName ||
+            `${user?.firstName || ""} ${user?.lastName || ""}`.trim() ||
+            "Unknown Instructor",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching schedule data:", error);
+      // Set fallback data
+      setScheduleData({
+        courseName: section?.courseName || "Unknown Course",
+        instructorName:
+          `${user?.firstName || ""} ${user?.lastName || ""}`.trim() ||
+          "Unknown Instructor",
+      });
+    }
   };
 
   const fetchStudents = async () => {
@@ -73,12 +108,13 @@ const RecordAttendance = () => {
   };
 
   const fetchData = async () => {
-    await fetchStudents();
+    await Promise.all([fetchScheduleData(), fetchStudents()]);
   };
   const { refreshing, onRefresh } = usePullToRefresh(fetchData);
 
   useEffect(() => {
     if (scheduleID) {
+      fetchScheduleData();
       fetchStudents();
     }
   }, [scheduleID]);
@@ -103,6 +139,35 @@ const RecordAttendance = () => {
     if (r.includes("late")) return [styles.badge, styles.badgeLate];
     if (r.includes("absent")) return [styles.badge, styles.badgeAbsent];
     return [styles.badge, styles.badgeDefault];
+  };
+
+  const sendNotification = async (userID: string, remark: string) => {
+    if (!scheduleData) return;
+
+    try {
+      const instructorPrefix =
+        scheduleData.instructorName.startsWith("Mr.") ||
+        scheduleData.instructorName.startsWith("Ms.") ||
+        scheduleData.instructorName.startsWith("Dr.")
+          ? scheduleData.instructorName
+          : `Mr./Ms. ${scheduleData.instructorName}`;
+
+      const title = `Attendance Recorded - ${scheduleData.courseName}`;
+      const message = `Your attendance has been marked as ${remark} by ${instructorPrefix}`;
+
+      await axios.post(`${API_URL}/notifications`, {
+        userId: userID,
+        title,
+        message,
+        type: "alert",
+        is_push: false,
+      });
+
+      console.log(`Notification sent to user ${userID}: ${title}`);
+    } catch (error) {
+      console.error("Failed to send notification:", error);
+      // Don't show error to user as attendance was already recorded successfully
+    }
   };
 
   // Inline buttons will call submitAttendance directly
@@ -146,6 +211,9 @@ const RecordAttendance = () => {
             : s
         )
       );
+
+      // Send notification after successful attendance recording
+      await sendNotification(userID, remark);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error("Failed to record attendance:", error.message);

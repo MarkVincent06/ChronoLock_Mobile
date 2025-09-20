@@ -104,7 +104,7 @@ const index = () => {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "alert":
-        return "warning";
+        return "information-circle";
       case "reminder":
         return "time";
       case "announcement":
@@ -117,7 +117,7 @@ const index = () => {
   const getNotificationColor = (type: string) => {
     switch (type) {
       case "alert":
-        return "#ff6b6b";
+        return "#3498db";
       case "reminder":
         return "#4ecdc4";
       case "announcement":
