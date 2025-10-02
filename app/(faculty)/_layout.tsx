@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useEffect, useState } from "react";
 import { Tabs, Redirect } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import API_URL from "../../config/ngrok-api";
 import axios from "axios";
@@ -29,6 +30,18 @@ const NotificationBadge: React.FC<{ count: number }> = ({ count }) => {
 
   return (
     <View style={styles.badge}>
+      <Text style={styles.badgeText}>
+        {count > 99 ? "99+" : count.toString()}
+      </Text>
+    </View>
+  );
+};
+
+const NotificationMenuBadge: React.FC<{ count: number }> = ({ count }) => {
+  if (count === 0) return null;
+
+  return (
+    <View style={styles.menuBadge}>
       <Text style={styles.badgeText}>
         {count > 99 ? "99+" : count.toString()}
       </Text>
@@ -61,6 +74,13 @@ const CustomHeader = () => {
       console.error("Error fetching unread notification count:", error);
     }
   };
+
+  // Refetch unread count whenever the screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchUnreadCount();
+    }, [user?.idNumber])
+  );
 
   const handleGoogleLogout = async () => {
     setIsLoading(true);
@@ -139,7 +159,7 @@ const CustomHeader = () => {
     fetchUnreadCount(); // Fetch unread count immediately on mount
 
     const dateTimeInterval = setInterval(updateDateTime, 60000);
-    const notificationInterval = setInterval(fetchUnreadCount, 60000); // Refresh every 1 minute
+    const notificationInterval = setInterval(fetchUnreadCount, 30000); // Refresh every 30sec
 
     return () => {
       clearInterval(dateTimeInterval);
@@ -216,7 +236,7 @@ const CustomHeader = () => {
             >
               <Icon name="notifications-outline" size={18} color="#333" />
               <Text style={styles.menuItemText}>Notifications</Text>
-              <NotificationBadge count={unreadCount} />
+              <NotificationMenuBadge count={unreadCount} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.menuItem}
@@ -434,6 +454,16 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -5,
     right: -5,
+    backgroundColor: "#ff4444",
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  menuBadge: {
     backgroundColor: "#ff4444",
     borderRadius: 10,
     minWidth: 20,

@@ -189,7 +189,10 @@ const Login: React.FC = () => {
       const { idToken, user: googleUser } = userInfo;
 
       // Restrict to school domain
-      if (!googleUser.email.endsWith("@my.cspc.edu.ph")) {
+      if (
+        !googleUser.email.endsWith("@cspc.edu.ph") &&
+        !googleUser.email.endsWith("@my.cspc.edu.ph")
+      ) {
         alert("Only valid CSPC accounts are allowed.");
         await GoogleSignin.signOut(); // force logout if not allowed
         setLoading(false);
