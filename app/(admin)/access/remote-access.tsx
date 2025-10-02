@@ -95,7 +95,7 @@ const AccessControl = () => {
       // Insert access log
       await axios.post(`${API_URL}/remote-access/insertAccessLog`, {
         idNumber: USER_ID_NUMBER,
-        action: `Admin has attempted to unlock the ERP Laboratory.`,
+        action: `${user?.firstName} ${user?.lastName} has attempted to unlock the ERP Laboratory.`,
         date: formattedDate, // YYYY-MM-DD format
         time: formattedTime, // HH:MM:SS format (24-hour)
       });

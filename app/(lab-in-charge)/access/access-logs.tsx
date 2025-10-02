@@ -17,6 +17,8 @@ interface AccessLog {
   action: string;
   date: string;
   time: string;
+  instructorName: string;
+  userType: string;
 }
 
 // Type assertion to fix TypeScript compatibility issues
@@ -100,6 +102,7 @@ const AccessLogs = () => {
           <View key={log.id} style={styles.card}>
             <Text style={styles.cardTitle}>Log #{logs.length - index}</Text>
             <Text style={styles.id}>ID: {log.idNumber}</Text>
+            <Text style={styles.userType}>Role: {log.userType}</Text>
             <Text style={styles.action}>{log.action}</Text>
             <Text style={styles.dateTime}>
               {formatDate(log.date)} | {formatTime(log.time)}
@@ -150,6 +153,12 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginBottom: 5,
     color: "#1A73E8",
+  },
+  userType: {
+    fontSize: 16,
+    marginBottom: 5,
+    fontWeight: "600",
+    color: "#2E7D32",
   },
   action: {
     fontSize: 16,

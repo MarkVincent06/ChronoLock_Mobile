@@ -52,6 +52,18 @@ const TabIcon: React.FC<TabIconProps> = ({ icon, color, name, focused }) => {
   );
 };
 
+const NotificationBadge: React.FC<{ count: number }> = ({ count }) => {
+  if (count === 0) return null;
+
+  return (
+    <View style={styles.badge}>
+      <Text style={styles.badgeText}>
+        {count > 99 ? "99+" : count.toString()}
+      </Text>
+    </View>
+  );
+};
+
 const CustomHeader = () => {
   const { user, setUser } = useUserContext();
   const router = useRouter();
@@ -60,6 +72,23 @@ const CustomHeader = () => {
   const [date, setDate] = useState("");
   const [menuVisible, setMenuVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchUnreadCount = async () => {
+    if (!user?.idNumber) return;
+
+    try {
+      const response = await axios.get(
+        `${API_URL}/notifications/unread-count/${user.idNumber}`
+      );
+
+      if (response.data.success) {
+        setUnreadCount(response.data.data.unreadCount);
+      }
+    } catch (error) {
+      console.error("Error fetching unread notification count:", error);
+    }
+  };
 
   const handleGoogleLogout = async () => {
     setIsLoading(true);
@@ -135,10 +164,16 @@ const CustomHeader = () => {
     };
 
     updateDateTime(); // Update immediately on mount
-    const interval = setInterval(updateDateTime, 60000);
+    fetchUnreadCount(); // Fetch unread count immediately on mount
 
-    return () => clearInterval(interval); // Clean up on unmount
-  }, []);
+    const dateTimeInterval = setInterval(updateDateTime, 60000);
+    const notificationInterval = setInterval(fetchUnreadCount, 60000); // Refresh every 1 minute
+
+    return () => {
+      clearInterval(dateTimeInterval);
+      clearInterval(notificationInterval);
+    };
+  }, [user?.idNumber]);
 
   const avatarSource =
     user?.avatar && user.avatar !== ""
@@ -172,11 +207,14 @@ const CustomHeader = () => {
           accessibilityLabel="Open profile menu"
           accessibilityRole="button"
         >
-          <Image
-            source={avatarSource}
-            style={styles.avatar}
-            resizeMode="cover"
-          />
+          <View style={styles.avatarContainer}>
+            <Image
+              source={avatarSource}
+              style={styles.avatar}
+              resizeMode="cover"
+            />
+            <NotificationBadge count={unreadCount} />
+          </View>
         </TouchableOpacity>
 
         {/* Dropdown Menu */}
@@ -192,6 +230,7 @@ const CustomHeader = () => {
             >
               <Ionicon name="notifications-outline" size={18} color="#333" />
               <Text style={styles.menuItemText}>Notifications</Text>
+              <NotificationBadge count={unreadCount} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.menuItem}
@@ -384,10 +423,32 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     backgroundColor: "#f0f0f0",
   },
+  avatarContainer: {
+    position: "relative",
+  },
   accountButton: {
     marginHorizontal: 10,
     alignItems: "center",
     justifyContent: "center",
+  },
+  badge: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: "#ff4444",
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  badgeText: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "bold",
+    textAlign: "center",
   },
   menuContainer: {
     position: "absolute",
