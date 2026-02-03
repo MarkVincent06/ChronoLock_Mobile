@@ -15,7 +15,7 @@ import FontAwesome from "react-native-vector-icons/MaterialCommunityIcons";
 import { useUserContext } from "@/context/UserContext";
 import API_URL from "@/config/ngrok-api";
 import { router } from "expo-router";
-import ESP32_URL from "@/config/esp32-api";
+// import ESP32_URL from "@/config/esp32-api";
 
 // Type assertion to fix TypeScript compatibility issues
 const Icon = FontAwesome as any;
@@ -36,22 +36,22 @@ const AccessControl = () => {
   );
 
   // Send command to ESP32
-  const sendCommand = async () => {
-    try {
-      const response = await axios.post(`${ESP32_URL}/unlock`, {
-        command: "unlock",
-      });
+  // const sendCommand = async () => {
+  //   try {
+  //     const response = await axios.post(`${ESP32_URL}/unlock`, {
+  //       command: "unlock",
+  //     });
 
-      if (response.status === 200) {
-        setConnectionStatus("Door unlocked successfully!");
-      } else {
-        throw new Error("Unexpected response from ESP32");
-      }
-    } catch (error: any) {
-      Alert.alert("Error", "Failed to unlock door: " + error.message);
-      setConnectionStatus("Unlock failed");
-    }
-  };
+  //     if (response.status === 200) {
+  //       setConnectionStatus("Door unlocked successfully!");
+  //     } else {
+  //       throw new Error("Unexpected response from ESP32");
+  //     }
+  //   } catch (error: any) {
+  //     Alert.alert("Error", "Failed to unlock door: " + error.message);
+  //     setConnectionStatus("Unlock failed");
+  //   }
+  // };
 
   const startCooldown = (seconds: number) => {
     if (cooldownIntervalRef.current) {
@@ -100,7 +100,11 @@ const AccessControl = () => {
         time: formattedTime, // HH:MM:SS format (24-hour)
       });
 
-      sendCommand();
+      // sendCommand();
+
+      await axios.post(`${API_URL}/remote-access/iot/unlock`, {
+        deviceId: "erp-door",
+      });
     } catch (error) {
       console.error("Error unlocking door:", error);
       Alert.alert("Failed to unlock door", "An error occurred.");
